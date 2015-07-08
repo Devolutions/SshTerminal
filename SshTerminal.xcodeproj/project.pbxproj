@@ -89,13 +89,13 @@
 			isa = PBXGroup;
 			children = (
 				F4AE905F1B418EBF007AC63E /* SshConnection.h */,
-				F4AE90601B418EBF007AC63E /* SshStorage.h */,
-				F4AE90611B418EBF007AC63E /* SshTerminalView.h */,
 				F4AE90621B418EBF007AC63E /* SshConnection.m */,
+				F4AE90601B418EBF007AC63E /* SshStorage.h */,
 				F4AE90631B418EBF007AC63E /* SshStorage.m */,
-				F4AE90641B418EBF007AC63E /* SshTerminal.m */,
-				F4AE90651B418EBF007AC63E /* SshTerminalView.m */,
 				F4AE90381B41733E007AC63E /* SshTerminal.h */,
+				F4AE90641B418EBF007AC63E /* SshTerminal.m */,
+				F4AE90611B418EBF007AC63E /* SshTerminalView.h */,
+				F4AE90651B418EBF007AC63E /* SshTerminalView.m */,
 				F4AE90361B41733E007AC63E /* Supporting Files */,
 			);
 			path = SshTerminal;
@@ -466,6 +466,7 @@
 				F4AE904B1B41733E007AC63E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		F4AE908D1B4198E2007AC63E /* Build configuration list for PBXNativeTarget "SshTerminalClient" */ = {
 			isa = XCConfigurationList;
@@ -474,6 +475,7 @@
 				F4AE908F1B4198E2007AC63E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

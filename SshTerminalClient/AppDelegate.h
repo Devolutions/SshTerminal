@@ -12,6 +12,7 @@
 @interface AppDelegate : NSObject <NSApplicationDelegate, SshTerminalEvent>
 {
     NSTextStorage* storage;
+    BOOL resume;
 }
 
 @property (weak) IBOutlet NSWindow *window;

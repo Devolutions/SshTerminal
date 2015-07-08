@@ -15,12 +15,19 @@
 
 @synthesize hostName;
 @synthesize userName;
+@synthesize keyFilePath;
 @synthesize columnCount;
 
 
 -(void)setPassword:(NSString *)string
 {
     password = string;
+}
+
+
+-(void)setKeyFilePassword:(NSString *)string
+{
+    keyFilePassword = string;
 }
 
 
@@ -39,11 +46,38 @@
 
     [connection setHost:[hostName UTF8String]];
     [connection setUser:[userName UTF8String]];
+    [connection setKeyFilePath:[[keyFilePath stringByExpandingTildeInPath] UTF8String] withPassword:[keyFilePassword UTF8String]];
     [connection setPassword:[password UTF8String]];
     [terminalView setColumnCount:columnCount];
     [terminalView setRowCountForHeight:self.contentSize.height];
     [terminalView initScreen];
     [connection start];
+}
+
+
+-(void)resume
+{
+    if (connection != nil)
+    {
+        if ([connection isExecuting] == NO)
+        {
+            return;
+        }
+        [connection resume:YES andSaveHost:NO];
+    }
+}
+
+
+-(void)resumeAndRememberServer
+{
+    if (connection != nil)
+    {
+        if ([connection isExecuting] == NO)
+        {
+            return;
+        }
+        [connection resume:YES andSaveHost:YES];
+    }
 }
 
 
@@ -122,6 +156,18 @@
             break;
         }
             
+        case SERVER_KEY_CHANGED:
+        case SERVER_KEY_FOUND_OTHER:
+        case SERVER_NOT_KNOWN:
+        {
+            if ([eventDelegate respondsToSelector:@selector(serverMismatch:)])
+            {
+                NSString* fingerPrint = [connection fingerPrint];
+                [eventDelegate serverMismatch:fingerPrint];
+            }
+            break;
+        }
+            
         default:
         {
             if ([eventDelegate respondsToSelector:@selector(error:)])
@@ -183,7 +229,6 @@
 {
     return [self initWithFrame:NSMakeRect(0, 0, 0, 0)];
 }
-
 
 
 @end

@@ -16,6 +16,7 @@ SshConnection* sshConnection = NULL;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
+    resume = NO;
     [_terminal setEventDelegate:self];
 }
 
@@ -34,18 +35,44 @@ SshConnection* sshConnection = NULL;
 
 - (IBAction)connect:(id)sender
 {
-    _terminal.userName = @"david";
-    _terminal.hostName = @"192.168.7.60";
-    [_terminal setPassword:@"123456"];
-    _terminal.columnCount = 80;
-    [_terminal connect];
-    [_connectButton setEnabled:NO];
+    if (resume == NO)
+    {
+#define TEST_SERVER 2
+#if (TEST_SERVER == 0)
+        _terminal.userName = @"david";
+        _terminal.hostName = @"192.168.7.60";
+        [_terminal setPassword:@"123456"];
+#elif (TEST_SERVER == 1)
+        _terminal.userName = @"dvincent";
+        _terminal.hostName = @"192.168.4.1";
+        [_terminal setPassword:@"Price2011"];
+#elif (TEST_SERVER == 2)
+        _terminal.userName = @"dvincent";
+        _terminal.hostName = @"192.168.4.1";
+        _terminal.keyFilePath = @"~/dvincentkey";
+        [_terminal setKeyFilePassword:@"123456"];
+#endif
+        _terminal.columnCount = 80;
+        [_terminal connect];
+        [_statusText setStringValue:@"Connecting"];
+        [_connectButton setEnabled:NO];
+    }
+    else   // Resume.
+    {
+        [_terminal resumeAndRememberServer];
+        [_connectButton setTitle:@"Connect"];
+        [_connectButton setEnabled:NO];
+        resume = NO;
+    }
 }
 
 
 - (IBAction)disconnect:(id)sender
 {
     [_terminal disconnect];
+    [_connectButton setTitle:@"Connect"];
+    [_connectButton setEnabled:NO];
+    resume = NO;
 }
 
 
@@ -61,6 +88,16 @@ SshConnection* sshConnection = NULL;
     [_statusText setStringValue:@"Disconnected"];
     [_disconnectButton setEnabled:NO];
     [_connectButton setEnabled:YES];
+}
+
+
+-(void)serverMismatch:(NSString *)fingerPrint
+{
+    [_errorText setStringValue:fingerPrint];
+    [_connectButton setTitle:@"Resume"];
+    [_connectButton setEnabled:YES];
+    [_disconnectButton setEnabled:YES];
+    resume = YES;
 }
 
 

@@ -24,6 +24,7 @@ enum ConnectionEvent
     SERVER_FILE_NOT_FOUND,
     SERVER_ERROR,
     PASSWORD_AUTHENTICATION_DENIED,
+    KEY_FILE_NOT_FOUND_OR_DENIED,
     CHANNEL_ERROR,
     CHANNEL_RESIZE_ERROR,
     
@@ -36,7 +37,10 @@ enum ConnectionEvent
 {
     ssh_session session;
     ssh_channel channel;
+    BOOL useKeyAuthentication;
     char* password;
+    char* keyFilePassword;
+    char* keyFilePath;
     int width;
     int height;
     
@@ -44,10 +48,11 @@ enum ConnectionEvent
     UInt8 outBuffer[OUTPUT_BUFFER_SIZE];
     int inIndex;
     int outIndex;
-    int changeHeight;
+    int resumeConnection;
     
     NSLock* inLock;
     NSLock* outLock;
+    NSCondition* connectCondition;
     
     NSObject* dataSink;
     SEL dataSelector;
@@ -59,9 +64,9 @@ enum ConnectionEvent
 
 -(void)setHost:(const char*)newHost;
 -(void)setUser:(const char*)newUser;
+-(void)setKeyFilePath:(const char*)newKeyFilePath withPassword:(const char*)newPassword;
 -(void)setPassword:(const char*)newPassword;
 -(void)setWidth:(int)newWidth;
--(void)setHeight:(int)newHeight;
 
 -(void)main;
 
@@ -70,6 +75,8 @@ enum ConnectionEvent
 
 -(int)readIn:(UInt8*)buffer length:(int)count;
 -(int)writeFrom:(const UInt8*)buffer length:(int)count;
+-(void)resume:(BOOL)isResuming andSaveHost:(BOOL)needsSaveHost;
+-(NSString*)fingerPrint;
 
 
 @end

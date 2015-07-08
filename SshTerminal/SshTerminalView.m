@@ -9,6 +9,10 @@
 #import "SshTerminalView.h"
 #import "SshStorage.h"
 
+#ifdef DEBUG
+//#define PRINT_INPUT 1
+#endif
+
 #define KEYPAD_ENTER 0x03
 
 #define STORAGE_WIDTH (columnCount + 2)
@@ -31,13 +35,32 @@ NSString* TAName = @"TerminalAttributeName";
 }
 
 
+-(NSRect)cursorRect
+{
+    NSRange range = NSMakeRange(charTop + curY * STORAGE_WIDTH + curX, 1);
+    NSRect rect = NSMakeRect(0, 0, 0, 0);;
+    NSUInteger rectCount;
+    NSRectArray rectarray = [self.layoutManager rectArrayForCharacterRange:range withinSelectedCharacterRange:range inTextContainer:self.textContainer rectCount:&rectCount];
+    if (rectCount > 0)
+    {
+        rect = rectarray[0];
+    }
+    
+    return rect;
+}
+
+
 -(void)setCursorVisible:(BOOL)visible
 {
     if (visible != isCursorVisible)
     {
-        [self needsDisplay];
+        isCursorVisible = visible;
+        NSRect rect = [self cursorRect];
+        if (NSIsEmptyRect(rect) == NO)
+        {
+            [self displayRect:rect];
+        }
     }
-    isCursorVisible = visible;
 }
 
 
@@ -49,13 +72,9 @@ NSString* TAName = @"TerminalAttributeName";
         return;
     }
     
-    NSRange range = NSMakeRange(charTop + curY * STORAGE_WIDTH + curX, 1);
-    NSRect rect;
-    NSUInteger rectCount;
-    NSRectArray rectarray = [self.layoutManager rectArrayForCharacterRange:range withinSelectedCharacterRange:range inTextContainer:self.textContainer rectCount:&rectCount];
-    if (rectCount > 0)
+    NSRect rect = [self cursorRect];
+    if (NSIsEmptyRect(rect) == NO)
     {
-        rect = rectarray[0];
         [textColors[0] setFill];
         [NSBezierPath fillRect:rect];
     }
@@ -307,8 +326,11 @@ NSString* TAName = @"TerminalAttributeName";
         }
         for (int i = 0; i < repeat; i++)
         {
-            [self addLine];
             charTop += STORAGE_WIDTH;
+            if (charTop + rowCount * STORAGE_WIDTH > [storage length])
+            {
+                [self addLine];
+            }
         }
     }
     else
@@ -647,13 +669,11 @@ NSString* TAName = @"TerminalAttributeName";
     else if (arg == 2)
     {
         // Blank whole screen, cursor does not move.
-        range.location = charTop;
-        range.length = columnCount;
-        while (range.location + range.length <= [storage length])
+        for (int i = 0; i < viewRowCount; i++)
         {
-            [storage replaceCharactersInRange:range withAttributedString:blankLine];
-            range.location += STORAGE_WIDTH;
+            [self addLine];
         }
+        charTop = (SInt32)[storage length] - STORAGE_WIDTH * viewRowCount + 2;
     }
     else if (arg == 3)
     {
@@ -1907,8 +1927,7 @@ NSString* TAName = @"TerminalAttributeName";
 -(void)setRowCountForHeight:(int)height
 {
     int fontHeight = (int)([normalFont ascender] - [normalFont descender] + [normalFont leading] +0.5F);
-    rowCount = height / fontHeight;
-    [connection setHeight:rowCount];
+    viewRowCount = height / fontHeight;
 }
 
 
@@ -2045,6 +2064,8 @@ NSString* TAName = @"TerminalAttributeName";
         lineFeed = [[NSAttributedString alloc] initWithString:@"\r\n" attributes:newLineAttributes];
         insert = [[NSMutableAttributedString alloc] init];
         tabStops = [[NSMutableData alloc] init];
+        
+        rowCount = 24;
         
         backColors[0] = [NSColor blackColor];
         backColors[1] = [NSColor blackColor];

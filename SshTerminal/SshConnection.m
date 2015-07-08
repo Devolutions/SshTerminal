@@ -9,8 +9,21 @@
 #import "SshConnection.h"
 #import "SshTerminalView.h"
 
+enum
+{
+    CONNECTION_ABORT = -1,
+    CONNECTION_SUSPENDED = 0,
+    CONNECTION_RESUME = 1,
+};
+
 
 int gInstanceCount = 0;
+
+
+int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, int verify, void *userdata)
+{
+    return SSH_ERROR;
+}
 
 
 @implementation SshConnection
@@ -30,27 +43,44 @@ int gInstanceCount = 0;
 }
 
 
+-(void)setKeyFilePath:(const char *)newKeyFilePath withPassword:(const char*)newPassword
+{
+    free(keyFilePath);
+    keyFilePath = NULL;
+    free(keyFilePassword);
+    keyFilePassword = NULL;
+    useKeyAuthentication = NO;
+    
+    if (newKeyFilePath != NULL)
+    {
+        if (strlen(newKeyFilePath) > 0)
+        {
+            keyFilePath = strdup(newKeyFilePath);
+            useKeyAuthentication = YES;
+        }
+    }
+    
+    if (newPassword != NULL)
+    {
+        keyFilePassword = strdup(newPassword);
+    }
+}
+
+
 -(void)setPassword:(const char *)passwordString
 {
-    password = strdup(passwordString);
+    free(password);
+    password = NULL;
+    if (passwordString != NULL)
+    {
+        password = strdup(passwordString);
+    }
 }
 
 
 -(void)setWidth:(int)newWidth
 {
     width = newWidth;
-}
-
-
--(void)setHeight:(int)newHeight
-{
-    if (newHeight != height)
-    {
-        height = newHeight;
-        [outLock lock];
-        changeHeight = newHeight;
-        [outLock unlock];
-    }
 }
 
 
@@ -94,6 +124,38 @@ int gInstanceCount = 0;
 }
 
 
+-(void)resume:(BOOL)isResuming andSaveHost:(BOOL)needsSaveHost
+{
+    if (needsSaveHost == YES)
+    {
+        ssh_write_knownhost(session);
+    }
+    [connectCondition lock];
+    resumeConnection = (isResuming == YES ? CONNECTION_RESUME : CONNECTION_ABORT);
+    [connectCondition signal];
+    [connectCondition unlock];
+}
+
+
+-(NSString*)fingerPrint
+{
+    ssh_key key = ssh_key_new();
+    ssh_get_publickey(session, &key);
+    unsigned char* hash;
+    size_t len;
+    ssh_get_publickey_hash(key, SSH_PUBLICKEY_HASH_MD5, &hash, &len);
+    
+    char* hexString = ssh_get_hexa(hash, len);
+    NSString* returnString = [NSString stringWithUTF8String:hexString];
+    
+    free(hexString);
+    free(hash);
+    ssh_key_free(key);
+    
+    return returnString;
+}
+
+
 -(void)setDataCallbackOn:(NSObject *)newSink with:(SEL)selector
 {
     dataSink = newSink;
@@ -114,6 +176,16 @@ int gInstanceCount = 0;
 }
 
 
+-(void)cancel
+{
+    [connectCondition lock];
+    resumeConnection = CONNECTION_ABORT;
+    [connectCondition signal];
+    [connectCondition unlock];
+    [super cancel];
+}
+
+
 -(void)main
 {
     int result = ssh_connect(session);
@@ -124,47 +196,113 @@ int gInstanceCount = 0;
     }
     
     result = ssh_is_server_known(session);
-    switch (result)
+    if (result != SSH_SERVER_KNOWN_OK)
     {
-        case SSH_SERVER_KNOWN_OK:
-            break;
-            
-        case SSH_SERVER_KNOWN_CHANGED:
-            [self eventNotify:SERVER_KEY_CHANGED];
-            break;
-            
-        case SSH_SERVER_FOUND_OTHER:
-            [self eventNotify:SERVER_KEY_FOUND_OTHER];
-            break;
-            
-        case SSH_SERVER_FILE_NOT_FOUND:
-            [self eventNotify:SERVER_FILE_NOT_FOUND];
-            break;
-            
-        case SSH_SERVER_NOT_KNOWN:
-            [self eventNotify:SERVER_NOT_KNOWN];
-            break;
-            
-        case SSH_SERVER_ERROR:
-            [self eventNotify:SERVER_ERROR];
-            break;
-            
-        default:
-            break;
-    }
-    
-    result = ssh_userauth_password(session, NULL, password);
-    if (result != SSH_AUTH_SUCCESS)
-    {
-        if (result == SSH_AUTH_ERROR)
+        BOOL suspendConnection = YES;
+        switch (result)
         {
-            [self eventNotify:FATAL_ERROR];
+            case SSH_SERVER_KNOWN_CHANGED:
+                [self eventNotify:SERVER_KEY_CHANGED];
+                break;
+                
+            case SSH_SERVER_FOUND_OTHER:
+                [self eventNotify:SERVER_KEY_FOUND_OTHER];
+                break;
+                
+            case SSH_SERVER_FILE_NOT_FOUND:
+                suspendConnection = NO;
+                [self eventNotify:SERVER_FILE_NOT_FOUND];
+                break;
+                
+            case SSH_SERVER_NOT_KNOWN:
+                [self eventNotify:SERVER_NOT_KNOWN];
+                break;
+                
+            case SSH_SERVER_ERROR:
+            default:
+                [self eventNotify:SERVER_ERROR];
+                suspendConnection = NO;
+                break;
+        }
+        
+        if (suspendConnection == NO)
+        {
+            goto DISCONNECT_EXIT;
         }
         else
         {
-            [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
+            // A connection IS established, but could be compromised: suspend the connection process,
+            // and wait for user feedback (eventNotify has caused an event to be sent to the user).
+            BOOL disconnect = NO;
+            [connectCondition lock];
+            while (resumeConnection == CONNECTION_SUSPENDED)
+            {
+                [connectCondition wait];
+            }
+            if (resumeConnection == CONNECTION_ABORT)
+            {
+                disconnect = YES;
+            }
+            [connectCondition unlock];
+            if (disconnect == YES)
+            {
+                goto DISCONNECT_EXIT;
+            }
         }
-        goto DISCONNECT_EXIT;
+    }
+    
+    if (useKeyAuthentication == YES)
+    {
+        // User authentication by key:
+        ssh_key key = ssh_key_new();
+        result = ssh_pki_import_privkey_file(keyFilePath, keyFilePassword, PrivateKeyAuthCallback, NULL, &key);
+        if (result == SSH_OK)
+        {
+            result = ssh_userauth_publickey(session, NULL, key);
+            ssh_key_free(key);
+            
+            if (result != SSH_AUTH_SUCCESS)
+            {
+                if (result == SSH_AUTH_ERROR)
+                {
+                    [self eventNotify:FATAL_ERROR];
+                }
+                else
+                {
+                    [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
+                }
+                goto DISCONNECT_EXIT;
+            }
+        }
+        else
+        {
+            if (result == SSH_EOF)
+            {
+                [self eventNotify:KEY_FILE_NOT_FOUND_OR_DENIED];
+            }
+            else
+            {
+                [self eventNotify:FATAL_ERROR];
+            }
+            goto DISCONNECT_EXIT;
+        }
+    }
+    else
+    {
+        // User authentication by password:
+        result = ssh_userauth_password(session, NULL, password);
+        if (result != SSH_AUTH_SUCCESS)
+        {
+            if (result == SSH_AUTH_ERROR)
+            {
+                [self eventNotify:FATAL_ERROR];
+            }
+            else
+            {
+                [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
+            }
+            goto DISCONNECT_EXIT;
+        }
     }
     
     channel = ssh_channel_new(session);
@@ -193,7 +331,6 @@ int gInstanceCount = 0;
         [self eventNotify:CHANNEL_ERROR];
         goto CLOSE_CHANNEL_EXIT;
     }
-    changeHeight = 0;
     
     result = ssh_channel_request_shell(channel);
     if (result != SSH_OK)
@@ -227,15 +364,6 @@ int gInstanceCount = 0;
                 outIndex -= writeCount;
             }
         }
-        if (changeHeight != 0)
-        {
-            result = ssh_channel_change_pty_size(channel, width, changeHeight);
-            if (result != SSH_OK)
-            {
-                [self eventNotify:CHANNEL_RESIZE_ERROR];
-            }
-            changeHeight = 0;
-        }
         [outLock unlock];
         
         if ([self isCancelled] == YES)
@@ -266,20 +394,34 @@ EXIT:
     self = [super init];
     if (self != nil)
     {
-        inIndex = 0;
-        outIndex = 0;
-
-        inLock = [[NSLock alloc] init];
-        outLock = [[NSLock alloc] init];
-        changeHeight = 0;
-        
         session = ssh_new();
         if (session != NULL)
         {
             gInstanceCount++;
         }
+        channel = NULL;
         
-        if (session == NULL || inLock == nil || outLock == nil)
+        useKeyAuthentication = NO;
+        password = NULL;
+        keyFilePassword = NULL;
+        keyFilePath = NULL;
+        width = 0;
+        height = 0;
+        
+        inIndex = 0;
+        outIndex = 0;
+        resumeConnection = CONNECTION_SUSPENDED;
+
+        inLock = [[NSLock alloc] init];
+        outLock = [[NSLock alloc] init];
+        connectCondition = [[NSCondition alloc] init];
+        
+        dataSink = nil;
+        dataSelector = nil;
+        eventSink = nil;
+        eventSelector = nil;
+        
+        if (session == NULL || inLock == nil || outLock == nil || connectCondition == nil)
         {
             self = nil;
         }
@@ -291,6 +433,10 @@ EXIT:
 
 -(void)dealloc
 {
+    free(password);
+    free(keyFilePassword);
+    free(keyFilePath);
+    
     if (session != NULL)
     {
         ssh_free(session);

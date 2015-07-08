@@ -694,7 +694,7 @@
                     <button verticalHuggingPriority="750" id="bL2-08-3fo">
                         <rect key="frame" x="96" y="513" width="100" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="push" title="Disconnect" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="TMw-zw-546">
+                        <buttonCell key="cell" type="push" title="Disconnect" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="TMw-zw-546">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
@@ -712,7 +712,7 @@
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="Hqb-iv-BYP">
-                        <rect key="frame" x="378" y="522" width="204" height="17"/>
+                        <rect key="frame" x="327" y="522" width="335" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="No error" id="y79-vz-WLn">
                             <font key="font" metaFont="system"/>

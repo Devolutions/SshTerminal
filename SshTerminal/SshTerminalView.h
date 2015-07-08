@@ -47,6 +47,7 @@ typedef union
     
     SInt32 columnCount;
     SInt32 rowCount;
+    SInt32 viewRowCount;
     
     SInt32 curX;
     SInt32 curY;
