@@ -23,7 +23,7 @@ typedef union
 } TerminalAttribute;
 
 
-@interface SshTerminalView : NSTextView
+@interface SshTerminalView : NSTextView <SshConnectionDataDelegate>
 {
     SshConnection* connection;
     NSTextStorage* storage;
@@ -76,6 +76,8 @@ typedef union
 
 -(void)setConnection:(SshConnection*)newConnection;
 -(void)setCursorVisible:(BOOL)visible;
+
+-(void)newDataAvailable;
 
 
 @end

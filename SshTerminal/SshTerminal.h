@@ -17,6 +17,14 @@ FOUNDATION_EXPORT const unsigned char SshTerminalVersionString[];
 // In this header, you should import all the public headers of your framework using statements like #import <SshTerminal/PublicHeader.h>
 
 
+enum
+{
+    sshTerminalDisconnected,
+    sshTerminalConnected,
+    sshTerminalPaused,
+};
+
+
 @protocol SshTerminalEvent <NSObject>
 @optional
 -(void)connected;
@@ -26,18 +34,17 @@ FOUNDATION_EXPORT const unsigned char SshTerminalVersionString[];
 
 @end
 
+
 @interface SshTerminal : NSScrollView
 {
-    id terminalView;
-    id connection;
-    
     NSString* password;
     NSString* hostName;
     NSString* userName;
     NSString* keyFilePath;
     NSString* keyFilePassword;
     int columnCount;
-    id eventDelegate;
+    int state;
+    id<SshTerminalEvent> eventDelegate;
 }
 
 -(void)setPassword:(NSString *)string;
@@ -48,8 +55,9 @@ FOUNDATION_EXPORT const unsigned char SshTerminalVersionString[];
 @property(copy,nonatomic)NSString* keyFilePath;
 
 @property(assign)int columnCount;
+@property(readonly)int state;
 
--(void)setEventDelegate:(id) delegate;
+-(void)setEventDelegate:(id<SshTerminalEvent>) delegate;
 -(void)connect;
 -(void)resume;
 -(void)resumeAndRememberServer;

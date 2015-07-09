@@ -33,7 +33,21 @@ enum ConnectionEvent
 };
 
 
-@interface SshConnection : NSThread
+@protocol SshConnectionDataDelegate <NSObject>
+
+-(void)newDataAvailable;
+
+@end
+
+
+@protocol SshConnectionEventDelegate <NSObject>
+
+-(void)signalError:(int)code;
+
+@end
+
+
+@interface SshConnection : NSObject
 {
     ssh_session session;
     ssh_channel channel;
@@ -48,19 +62,13 @@ enum ConnectionEvent
     UInt8 outBuffer[OUTPUT_BUFFER_SIZE];
     int inIndex;
     int outIndex;
-    int resumeConnection;
     
-    NSLock* inLock;
-    NSLock* outLock;
-    NSCondition* connectCondition;
+    dispatch_queue_t queue;
+    dispatch_source_t readSource;
     
-    NSObject* dataSink;
-    SEL dataSelector;
-    NSObject* eventSink;
-    SEL eventSelector;
+    id<SshConnectionDataDelegate> dataDelegate;
+    id<SshConnectionEventDelegate> eventDelegate;
 }
-
-@property(readonly)ssh_session session;
 
 -(void)setHost:(const char*)newHost;
 -(void)setUser:(const char*)newUser;
@@ -68,14 +76,20 @@ enum ConnectionEvent
 -(void)setPassword:(const char*)newPassword;
 -(void)setWidth:(int)newWidth;
 
--(void)main;
+-(void)connect;
+-(void)authenticateServer;
+-(void)authenticateUser;
+-(void)openTerminalChannel;
+-(void)closeTerminalChannel;
+-(void)disconnect;
 
--(void)setDataCallbackOn:(NSObject*)newView with:(SEL)selector;
--(void)setEventCallbackOn:(NSObject*)newView with:(SEL)selector;
+-(void)setDataDelegate:(id<SshConnectionDataDelegate>)newDataDelegate;
+-(void)setEventDelegate:(id<SshConnectionEventDelegate>)newEventDelegate;
 
 -(int)readIn:(UInt8*)buffer length:(int)count;
 -(int)writeFrom:(const UInt8*)buffer length:(int)count;
 -(void)resume:(BOOL)isResuming andSaveHost:(BOOL)needsSaveHost;
+-(void)endConnection;
 -(NSString*)fingerPrint;
 
 

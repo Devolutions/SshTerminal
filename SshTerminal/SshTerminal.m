@@ -11,12 +11,22 @@
 #import "SshConnection.h"
 
 
+@interface SshTerminal () <SshConnectionEventDelegate>
+{
+    SshTerminalView* terminalView;
+    SshConnection* connection;
+}
+
+@end
+
+
 @implementation SshTerminal
 
 @synthesize hostName;
 @synthesize userName;
 @synthesize keyFilePath;
 @synthesize columnCount;
+@synthesize state;
 
 
 -(void)setPassword:(NSString *)string
@@ -35,13 +45,15 @@
 {
     if (connection != nil)
     {
-        if ([connection isExecuting] == YES)
+        if (state != sshTerminalDisconnected)
         {
             return;
         }
     }
+    state = sshTerminalConnected;
+    
     connection = [[SshConnection alloc] init];
-    [connection setEventCallbackOn:self with:@selector(processEvent:)];
+    [connection setEventDelegate:self];
     [terminalView setConnection:connection];
 
     [connection setHost:[hostName UTF8String]];
@@ -51,7 +63,8 @@
     [terminalView setColumnCount:columnCount];
     [terminalView setRowCountForHeight:self.contentSize.height];
     [terminalView initScreen];
-    [connection start];
+    
+    [connection connect];
 }
 
 
@@ -59,10 +72,11 @@
 {
     if (connection != nil)
     {
-        if ([connection isExecuting] == NO)
+        if (state != sshTerminalPaused)
         {
             return;
         }
+        state = sshTerminalConnected;
         [connection resume:YES andSaveHost:NO];
     }
 }
@@ -72,10 +86,11 @@
 {
     if (connection != nil)
     {
-        if ([connection isExecuting] == NO)
+        if (state != sshTerminalPaused)
         {
             return;
         }
+        state = sshTerminalConnected;
         [connection resume:YES andSaveHost:YES];
     }
 }
@@ -83,7 +98,15 @@
 
 -(void)disconnect
 {
-    [connection cancel];
+    if (connection != nil)
+    {
+        if (state == sshTerminalDisconnected)
+        {
+            return;
+        }
+        state = sshTerminalDisconnected;
+        [connection endConnection];
+    }
 }
 
 
@@ -130,9 +153,8 @@
 }
 
 
--(void)processEvent:(id)object
+-(void)signalError:(int)code
 {
-    NSInteger code = [(NSNumber*)object integerValue];
     switch (code)
     {
         case CONNECTED:
@@ -147,6 +169,7 @@
             
         case DISCONNECTED:
         {
+            state = sshTerminalDisconnected;
             [terminalView setCursorVisible:NO];
             if ([eventDelegate respondsToSelector:@selector(disconnected)])
             {
@@ -160,6 +183,7 @@
         case SERVER_KEY_FOUND_OTHER:
         case SERVER_NOT_KNOWN:
         {
+            state = sshTerminalPaused;
             if ([eventDelegate respondsToSelector:@selector(serverMismatch:)])
             {
                 NSString* fingerPrint = [connection fingerPrint];
@@ -182,6 +206,8 @@
 
 -(void)initSubclassMembers
 {
+    state = sshTerminalDisconnected;
+    
     [self setAutoresizesSubviews:YES];
     [self setHasVerticalScroller:YES];
     [self setHasHorizontalScroller:NO];

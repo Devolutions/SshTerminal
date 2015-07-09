@@ -31,7 +31,7 @@ NSString* TAName = @"TerminalAttributeName";
 -(void)setConnection:(SshConnection *)newConnection
 {
     connection = newConnection;
-    [connection setDataCallbackOn:self with:@selector(newDataAvailable:)];
+    [connection setDataDelegate:self];
 }
 
 
@@ -1955,7 +1955,7 @@ NSString* TAName = @"TerminalAttributeName";
 }
 
 
--(void)newDataAvailable:(id)object
+-(void)newDataAvailable
 {
     int readCount = [connection readIn:inBuffer + inIndex length:TERMINAL_BUFFER_SIZE - inIndex];
     inIndex += readCount;

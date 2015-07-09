@@ -37,7 +37,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 2
+#define TEST_SERVER 0
 #if (TEST_SERVER == 0)
         _terminal.userName = @"david";
         _terminal.hostName = @"192.168.7.60";

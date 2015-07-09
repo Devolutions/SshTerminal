@@ -9,13 +9,6 @@
 #import "SshConnection.h"
 #import "SshTerminalView.h"
 
-enum
-{
-    CONNECTION_ABORT = -1,
-    CONNECTION_SUSPENDED = 0,
-    CONNECTION_RESUME = 1,
-};
-
 
 int gInstanceCount = 0;
 
@@ -27,9 +20,6 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 
 @implementation SshConnection
-
-@synthesize session;
-
 
 -(void)setHost:(const char *)hostString
 {
@@ -86,41 +76,26 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(int)readIn:(UInt8 *)buffer length:(int)count
 {
-    [inLock lock];
-    
-    if (count > inIndex)
+    int readCount = ssh_channel_read_nonblocking(channel, buffer, count, 0);
+    if (readCount == count)
     {
-        count = inIndex;
+        // Might have more data to read:
+        dispatch_async(queue, ^(void){ [dataDelegate newDataAvailable]; });
     }
-
-    memcpy(buffer, inBuffer, count);
-    if (count < inIndex)
+    else if (ssh_channel_is_eof(channel))
     {
-        memmove(inBuffer, inBuffer + count, inIndex - count);
+        dispatch_suspend(readSource);
+        dispatch_async(queue, ^(void){ [self closeTerminalChannel]; });
+        return 0;
     }
-    inIndex -= count;
-
-    [inLock unlock];
-    
-    return count;
+    return readCount;
 }
 
 
 -(int)writeFrom:(const UInt8 *)buffer length:(int)count
 {
-    [outLock lock];
-    
-    if (count > OUTPUT_BUFFER_SIZE - outIndex)
-    {
-        count = OUTPUT_BUFFER_SIZE - outIndex;
-    }
-    
-    memcpy(outBuffer + outIndex, buffer, count);
-    outIndex += count;
-    
-    [outLock unlock];
-    
-    return count;
+    int writeCount = ssh_channel_write(channel, buffer, count);
+    return writeCount;
 }
 
 
@@ -130,10 +105,13 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     {
         ssh_write_knownhost(session);
     }
-    [connectCondition lock];
-    resumeConnection = (isResuming == YES ? CONNECTION_RESUME : CONNECTION_ABORT);
-    [connectCondition signal];
-    [connectCondition unlock];
+    dispatch_async(queue, ^(void){ [self authenticateUser]; });
+}
+
+
+-(void)endConnection
+{
+    dispatch_async(queue, ^(void){ [self closeTerminalChannel]; });
 }
 
 
@@ -156,106 +134,78 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 }
 
 
--(void)setDataCallbackOn:(NSObject *)newSink with:(SEL)selector
+-(void)setDataDelegate:(id<SshConnectionDataDelegate>)newDataDelegate
 {
-    dataSink = newSink;
-    dataSelector = selector;
+    dataDelegate = newDataDelegate;
 }
 
 
--(void)setEventCallbackOn:(NSObject *)newSink with:(SEL)selector
+-(void)setEventDelegate:(id<SshConnectionEventDelegate>)newEventDelegate
 {
-    eventSink = newSink;
-    eventSelector = selector;
+    eventDelegate = newEventDelegate;
 }
 
 
--(void)eventNotify:(NSInteger)code
+-(void)eventNotify:(int)code
 {
-    [eventSink performSelectorOnMainThread:eventSelector withObject:[NSNumber numberWithInteger:code] waitUntilDone:NO];
+    [eventDelegate signalError:code];
 }
 
 
--(void)cancel
-{
-    [connectCondition lock];
-    resumeConnection = CONNECTION_ABORT;
-    [connectCondition signal];
-    [connectCondition unlock];
-    [super cancel];
-}
-
-
--(void)main
+-(void)connect
 {
     int result = ssh_connect(session);
     if (result != SSH_OK)
     {
         [self eventNotify:CONNECTION_ERROR];
-        goto EXIT;
     }
     
-    result = ssh_is_server_known(session);
-    if (result != SSH_SERVER_KNOWN_OK)
+    dispatch_async(queue, ^(void){ [self authenticateServer]; });
+}
+
+
+-(void)authenticateServer
+{
+    int result = ssh_is_server_known(session);
+    switch (result)
     {
-        BOOL suspendConnection = YES;
-        switch (result)
+        case SSH_SERVER_KNOWN_OK:
         {
-            case SSH_SERVER_KNOWN_CHANGED:
-                [self eventNotify:SERVER_KEY_CHANGED];
-                break;
-                
-            case SSH_SERVER_FOUND_OTHER:
-                [self eventNotify:SERVER_KEY_FOUND_OTHER];
-                break;
-                
-            case SSH_SERVER_FILE_NOT_FOUND:
-                suspendConnection = NO;
-                [self eventNotify:SERVER_FILE_NOT_FOUND];
-                break;
-                
-            case SSH_SERVER_NOT_KNOWN:
-                [self eventNotify:SERVER_NOT_KNOWN];
-                break;
-                
-            case SSH_SERVER_ERROR:
-            default:
-                [self eventNotify:SERVER_ERROR];
-                suspendConnection = NO;
-                break;
+            dispatch_async(queue, ^{ [self authenticateUser]; });
+            break;
         }
-        
-        if (suspendConnection == NO)
-        {
-            goto DISCONNECT_EXIT;
-        }
-        else
-        {
-            // A connection IS established, but could be compromised: suspend the connection process,
-            // and wait for user feedback (eventNotify has caused an event to be sent to the user).
-            BOOL disconnect = NO;
-            [connectCondition lock];
-            while (resumeConnection == CONNECTION_SUSPENDED)
-            {
-                [connectCondition wait];
-            }
-            if (resumeConnection == CONNECTION_ABORT)
-            {
-                disconnect = YES;
-            }
-            [connectCondition unlock];
-            if (disconnect == YES)
-            {
-                goto DISCONNECT_EXIT;
-            }
-        }
+            
+        case SSH_SERVER_KNOWN_CHANGED:
+            [self eventNotify:SERVER_KEY_CHANGED];
+            break;
+            
+        case SSH_SERVER_FOUND_OTHER:
+            [self eventNotify:SERVER_KEY_FOUND_OTHER];
+            break;
+            
+        case SSH_SERVER_FILE_NOT_FOUND:
+            [self eventNotify:SERVER_FILE_NOT_FOUND];
+            break;
+            
+        case SSH_SERVER_NOT_KNOWN:
+            [self eventNotify:SERVER_NOT_KNOWN];
+            break;
+            
+        case SSH_SERVER_ERROR:
+        default:
+            [self eventNotify:SERVER_ERROR];
+            break;
     }
-    
+}
+
+
+-(void)authenticateUser
+{
     if (useKeyAuthentication == YES)
     {
         // User authentication by key:
         ssh_key key = ssh_key_new();
-        result = ssh_pki_import_privkey_file(keyFilePath, keyFilePassword, PrivateKeyAuthCallback, NULL, &key);
+        int result = ssh_pki_import_privkey_file(keyFilePath, keyFilePassword, PrivateKeyAuthCallback, NULL, &key);
         if (result == SSH_OK)
         {
             result = ssh_userauth_publickey(session, NULL, key);
@@ -271,7 +221,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
                 {
                     [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
                 }
-                goto DISCONNECT_EXIT;
+                dispatch_async(queue, ^(void){ [self disconnect]; });
             }
         }
         else
@@ -284,13 +234,13 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             {
                 [self eventNotify:FATAL_ERROR];
             }
-            goto DISCONNECT_EXIT;
+            dispatch_async(queue, ^(void){ [self disconnect]; });
         }
     }
     else
     {
         // User authentication by password:
-        result = ssh_userauth_password(session, NULL, password);
+        int result = ssh_userauth_password(session, NULL, password);
         if (result != SSH_AUTH_SUCCESS)
         {
             if (result == SSH_AUTH_ERROR)
@@ -301,90 +251,76 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             {
                 [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
             }
-            goto DISCONNECT_EXIT;
+            dispatch_async(queue, ^(void){ [self disconnect]; });
         }
     }
+    
+    dispatch_async(queue, ^(void){ [self openTerminalChannel]; });
+}
+
+
+-(void)openTerminalChannel
+{
+    int fd = ssh_get_fd(session);
+    readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
+    dispatch_source_set_event_handler(readSource, ^(void){ [dataDelegate newDataAvailable]; });
     
     channel = ssh_channel_new(session);
     if (channel == NULL)
     {
         [self eventNotify:CHANNEL_ERROR];
-        goto DISCONNECT_EXIT;
+        dispatch_async(queue, ^(void){ [self disconnect]; });
     }
     
-    result = ssh_channel_open_session(channel);
+    int result = ssh_channel_open_session(channel);
     if (result != SSH_OK)
     {
         [self eventNotify:CHANNEL_ERROR];
-        goto CLOSE_CHANNEL_EXIT;
+        dispatch_async(queue, ^(void){ [self closeTerminalChannel]; });
     }
     
     result = ssh_channel_request_pty(channel);
     if (result != SSH_OK)
     {
         [self eventNotify:CHANNEL_ERROR];
-        goto CLOSE_CHANNEL_EXIT;
+        dispatch_async(queue, ^(void){ [self closeTerminalChannel]; });
     }
     result = ssh_channel_change_pty_size(channel, width, height);
     if (result != SSH_OK)
     {
         [self eventNotify:CHANNEL_ERROR];
-        goto CLOSE_CHANNEL_EXIT;
+        dispatch_async(queue, ^(void){ [self closeTerminalChannel]; });
     }
     
     result = ssh_channel_request_shell(channel);
     if (result != SSH_OK)
     {
         [self eventNotify:CHANNEL_ERROR];
-        goto CLOSE_CHANNEL_EXIT;
+        dispatch_async(queue, ^(void){ [self closeTerminalChannel]; });
     }
-    
-    [self eventNotify:CONNECTED];
-    while (ssh_channel_is_open(channel) && ssh_channel_is_eof(channel) == 0)
-    {
-        [inLock lock];
-        int readCount = ssh_channel_read_nonblocking(channel, inBuffer + inIndex, INPUT_BUFFER_SIZE - inIndex, 0);
-        if (readCount > 0)
-        {
-            inIndex += readCount;
-        }
-        [inLock unlock];
-        if (readCount > 0)
-        {
-            [dataSink performSelectorOnMainThread:dataSelector withObject:nil waitUntilDone:NO];
-        }
-        
-        [outLock lock];
-        if (outIndex)
-        {
-            int writeCount = ssh_channel_write(channel, outBuffer, outIndex);
-            if (writeCount > 0)
-            {
-                memmove(outBuffer, outBuffer + writeCount, outIndex - writeCount);
-                outIndex -= writeCount;
-            }
-        }
-        [outLock unlock];
-        
-        if ([self isCancelled] == YES)
-        {
-            break;
-        }
-        
-        if (readCount == 0)
-        {
-            [NSThread sleepForTimeInterval:0.01];
-        }
-    }
-    
-CLOSE_CHANNEL_EXIT:
-    ssh_channel_close(channel);
-    ssh_channel_free(channel);
 
-DISCONNECT_EXIT:
-    ssh_disconnect(session);
-    
-EXIT:
+    [self eventNotify:CONNECTED];
+    dispatch_resume(readSource);
+}
+
+
+-(void)closeTerminalChannel
+{
+    if (ssh_channel_is_open(channel))
+    {
+        ssh_channel_close(channel);
+        ssh_channel_free(channel);
+    }
+    dispatch_async(queue, ^(void){ [self disconnect]; });
+}
+
+
+-(void)disconnect
+{
+    if (ssh_is_connected(session))
+    {
+        ssh_disconnect(session);
+    }
     [self eventNotify:DISCONNECTED];
 }
 
@@ -410,18 +346,13 @@ EXIT:
         
         inIndex = 0;
         outIndex = 0;
-        resumeConnection = CONNECTION_SUSPENDED;
 
-        inLock = [[NSLock alloc] init];
-        outLock = [[NSLock alloc] init];
-        connectCondition = [[NSCondition alloc] init];
+        queue = dispatch_get_main_queue();
         
-        dataSink = nil;
-        dataSelector = nil;
-        eventSink = nil;
-        eventSelector = nil;
+        dataDelegate = nil;
+        eventDelegate = nil;
         
-        if (session == NULL || inLock == nil || outLock == nil || connectCondition == nil)
+        if (session == NULL)
         {
             self = nil;
         }
