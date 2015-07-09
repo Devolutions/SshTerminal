@@ -27,6 +27,12 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 }
 
 
+-(void)setPort:(SInt16)newPort
+{
+    ssh_options_set(session, SSH_OPTIONS_PORT, &newPort);
+}
+
+
 -(void)setUser:(const char *)userString
 {
     ssh_options_set(session, SSH_OPTIONS_USER, userString);

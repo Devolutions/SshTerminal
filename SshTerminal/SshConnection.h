@@ -71,6 +71,7 @@ enum ConnectionEvent
 }
 
 -(void)setHost:(const char*)newHost;
+-(void)setPort:(SInt16)newPort;
 -(void)setUser:(const char*)newUser;
 -(void)setKeyFilePath:(const char*)newKeyFilePath withPassword:(const char*)newPassword;
 -(void)setPassword:(const char*)newPassword;

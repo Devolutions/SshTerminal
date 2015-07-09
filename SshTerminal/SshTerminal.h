@@ -42,6 +42,7 @@ enum
     NSString* userName;
     NSString* keyFilePath;
     NSString* keyFilePassword;
+    UInt16 port;
     int columnCount;
     int state;
     id<SshTerminalEvent> eventDelegate;
@@ -51,6 +52,7 @@ enum
 -(void)setKeyFilePassword:(NSString *)string;
 
 @property(copy,nonatomic)NSString* hostName;
+@property(assign)UInt16 port;
 @property(copy,nonatomic)NSString* userName;
 @property(copy,nonatomic)NSString* keyFilePath;
 

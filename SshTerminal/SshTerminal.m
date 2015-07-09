@@ -57,6 +57,7 @@
     [terminalView setConnection:connection];
 
     [connection setHost:[hostName UTF8String]];
+    [connection setPort:port];
     [connection setUser:[userName UTF8String]];
     [connection setKeyFilePath:[[keyFilePath stringByExpandingTildeInPath] UTF8String] withPassword:[keyFilePassword UTF8String]];
     [connection setPassword:[password UTF8String]];
@@ -207,6 +208,7 @@
 -(void)initSubclassMembers
 {
     state = sshTerminalDisconnected;
+    port = 22;
     
     [self setAutoresizesSubviews:YES];
     [self setHasVerticalScroller:YES];
