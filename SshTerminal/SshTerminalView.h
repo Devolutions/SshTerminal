@@ -77,6 +77,7 @@ typedef union
 -(void)setConnection:(SshConnection*)newConnection;
 -(void)setCursorVisible:(BOOL)visible;
 
+-(void)newDataAvailableIn:(UInt8*)buffer length:(int)size;
 -(void)newDataAvailable;
 
 

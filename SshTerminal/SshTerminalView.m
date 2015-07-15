@@ -1955,11 +1955,26 @@ NSString* TAName = @"TerminalAttributeName";
 }
 
 
+-(void)newDataAvailableIn:(UInt8*)buffer length:(int)size
+{
+    while (size > 0)
+    {
+        int copySize = (size > TERMINAL_BUFFER_SIZE - inIndex ? TERMINAL_BUFFER_SIZE - inIndex : size);
+        memcpy(inBuffer + inIndex, buffer, copySize);
+        inIndex += copySize;
+        [self newDataAvailable];
+        size -= copySize;
+        buffer += copySize;
+    }
+
+    [self actualizeAttributes:NSMakeRange(charTop, [storage length] - charTop)];
+    [self setSelectedRange:NSMakeRange(charTop + curY * STORAGE_WIDTH + curX, 0)];
+    [self scrollRangeToVisible:NSMakeRange(charTop, [storage length] - charTop)];
+}
+
+
 -(void)newDataAvailable
 {
-    int readCount = [connection readIn:inBuffer + inIndex length:TERMINAL_BUFFER_SIZE - inIndex];
-    inIndex += readCount;
-    
     char charBuffer[2] = {0, 0};
     int i;
     //[storage beginEditing];
@@ -2030,9 +2045,6 @@ NSString* TAName = @"TerminalAttributeName";
         }
     }
     //[storage endEditing];
-    [self actualizeAttributes:NSMakeRange(charTop, [storage length] - charTop)];
-    [self setSelectedRange:NSMakeRange(charTop + curY * STORAGE_WIDTH + curX, 0)];
-    [self scrollRangeToVisible:NSMakeRange(charTop, [storage length] - charTop)];
     
     inIndex -= i;
 }

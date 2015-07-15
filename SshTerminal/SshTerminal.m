@@ -11,15 +11,41 @@
 #import "SshConnection.h"
 
 
+// Helper object.
+@interface TunnelProperties : NSObject
+@property(copy,nonatomic)NSString* hostName;
+@property(assign)SInt16 port;
+@property(copy,nonatomic)NSString* remoteHostName;
+@property(assign)SInt16 remotePort;
+@property(assign)BOOL reverse;
+@end
+
+@implementation TunnelProperties
+@end
+
+
+// Private extension.
 @interface SshTerminal () <SshConnectionEventDelegate>
 {
     SshTerminalView* terminalView;
     SshConnection* connection;
+
+    NSString* password;
+    NSString* hostName;
+    NSString* userName;
+    NSString* keyFilePath;
+    NSString* keyFilePassword;
+    UInt16 port;
+    int columnCount;
+    int state;
+    id<SshTerminalEvent> eventDelegate;
+    NSMutableArray* tunnels;
 }
 
 @end
 
 
+// Implementation.
 @implementation SshTerminal
 
 @synthesize hostName;
@@ -27,6 +53,7 @@
 @synthesize keyFilePath;
 @synthesize columnCount;
 @synthesize state;
+@synthesize port;
 
 
 -(void)setPassword:(NSString *)string
@@ -38,6 +65,36 @@
 -(void)setKeyFilePassword:(NSString *)string
 {
     keyFilePassword = string;
+}
+
+
+-(void)addForwardTunnelWithPort:(SInt16)newPort onHost:(NSString *)newHostName andRemotePort:(SInt16)newRemotePort onRemoteHost:(NSString *)newRemoteHostName
+{
+    TunnelProperties* tunnel = [TunnelProperties new];
+    tunnel.port = newPort;
+    tunnel.hostName = newHostName;
+    tunnel.remotePort = newRemotePort;
+    tunnel.remoteHostName = newRemoteHostName;
+    tunnel.reverse = NO;
+    [tunnels addObject:tunnel];
+}
+
+
+-(void)addReverseTunnelWithPort:(SInt16)newPort onHost:(NSString *)newHostName andRemotePort:(SInt16)newRemotePort onRemoteHost:(NSString *)newRemoteHostName
+{
+    TunnelProperties* tunnel = [TunnelProperties new];
+    tunnel.port = newPort;
+    tunnel.hostName = newHostName;
+    tunnel.remotePort = newRemotePort;
+    tunnel.remoteHostName = newRemoteHostName;
+    tunnel.reverse = YES;
+    [tunnels addObject:tunnel];
+}
+
+
+-(void)clearAllTunnels
+{
+    [tunnels removeAllObjects];
 }
 
 
@@ -56,16 +113,30 @@
     [connection setEventDelegate:self];
     [terminalView setConnection:connection];
 
-    [connection setHost:[hostName UTF8String]];
+    [connection setHost:hostName];
     [connection setPort:port];
-    [connection setUser:[userName UTF8String]];
-    [connection setKeyFilePath:[[keyFilePath stringByExpandingTildeInPath] UTF8String] withPassword:[keyFilePassword UTF8String]];
-    [connection setPassword:[password UTF8String]];
+    [connection setUser:userName];
+    [connection setKeyFilePath:[keyFilePath stringByExpandingTildeInPath] withPassword:keyFilePassword];
+    [connection setPassword:password];
+    int tunnelCount = (int)[tunnels count];
+    for (int i = 0; i < tunnelCount; i++)
+    {
+        TunnelProperties* tunnel = [tunnels objectAtIndex:i];
+        if (tunnel.reverse == NO)
+        {
+            [connection addForwardTunnelPort:tunnel.port host:tunnel.hostName remotePort:tunnel.remotePort remoteHost:tunnel.remoteHostName];
+        }
+        else
+        {
+            [connection addReverseTunnelPort:tunnel.port host:tunnel.hostName remotePort:tunnel.remotePort remoteHost:tunnel.remoteHostName];
+        }
+    }
+    
     [terminalView setColumnCount:columnCount];
     [terminalView setRowCountForHeight:self.contentSize.height];
     [terminalView initScreen];
     
-    [connection connect];
+    [connection startConnection];
 }
 
 
@@ -209,6 +280,7 @@
 {
     state = sshTerminalDisconnected;
     port = 22;
+    tunnels = [NSMutableArray new];
     
     [self setAutoresizesSubviews:YES];
     [self setHasVerticalScroller:YES];

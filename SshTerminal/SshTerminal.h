@@ -14,8 +14,6 @@ FOUNDATION_EXPORT double SshTerminalVersionNumber;
 //! Project version string for SshTerminal.
 FOUNDATION_EXPORT const unsigned char SshTerminalVersionString[];
 
-// In this header, you should import all the public headers of your framework using statements like #import <SshTerminal/PublicHeader.h>
-
 
 enum
 {
@@ -36,27 +34,18 @@ enum
 
 
 @interface SshTerminal : NSScrollView
-{
-    NSString* password;
-    NSString* hostName;
-    NSString* userName;
-    NSString* keyFilePath;
-    NSString* keyFilePassword;
-    UInt16 port;
-    int columnCount;
-    int state;
-    id<SshTerminalEvent> eventDelegate;
-}
 
--(void)setPassword:(NSString *)string;
--(void)setKeyFilePassword:(NSString *)string;
-
-@property(copy,nonatomic)NSString* hostName;
+@property(copy,nonatomic)NSString* hostName;   // Host name or IP address.
 @property(assign)UInt16 port;
+-(void)setPassword:(NSString *)string;
 @property(copy,nonatomic)NSString* userName;
 @property(copy,nonatomic)NSString* keyFilePath;
-
+-(void)setKeyFilePassword:(NSString *)string;
 @property(assign)int columnCount;
+-(void)addForwardTunnelWithPort:(SInt16)port onHost:(NSString*)hostName andRemotePort:(SInt16)remotePort onRemoteHost:(NSString*)remoteHostName;
+-(void)addReverseTunnelWithPort:(SInt16)port onHost:(NSString*)hostName andRemotePort:(SInt16)remotePort onRemoteHost:(NSString*)remoteHostName;
+-(void)clearAllTunnels;
+
 @property(readonly)int state;
 
 -(void)setEventDelegate:(id<SshTerminalEvent>) delegate;

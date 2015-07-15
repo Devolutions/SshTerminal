@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F4A3E2F71B5693A30007D4C0 /* SshTunnel.h in Headers */ = {isa = PBXBuildFile; fileRef = F4A3E2F51B5693A30007D4C0 /* SshTunnel.h */; };
+		F4A3E2F81B5693A30007D4C0 /* SshTunnel.m in Sources */ = {isa = PBXBuildFile; fileRef = F4A3E2F61B5693A30007D4C0 /* SshTunnel.m */; };
+		F4A3E2FB1B5694420007D4C0 /* SshTunnelConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F4A3E2F91B5694420007D4C0 /* SshTunnelConnection.h */; };
+		F4A3E2FC1B5694420007D4C0 /* SshTunnelConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = F4A3E2FA1B5694420007D4C0 /* SshTunnelConnection.m */; };
+		F4A3E2FE1B569B930007D4C0 /* SshFoundation.h in Headers */ = {isa = PBXBuildFile; fileRef = F4A3E2FD1B569B930007D4C0 /* SshFoundation.h */; };
 		F4AE90391B41733E007AC63E /* SshTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE90381B41733E007AC63E /* SshTerminal.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F4AE90661B418EBF007AC63E /* SshConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE905F1B418EBF007AC63E /* SshConnection.h */; };
 		F4AE90671B418EBF007AC63E /* SshStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE90601B418EBF007AC63E /* SshStorage.h */; };
@@ -24,6 +29,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		F4A3E2F51B5693A30007D4C0 /* SshTunnel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshTunnel.h; sourceTree = "<group>"; };
+		F4A3E2F61B5693A30007D4C0 /* SshTunnel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SshTunnel.m; sourceTree = "<group>"; };
+		F4A3E2F91B5694420007D4C0 /* SshTunnelConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshTunnelConnection.h; sourceTree = "<group>"; };
+		F4A3E2FA1B5694420007D4C0 /* SshTunnelConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SshTunnelConnection.m; sourceTree = "<group>"; };
+		F4A3E2FD1B569B930007D4C0 /* SshFoundation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshFoundation.h; sourceTree = "<group>"; };
 		F4AE90331B41733E007AC63E /* SshTerminal.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SshTerminal.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4AE90371B41733E007AC63E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F4AE90381B41733E007AC63E /* SshTerminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SshTerminal.h; sourceTree = "<group>"; };
@@ -90,12 +100,17 @@
 			children = (
 				F4AE905F1B418EBF007AC63E /* SshConnection.h */,
 				F4AE90621B418EBF007AC63E /* SshConnection.m */,
+				F4A3E2FD1B569B930007D4C0 /* SshFoundation.h */,
 				F4AE90601B418EBF007AC63E /* SshStorage.h */,
 				F4AE90631B418EBF007AC63E /* SshStorage.m */,
 				F4AE90381B41733E007AC63E /* SshTerminal.h */,
 				F4AE90641B418EBF007AC63E /* SshTerminal.m */,
 				F4AE90611B418EBF007AC63E /* SshTerminalView.h */,
 				F4AE90651B418EBF007AC63E /* SshTerminalView.m */,
+				F4A3E2F51B5693A30007D4C0 /* SshTunnel.h */,
+				F4A3E2F61B5693A30007D4C0 /* SshTunnel.m */,
+				F4A3E2F91B5694420007D4C0 /* SshTunnelConnection.h */,
+				F4A3E2FA1B5694420007D4C0 /* SshTunnelConnection.m */,
 				F4AE90361B41733E007AC63E /* Supporting Files */,
 			);
 			path = SshTerminal;
@@ -152,8 +167,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				F4AE90681B418EBF007AC63E /* SshTerminalView.h in Headers */,
+				F4A3E2FB1B5694420007D4C0 /* SshTunnelConnection.h in Headers */,
+				F4A3E2FE1B569B930007D4C0 /* SshFoundation.h in Headers */,
 				F4AE90391B41733E007AC63E /* SshTerminal.h in Headers */,
 				F4AE90671B418EBF007AC63E /* SshStorage.h in Headers */,
+				F4A3E2F71B5693A30007D4C0 /* SshTunnel.h in Headers */,
 				F4AE90661B418EBF007AC63E /* SshConnection.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -258,7 +276,9 @@
 			files = (
 				F4AE906A1B418EBF007AC63E /* SshStorage.m in Sources */,
 				F4AE906C1B418EBF007AC63E /* SshTerminalView.m in Sources */,
+				F4A3E2FC1B5694420007D4C0 /* SshTunnelConnection.m in Sources */,
 				F4AE90691B418EBF007AC63E /* SshConnection.m in Sources */,
+				F4A3E2F81B5693A30007D4C0 /* SshTunnel.m in Sources */,
 				F4AE906B1B418EBF007AC63E /* SshTerminal.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

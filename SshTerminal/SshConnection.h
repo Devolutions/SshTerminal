@@ -7,8 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
-#define LIBSSH_LEGACY_0_4 1
-#import "libssh/libssh.h"
+#import "SshFoundation.h"
+#import "SshTunnel.h"
+#import "SshTunnelConnection.h"
 
 
 #define INPUT_BUFFER_SIZE 1024
@@ -17,6 +18,7 @@
 enum ConnectionEvent
 {
     FATAL_ERROR,
+    TUNNEL_ERROR,
     CONNECTION_ERROR,
     SERVER_KEY_CHANGED,
     SERVER_KEY_FOUND_OTHER,
@@ -35,7 +37,7 @@ enum ConnectionEvent
 
 @protocol SshConnectionDataDelegate <NSObject>
 
--(void)newDataAvailable;
+-(void)newDataAvailableIn:(UInt8*)buffer length:(int)size;
 
 @end
 
@@ -52,9 +54,9 @@ enum ConnectionEvent
     ssh_session session;
     ssh_channel channel;
     BOOL useKeyAuthentication;
-    char* password;
-    char* keyFilePassword;
-    char* keyFilePath;
+    NSString* password;
+    NSString* keyFilePassword;
+    NSString* keyFilePath;
     int width;
     int height;
     
@@ -64,24 +66,34 @@ enum ConnectionEvent
     int outIndex;
     
     dispatch_queue_t queue;
+    dispatch_queue_t mainQueue;
     dispatch_source_t readSource;
+    NSMutableArray* forwardTunnels;
+    NSMutableArray* reverseTunnels;
+    NSMutableArray* tunnelConnections;
     
     id<SshConnectionDataDelegate> dataDelegate;
     id<SshConnectionEventDelegate> eventDelegate;
 }
 
--(void)setHost:(const char*)newHost;
+-(void)setHost:(NSString*)newHost;
 -(void)setPort:(SInt16)newPort;
--(void)setUser:(const char*)newUser;
--(void)setKeyFilePath:(const char*)newKeyFilePath withPassword:(const char*)newPassword;
--(void)setPassword:(const char*)newPassword;
+-(void)setUser:(NSString*)newUser;
+-(void)setKeyFilePath:(NSString*)newKeyFilePath withPassword:(NSString*)newPassword;
+-(void)setPassword:(NSString*)newPassword;
 -(void)setWidth:(int)newWidth;
+
+-(void)addForwardTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
+-(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 
 -(void)connect;
 -(void)authenticateServer;
 -(void)authenticateUser;
 -(void)openTerminalChannel;
--(void)closeTerminalChannel;
+-(void)newTerminalDataAvailable;
+-(void)newSshDataAvailable;
+-(void)newTunnelConnection:(SshTunnel*)tunnel;
+-(void)closeAllChannels;
 -(void)disconnect;
 
 -(void)setDataDelegate:(id<SshConnectionDataDelegate>)newDataDelegate;
@@ -90,6 +102,7 @@ enum ConnectionEvent
 -(int)readIn:(UInt8*)buffer length:(int)count;
 -(int)writeFrom:(const UInt8*)buffer length:(int)count;
 -(void)resume:(BOOL)isResuming andSaveHost:(BOOL)needsSaveHost;
+-(void)startConnection;
 -(void)endConnection;
 -(NSString*)fingerPrint;
 
