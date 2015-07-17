@@ -12,6 +12,4 @@
 #define LIBSSH_LEGACY_0_4 1
 #include "libssh/libssh.h"
 
-int createBoundSocket(UInt16 port, const char* host);
-
 #endif

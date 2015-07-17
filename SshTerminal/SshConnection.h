@@ -18,6 +18,7 @@
 enum ConnectionEvent
 {
     FATAL_ERROR,
+    OUT_OF_MEMORY_ERROR,
     TUNNEL_ERROR,
     CONNECTION_ERROR,
     SERVER_KEY_CHANGED,
@@ -76,6 +77,7 @@ enum ConnectionEvent
     id<SshConnectionEventDelegate> eventDelegate;
 }
 
+// Methods called from the UI thread.
 -(void)setHost:(NSString*)newHost;
 -(void)setPort:(SInt16)newPort;
 -(void)setUser:(NSString*)newUser;
@@ -86,6 +88,16 @@ enum ConnectionEvent
 -(void)addForwardTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 -(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 
+-(void)setDataDelegate:(id<SshConnectionDataDelegate>)newDataDelegate;
+-(void)setEventDelegate:(id<SshConnectionEventDelegate>)newEventDelegate;
+
+-(int)writeFrom:(const UInt8*)buffer length:(int)count;
+-(void)resume:(BOOL)isResuming andSaveHost:(BOOL)needsSaveHost;
+-(void)startConnection;
+-(void)endConnection;
+-(NSString*)fingerPrint;
+
+// Methods called from the private queue thread.
 -(void)connect;
 -(void)authenticateServer;
 -(void)authenticateUser;
@@ -95,16 +107,6 @@ enum ConnectionEvent
 -(void)newTunnelConnection:(SshTunnel*)tunnel;
 -(void)closeAllChannels;
 -(void)disconnect;
-
--(void)setDataDelegate:(id<SshConnectionDataDelegate>)newDataDelegate;
--(void)setEventDelegate:(id<SshConnectionEventDelegate>)newEventDelegate;
-
--(int)readIn:(UInt8*)buffer length:(int)count;
--(int)writeFrom:(const UInt8*)buffer length:(int)count;
--(void)resume:(BOOL)isResuming andSaveHost:(BOOL)needsSaveHost;
--(void)startConnection;
--(void)endConnection;
--(NSString*)fingerPrint;
 
 
 @end

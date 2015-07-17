@@ -28,6 +28,8 @@
 -(void)endListening;
 -(int)acceptConnection;
 
+-(int)connectToLocal;
+
 @end
 
 

@@ -58,15 +58,17 @@
 
 -(void)newLocalDataAvailable
 {
+    // This method is called by the dispatch source associated with the socket fd.
     if (fd < 0 || channel == NULL)
     {
         return;
     }
     
-    int readCount = (int)recv(fd, buffer, 1500, 0);
+    int readCount = (int)recv(fd, buffer, FORWARD_BUFFER_SIZE, 0);
     if (readCount <= 0)
     {
-        // The socket side connection ended (this method is called by a dispatch source, so it must have data to read, otherwise...):
+        // The socket side connection ended:
+        // (This assumption is correct because this method is called by a dispatch source, so it must have data to read):
         [self releaseResources];
         return;
     }
@@ -84,37 +86,44 @@
     {
         return NO;
     }
+    
+    BOOL hasReadData = NO;
     int availableCount = ssh_channel_poll(channel, 0);
     if (availableCount > 0)
     {
         UInt8* tempBuffer = malloc(availableCount);
-        int result = ssh_channel_read_nonblocking(channel, tempBuffer, availableCount, 0);
-        if (result < 0)
+        if (tempBuffer != NULL)
+        {
+            int result = ssh_channel_read_nonblocking(channel, tempBuffer, availableCount, 0);
+            if (result >= 0)
+            {
+                hasReadData = YES;
+                int flags = fcntl(fd, F_GETFL, 0);
+                fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+                result = (int)send(fd, tempBuffer, availableCount, 0);   // This call is blocking.
+                fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+                if (result < 0)
+                {
+                    [self releaseResources];
+                }
+            }
+            free(tempBuffer);
+        }
+        else
         {
             [self releaseResources];
-            return NO;
         }
-        int flags = fcntl(fd, F_GETFL, 0);
-        fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
-        result = (int)send(fd, tempBuffer, availableCount, 0);   // This call is blocking.
-        if (result < 0)
-        {
-            [self releaseResources];
-            return NO;
-        }
-        fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-        free(tempBuffer);
     }
     else
     {
         if (ssh_channel_is_eof(channel))
         {
+            hasReadData = YES;   // I am not sure if the EOF implies that data has been read from the SSH session: play on the safe side.
             [self releaseResources];
         }
-        return NO;
     }
     
-    return YES;
+    return hasReadData;
 }
 
 

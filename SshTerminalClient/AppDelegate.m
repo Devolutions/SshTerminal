@@ -23,7 +23,7 @@ SshConnection* sshConnection = NULL;
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification
 {
-    // Insert code here to tear down your application
+    _terminal = NULL;
 }
 
 
@@ -37,7 +37,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 1
+#define TEST_SERVER 3
 #if (TEST_SERVER == 0)
         _terminal.userName = @"david";
         _terminal.hostName = @"192.168.7.60";
@@ -47,12 +47,18 @@ SshConnection* sshConnection = NULL;
         _terminal.hostName = @"192.168.4.1";
         [_terminal setPassword:@"Price2011"];
         [_terminal clearAllTunnels];
-        [_terminal addForwardTunnelWithPort:2000 onHost:@"localhost" andRemotePort:2222 onRemoteHost:@"localhost"];
 #elif (TEST_SERVER == 2)
         _terminal.userName = @"dvincent";
         _terminal.hostName = @"192.168.4.1";
         _terminal.keyFilePath = @"~/dvincentkey";
         [_terminal setKeyFilePassword:@"123456"];
+#elif (TEST_SERVER == 3)
+        _terminal.userName = @"dvincent";
+        _terminal.hostName = @"192.168.4.1";
+        [_terminal setPassword:@"Price2011"];
+        [_terminal clearAllTunnels];
+        [_terminal addForwardTunnelWithPort:2001 onHost:@"localhost" andRemotePort:2223 onRemoteHost:@"localhost"];
+        [_terminal addReverseTunnelWithPort:2000 onHost:@"localhost" andRemotePort:2222 onRemoteHost:@"localhost"];
 #endif
         _terminal.columnCount = 80;
         [_terminal connect];

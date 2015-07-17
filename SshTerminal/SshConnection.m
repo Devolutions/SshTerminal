@@ -13,62 +13,12 @@
 int gInstanceCount = 0;
 
 
-// Helper functions.
 int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, int verify, void *userdata)
 {
     // This callback implementation avoids a password prompt for key files when the provided password is wrong.
     return SSH_ERROR;
 }
 
-
-int createBoundSocket(UInt16 port, const char* host)
-{
-    struct addrinfo* info;
-    struct addrinfo hint;
-    memset(&hint, 0, sizeof(hint));
-    hint.ai_flags = AI_ADDRCONFIG | AI_PASSIVE;
-    hint.ai_family = PF_UNSPEC;
-    hint.ai_socktype = SOCK_STREAM;
-    hint.ai_protocol = IPPROTO_TCP;
-    int result = getaddrinfo(host, NULL, NULL, &info);
-    if (result != 0)
-    {
-        return -1;
-    }
-    struct addrinfo* selectedInfo = info;
-    while (selectedInfo->ai_next != NULL)
-    {
-        if ((selectedInfo->ai_family == PF_INET || selectedInfo->ai_family == PF_INET6) && selectedInfo->ai_socktype == SOCK_STREAM)
-        {
-            break;
-        }
-        selectedInfo = selectedInfo->ai_next;
-    }
-    
-    int fd = socket(selectedInfo->ai_family, selectedInfo->ai_socktype, selectedInfo->ai_protocol);
-    if (fd == -1)
-    {
-        freeaddrinfo(info);
-        return -1;
-    }
-    
-    int flags = fcntl(fd, F_GETFL, 0);
-    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-    
-    struct sockaddr_in* address = (struct sockaddr_in*)selectedInfo->ai_addr;
-    address->sin_port = htons(port);
-    result = bind(fd, (struct sockaddr*)address, selectedInfo->ai_addrlen);
-    freeaddrinfo(info);
-    if (result != 0)
-    {
-        close(fd);
-        return -1;
-    }
-    return fd;
-}
-
-
-//-----------------------------------------------------------------------
 
 @implementation SshConnection
 
@@ -146,26 +96,14 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost
 {
+    SshTunnel* tunnel = [SshTunnel new];
     
-}
-
-
--(int)readIn:(UInt8 *)buffer length:(int)count
-{/*
-    int readCount = ssh_channel_read_nonblocking(channel, buffer, count, 0);
-    if (readCount == count)
-    {
-        // Might have more data to read:
-        dispatch_async(queue, ^(void){ [dataDelegate newDataAvailable]; });
-    }
-    else if (ssh_channel_is_eof(channel))
-    {
-        dispatch_suspend(readSource);
-        dispatch_async(queue, ^(void){ [self closeTerminalChannel]; });
-        return 0;
-    }
-    return readCount;*/
-    return 0;
+    tunnel.port = newPort;
+    tunnel.remotePort = newRemotePort;
+    tunnel.host = newHost;
+    tunnel.remoteHost = newRemoteHost;
+    
+    [reverseTunnels addObject:tunnel];
 }
 
 
@@ -232,11 +170,13 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)connect
 {
+    printf("connect\r\n");
     int result = ssh_connect(session);
     if (result != SSH_OK)
     {
         [self eventNotify:CONNECTION_ERROR];
         dispatch_async(queue, ^(void){ [self disconnect]; });
+        return;
     }
     
     dispatch_async(queue, ^(void){ [self authenticateServer]; });
@@ -245,6 +185,7 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)authenticateServer
 {
+    printf("authenticateServer\r\n");
     int result = ssh_is_server_known(session);
     switch (result)
     {
@@ -253,7 +194,8 @@ int createBoundSocket(UInt16 port, const char* host)
             dispatch_async(queue, ^{ [self authenticateUser]; });
             break;
         }
-            
+        
+        // Potential attack errors (the client will be notified and will need to either -(void)resume or -(void)disconnect).
         case SSH_SERVER_KNOWN_CHANGED:
             [self eventNotify:SERVER_KEY_CHANGED];
             break;
@@ -262,12 +204,13 @@ int createBoundSocket(UInt16 port, const char* host)
             [self eventNotify:SERVER_KEY_FOUND_OTHER];
             break;
             
-        case SSH_SERVER_FILE_NOT_FOUND:
-            [self eventNotify:SERVER_FILE_NOT_FOUND];
-            break;
-            
         case SSH_SERVER_NOT_KNOWN:
             [self eventNotify:SERVER_NOT_KNOWN];
+            break;
+        
+        // Fatal errors.
+        case SSH_SERVER_FILE_NOT_FOUND:
+            [self eventNotify:SERVER_FILE_NOT_FOUND];
             break;
             
         case SSH_SERVER_ERROR:
@@ -280,10 +223,17 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)authenticateUser
 {
+    printf("authenticateUser\r\n");
     if (useKeyAuthentication == YES)
     {
         // User authentication by key:
         ssh_key key = ssh_key_new();
+        if (key == NULL)
+        {
+            [self eventNotify:OUT_OF_MEMORY_ERROR];
+            dispatch_async(queue, ^(void){ [self disconnect]; });
+            return;
+        }
         int result = ssh_pki_import_privkey_file([keyFilePath UTF8String], [keyFilePassword UTF8String], PrivateKeyAuthCallback, NULL, &key);
         if (result == SSH_OK)
         {
@@ -301,6 +251,7 @@ int createBoundSocket(UInt16 port, const char* host)
                     [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
                 }
                 dispatch_async(queue, ^(void){ [self disconnect]; });
+                return;
             }
         }
         else
@@ -314,6 +265,7 @@ int createBoundSocket(UInt16 port, const char* host)
                 [self eventNotify:FATAL_ERROR];
             }
             dispatch_async(queue, ^(void){ [self disconnect]; });
+            return;
         }
     }
     else
@@ -331,6 +283,7 @@ int createBoundSocket(UInt16 port, const char* host)
                 [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
             }
             dispatch_async(queue, ^(void){ [self disconnect]; });
+            return;
         }
     }
     
@@ -347,15 +300,23 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)openTerminalChannel
 {
+    printf("openTerminalChannel\r\n");
     int fd = ssh_get_fd(session);
     readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
+    if (readSource == nil)
+    {
+        [self eventNotify:OUT_OF_MEMORY_ERROR];
+        dispatch_async(queue, ^(void){ [self disconnect]; });
+        return;
+    }
     dispatch_source_set_event_handler(readSource, ^(void){ [self newTerminalDataAvailable]; });
     
     channel = ssh_channel_new(session);
     if (channel == NULL)
     {
-        [self eventNotify:CHANNEL_ERROR];
+        [self eventNotify:OUT_OF_MEMORY_ERROR];
         dispatch_async(queue, ^(void){ [self disconnect]; });
+        return;
     }
     
     int result = ssh_channel_open_session(channel);
@@ -363,6 +324,7 @@ int createBoundSocket(UInt16 port, const char* host)
     {
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+        return;
     }
     
     result = ssh_channel_request_pty(channel);
@@ -370,12 +332,14 @@ int createBoundSocket(UInt16 port, const char* host)
     {
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+        return;
     }
     result = ssh_channel_change_pty_size(channel, width, height);
     if (result != SSH_OK)
     {
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+        return;
     }
     
     result = ssh_channel_request_shell(channel);
@@ -383,6 +347,7 @@ int createBoundSocket(UInt16 port, const char* host)
     {
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+        return;
     }
 
     [self eventNotify:CONNECTED];
@@ -392,10 +357,19 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)newTerminalDataAvailable
 {
+    printf("newTerminalDataAvailable\r\n");
+    // This method is called by the dispatch source associated with the socket of the SSH session.
     int availableCount = ssh_channel_poll(channel, 0);
     if (availableCount > 0)
     {
+        printf("availableCount=%d\r\n", availableCount);
         UInt8* buffer = malloc(availableCount);
+        if (buffer == NULL)
+        {
+            [self eventNotify:OUT_OF_MEMORY_ERROR];
+            dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+            return;
+        }
         ssh_channel_read_nonblocking(channel, buffer, availableCount, 0);
         dispatch_async(dispatch_get_main_queue(), ^(void){
             [dataDelegate newDataAvailableIn:buffer length:availableCount];
@@ -407,7 +381,7 @@ int createBoundSocket(UInt16 port, const char* host)
     }
     else if (ssh_channel_is_eof(channel))
     {
-        // The terminal has exited:
+        // The terminal has closed the connection:
         dispatch_async(queue, ^(void){ [self disconnect]; });
     }
 }
@@ -415,8 +389,15 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)openTunnelChannels
 {
+    printf("openTunnelChannels\r\n");
     int fd = ssh_get_fd(session);
     readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
+    if (readSource == nil)
+    {
+        [self eventNotify:OUT_OF_MEMORY_ERROR];
+        dispatch_async(queue, ^(void){ [self disconnect]; });
+        return;
+    }
     dispatch_source_set_event_handler(readSource, ^(void){ [self newSshDataAvailable]; });
     dispatch_resume(readSource);
     
@@ -428,6 +409,20 @@ int createBoundSocket(UInt16 port, const char* host)
         {
             [self eventNotify:TUNNEL_ERROR];
             [forwardTunnels removeObjectAtIndex:i];
+            i--;
+        }
+    }
+    
+    for (int i = 0; i < [reverseTunnels count]; i++)
+    {
+        SshTunnel* tunnel = [reverseTunnels objectAtIndex:i];
+        int boundPort;
+        int result = ssh_forward_listen(session, [tunnel.remoteHost UTF8String], tunnel.remotePort, &boundPort);
+        if (result != SSH_OK)
+        {
+            [self eventNotify:TUNNEL_ERROR];
+            [reverseTunnels removeObjectAtIndex:i];
+            i--;
         }
     }
     
@@ -437,6 +432,8 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)newSshDataAvailable
 {
+    printf("newSshDataAvailable\r\n");
+    // This method is called by the dispatch source associated with the socket of the SSH session.
     BOOL dataHasBeenRead = NO;
     
     // Read data from the tunnel connection channels, if any.
@@ -447,6 +444,35 @@ int createBoundSocket(UInt16 port, const char* host)
         if ([tunnelConnection isAlive] == NO)
         {
             [tunnelConnections removeObjectAtIndex:i];
+            i--;
+        }
+    }
+    
+    // Check if a reverse tunnel is ready to be accepted.
+    int destinationPort;
+    ssh_channel tunnelChannel = ssh_channel_accept_forward(session, 0, &destinationPort);
+    if (tunnelChannel != NULL)
+    {
+        // A reverse tunnel is accepted: search the reverse tunnels to find the tunnel corresponding to the destination port.
+        dataHasBeenRead |= YES;
+        for (int i = 0; i < [reverseTunnels count]; i++)
+        {
+            SshTunnel* tunnel = [reverseTunnels objectAtIndex:i];
+            if (tunnel.remotePort == destinationPort)
+            {
+                int tunnelFd = [tunnel connectToLocal];
+                SshTunnelConnection* tunnelConnection = [SshTunnelConnection connectionWithSocket:tunnelFd onChannel:tunnelChannel onQueue:queue];
+                if (tunnelConnection != nil)
+                {
+                    [tunnelConnections addObject:tunnelConnection];
+                }
+                else
+                {
+                    [self eventNotify:TUNNEL_ERROR];
+                }
+                
+                break;
+            }
         }
     }
     
@@ -460,24 +486,33 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)newTunnelConnection:(SshTunnel *)tunnel
 {
+    printf("newTunnelConnection\r\n");
+    // This method is called by the dispatch source associated with the listen socket of a forward tunnel.
+    int tunnelFd = [tunnel acceptConnection];
+    if (tunnelFd < 0)
+    {
+        [self eventNotify:TUNNEL_ERROR];
+        return;
+    }
     ssh_channel tunnelChannel = ssh_channel_new(session);
     if (tunnelChannel == NULL)
     {
-        [self eventNotify:TUNNEL_ERROR];
+        close(tunnelFd);
+        [self eventNotify:OUT_OF_MEMORY_ERROR];
         return;
     }
     int result = ssh_channel_open_forward(tunnelChannel, [tunnel.remoteHost UTF8String], tunnel.remotePort, [tunnel.host UTF8String], tunnel.port);
     if (result != SSH_OK)
     {
+        close(tunnelFd);
         [self eventNotify:TUNNEL_ERROR];
         return;
     }
-    int tunnelFd = [tunnel acceptConnection];
     SshTunnelConnection* tunnelConnection = [SshTunnelConnection connectionWithSocket:tunnelFd onChannel:tunnelChannel onQueue:queue];
-    
     if (tunnelConnection == nil)
     {
-        [self eventNotify:TUNNEL_ERROR];
+        close(tunnelFd);
+        [self eventNotify:OUT_OF_MEMORY_ERROR];
         return;
     }
     
@@ -487,6 +522,7 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)closeAllChannels
 {
+    printf("closeAllChannels\r\n");
     if (readSource != NULL)
     {
         dispatch_source_cancel(readSource);
@@ -508,16 +544,21 @@ int createBoundSocket(UInt16 port, const char* host)
     for (int i = 0; i < [reverseTunnels count]; i++)
     {
         SshTunnel* tunnel = [reverseTunnels objectAtIndex:i];
-        //[tunnel endListening];
+        ssh_forward_cancel(session, [tunnel.remoteHost UTF8String], tunnel.remotePort);
     }
     [reverseTunnels removeAllObjects];
     
-    for (int i = 0; i < [tunnelConnections count]; i++)
-    {
-        SshTunnelConnection* tunnelConnection = [tunnelConnections objectAtIndex:i];
-        [tunnelConnection disconnect];
-    }
-    [tunnelConnections removeAllObjects];
+    // Some dispatch sources might have been triggered after the beginning of this method and before they were canceled. Since they will
+    // be executed later and might result in new tunnel connections, the removal of all tunnelConnection objects is performed in
+    // a queued task that will necessary happen after all tasks queued by the cancelled sources will have been executed.
+    dispatch_async(queue, ^(void){
+        for (int i = 0; i < [tunnelConnections count]; i++)
+        {
+            SshTunnelConnection* tunnelConnection = [tunnelConnections objectAtIndex:i];
+            [tunnelConnection disconnect];
+        }
+        [tunnelConnections removeAllObjects];
+    });
     
     dispatch_async(queue, ^(void){ [self disconnect]; });
 }
@@ -525,6 +566,7 @@ int createBoundSocket(UInt16 port, const char* host)
 
 -(void)disconnect
 {
+    printf("disconnect\r\n");
     if (ssh_is_connected(session))
     {
         ssh_disconnect(session);
@@ -547,9 +589,10 @@ int createBoundSocket(UInt16 port, const char* host)
         queue = dispatch_queue_create("com.Devolutions.SshConnectionQueue", DISPATCH_QUEUE_SERIAL);
         mainQueue = dispatch_get_main_queue();
         forwardTunnels = [NSMutableArray new];
+        reverseTunnels = [NSMutableArray new];
         tunnelConnections = [NSMutableArray new];
         
-        if (session == NULL)
+        if (session == NULL || forwardTunnels == nil || reverseTunnels == nil || tunnelConnections == nil)
         {
             self = nil;
         }

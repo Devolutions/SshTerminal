@@ -9,13 +9,14 @@
 #import <Foundation/Foundation.h>
 #import "SshFoundation.h"
 
+#define FORWARD_BUFFER_SIZE 2800
 
 @interface SshTunnelConnection : NSObject
 {
     int fd;
     ssh_channel channel;
     dispatch_source_t readSource;
-    UInt8 buffer[1500];
+    UInt8 buffer[FORWARD_BUFFER_SIZE];
 }
 
 +(instancetype)connectionWithSocket:(int)newFd onChannel:(ssh_channel)newChannel onQueue:(dispatch_queue_t)queue;
