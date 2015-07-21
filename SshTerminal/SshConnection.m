@@ -89,6 +89,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     tunnel.remotePort = newRemotePort;
     tunnel.host = newHost;
     tunnel.remoteHost = newRemoteHost;
+    tunnel.reverse = NO;
     
     [forwardTunnels addObject:tunnel];
 }
@@ -102,6 +103,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     tunnel.remotePort = newRemotePort;
     tunnel.host = newHost;
     tunnel.remoteHost = newRemoteHost;
+    tunnel.reverse = YES;
     
     [reverseTunnels addObject:tunnel];
 }
@@ -170,7 +172,6 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)connect
 {
-    printf("connect\r\n");
     int result = ssh_connect(session);
     if (result != SSH_OK)
     {
@@ -185,7 +186,6 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)authenticateServer
 {
-    printf("authenticateServer\r\n");
     int result = ssh_is_server_known(session);
     switch (result)
     {
@@ -223,7 +223,6 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)authenticateUser
 {
-    printf("authenticateUser\r\n");
     if (useKeyAuthentication == YES)
     {
         // User authentication by key:
@@ -300,7 +299,6 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)openTerminalChannel
 {
-    printf("openTerminalChannel\r\n");
     int fd = ssh_get_fd(session);
     readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
     if (readSource == nil)
@@ -357,12 +355,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)newTerminalDataAvailable
 {
-    printf("newTerminalDataAvailable\r\n");
     // This method is called by the dispatch source associated with the socket of the SSH session.
     int availableCount = ssh_channel_poll(channel, 0);
     if (availableCount > 0)
     {
-        printf("availableCount=%d\r\n", availableCount);
         UInt8* buffer = malloc(availableCount);
         if (buffer == NULL)
         {
@@ -371,7 +367,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             return;
         }
         ssh_channel_read_nonblocking(channel, buffer, availableCount, 0);
-        dispatch_async(dispatch_get_main_queue(), ^(void){
+        dispatch_async(mainQueue, ^(void){
             [dataDelegate newDataAvailableIn:buffer length:availableCount];
             free(buffer);
         });
@@ -389,7 +385,6 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)openTunnelChannels
 {
-    printf("openTunnelChannels\r\n");
     int fd = ssh_get_fd(session);
     readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
     if (readSource == nil)
@@ -426,13 +421,60 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         }
     }
     
+    dispatch_async(mainQueue, ^(void){
+        char* host;
+        ssh_options_get(session, SSH_OPTIONS_HOST, &host);
+        char stringBuffer[80];
+        sprintf(stringBuffer, "Logged in to: %s\r\n", host);
+        [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+    });
     [self eventNotify:CONNECTED];
+}
+
+
+-(void)disconnectionMessage:(SshTunnelConnection*)tunnelConnection
+{
+    char stringBuffer[80];
+    SshTunnel* tunnel = tunnelConnection.tunnel;
+    if (tunnelConnection.endedByRemote == NO)
+    {
+        if (tunnel.reverse == NO)
+        {
+            snprintf(stringBuffer, sizeof(stringBuffer), "Connection terminated by %s:%s\r\n", tunnelConnection.peerAddress, tunnelConnection.peerPort);
+        }
+        else
+        {
+            snprintf(stringBuffer, sizeof(stringBuffer), "Connection terminated by %s:%d\r\n", [tunnel.host UTF8String], tunnel.port);
+        }
+    }
+    else
+    {
+        if (tunnel.reverse == NO)
+        {
+            snprintf(stringBuffer, sizeof(stringBuffer), "Connection to %s:%s terminated by remote server\r\n", tunnelConnection.peerAddress, tunnelConnection.peerPort);
+        }
+        else
+        {
+            snprintf(stringBuffer, sizeof(stringBuffer), "Connection to %s:%d terminated by remote server\r\n", [tunnel.host UTF8String], tunnel.port);
+        }
+    }
+    [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+}
+
+
+-(void)remoteConnectionMessage:(SshTunnelConnection*)tunnelConnection
+{
+    char stringBuffer[240];
+    SshTunnel* tunnel = tunnelConnection.tunnel;
+    int n = snprintf(stringBuffer, sizeof(stringBuffer), "Connected %s:%s\r\n", tunnelConnection.address, tunnelConnection.port);
+    n += snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    to local %s:%d\r\n", [tunnel.host UTF8String], tunnel.port);
+    snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    from remote %s:%d\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
+    [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
 }
 
 
 -(void)newSshDataAvailable
 {
-    printf("newSshDataAvailable\r\n");
     // This method is called by the dispatch source associated with the socket of the SSH session.
     BOOL dataHasBeenRead = NO;
     
@@ -445,6 +487,8 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         {
             [tunnelConnections removeObjectAtIndex:i];
             i--;
+            
+            dispatch_async(mainQueue, ^(void){ [self disconnectionMessage:tunnelConnection]; });
         }
     }
     
@@ -464,7 +508,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
                 SshTunnelConnection* tunnelConnection = [SshTunnelConnection connectionWithSocket:tunnelFd onChannel:tunnelChannel onQueue:queue];
                 if (tunnelConnection != nil)
                 {
+                    tunnelConnection.tunnel = tunnel;
                     [tunnelConnections addObject:tunnelConnection];
+                    
+                    dispatch_async(mainQueue, ^(void){ [self remoteConnectionMessage:tunnelConnection]; });
                 }
                 else
                 {
@@ -484,9 +531,19 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 }
 
 
+-(void)localConnectionMessage:(SshTunnelConnection*)tunnelConnection
+{
+    char stringBuffer[240];
+    SshTunnel* tunnel = tunnelConnection.tunnel;
+    int n = snprintf(stringBuffer, sizeof(stringBuffer), "Accepted connection from %s:%s\r\n", tunnelConnection.peerAddress, tunnelConnection.peerPort);
+    n += snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    on local %s:%d\r\n", [tunnel.host UTF8String], tunnel.port);
+    snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    to remote %s:%d\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
+    [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+}
+
+
 -(void)newTunnelConnection:(SshTunnel *)tunnel
 {
-    printf("newTunnelConnection\r\n");
     // This method is called by the dispatch source associated with the listen socket of a forward tunnel.
     int tunnelFd = [tunnel acceptConnection];
     if (tunnelFd < 0)
@@ -516,13 +573,31 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         return;
     }
     
+    tunnelConnection.tunnel = tunnel;
     [tunnelConnections addObject:tunnelConnection];
+
+    dispatch_async(mainQueue, ^(void){ [self localConnectionMessage:tunnelConnection]; });
+}
+
+
+-(void)brutalDisconnectMessage:(SshTunnelConnection*)tunnelConnection
+{
+    char stringBuffer[240];
+    SshTunnel* tunnel = tunnelConnection.tunnel;
+    if (tunnel.reverse == NO)
+    {
+        snprintf(stringBuffer, sizeof(stringBuffer), "Connection %s:%s aborted\r\n", tunnelConnection.peerAddress, tunnelConnection.peerPort);
+    }
+    else
+    {
+        snprintf(stringBuffer, sizeof(stringBuffer), "Connection %s:%s aborted\r\n", tunnelConnection.address, tunnelConnection.port);
+    }
+    [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
 }
 
 
 -(void)closeAllChannels
 {
-    printf("closeAllChannels\r\n");
     if (readSource != NULL)
     {
         dispatch_source_cancel(readSource);
@@ -556,6 +631,8 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         {
             SshTunnelConnection* tunnelConnection = [tunnelConnections objectAtIndex:i];
             [tunnelConnection disconnect];
+            
+            dispatch_async(mainQueue, ^(void){ [self brutalDisconnectMessage:tunnelConnection]; });
         }
         [tunnelConnections removeAllObjects];
     });
@@ -566,11 +643,14 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)disconnect
 {
-    printf("disconnect\r\n");
     if (ssh_is_connected(session))
     {
         ssh_disconnect(session);
     }
+    
+    dispatch_async(mainQueue, ^(void){
+        [dataDelegate newDataAvailableIn:(UInt8*)"\r\nLogged out\r\n" length:14];
+    });
     [self eventNotify:DISCONNECTED];
 }
 

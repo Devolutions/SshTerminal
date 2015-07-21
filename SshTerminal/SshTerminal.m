@@ -231,7 +231,10 @@
     {
         case CONNECTED:
         {
-            [terminalView setCursorVisible:YES];
+            if (tunnels.count == 0)
+            {
+                [terminalView setCursorVisible:YES];
+            }
             if ([eventDelegate respondsToSelector:@selector(connected)])
             {
                 [eventDelegate connected];

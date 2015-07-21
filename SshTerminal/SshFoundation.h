@@ -12,4 +12,21 @@
 #define LIBSSH_LEGACY_0_4 1
 #include "libssh/libssh.h"
 
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            UInt8 len;
+            UInt8 family;
+            UInt16 port;
+        };
+        struct sockaddr ip;
+        struct sockaddr_in ipv4;
+        struct sockaddr_in6 ipv6;
+    };
+} NetworkAddress;
+
+
 #endif

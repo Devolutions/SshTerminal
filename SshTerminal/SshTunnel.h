@@ -19,6 +19,7 @@
     NSString* remoteHost;
 }
 
+@property(assign)BOOL reverse;
 @property(assign)UInt16 port;
 @property(assign)UInt16 remotePort;
 @property(strong,nonatomic)NSString* host;

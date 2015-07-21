@@ -10,6 +10,34 @@
 
 @implementation SshTunnelConnection
 
+@synthesize fd;
+@synthesize endedByRemote;
+
+
+-(char*)address
+{
+    return address;
+}
+
+
+-(char*)port
+{
+    return port;
+}
+
+
+-(char*)peerAddress
+{
+    return peerAddress;
+}
+
+
+-(char*)peerPort
+{
+    return peerPort;
+}
+
+
 +(instancetype)connectionWithSocket:(int)newFd onChannel:(ssh_channel)newChannel onQueue:(dispatch_queue_t)queue
 {
     if (newFd < 0 || newChannel == NULL)
@@ -30,6 +58,13 @@
         }
         dispatch_source_set_event_handler(tunnelConnection->readSource, ^(void){ [tunnelConnection newLocalDataAvailable]; });
         dispatch_resume(tunnelConnection->readSource);
+        
+        NetworkAddress address;
+        socklen_t addressSize = sizeof(address);
+        getsockname(newFd, &address.ip, &addressSize);
+        getnameinfo(&address.ip, address.len, tunnelConnection->address, sizeof(tunnelConnection->address), tunnelConnection->port, sizeof(tunnelConnection->port), NI_NUMERICHOST | NI_NUMERICSERV);
+        getpeername(newFd, &address.ip, &addressSize);
+        getnameinfo(&address.ip, address.len, tunnelConnection->peerAddress, sizeof(tunnelConnection->peerAddress), tunnelConnection->peerPort, sizeof(tunnelConnection->peerPort), NI_NUMERICHOST | NI_NUMERICSERV);
     }
     
     return tunnelConnection;
@@ -69,12 +104,14 @@
     {
         // The socket side connection ended:
         // (This assumption is correct because this method is called by a dispatch source, so it must have data to read):
+        endedByRemote = NO;
         [self releaseResources];
         return;
     }
     int result = ssh_channel_write(channel, buffer, readCount);   // This call is blocking.
     if (result < 0)
     {
+        endedByRemote = YES;
         [self releaseResources];
     }
 }
@@ -104,6 +141,7 @@
                 fcntl(fd, F_SETFL, flags | O_NONBLOCK);
                 if (result < 0)
                 {
+                    endedByRemote = YES;
                     [self releaseResources];
                 }
             }
@@ -111,6 +149,7 @@
         }
         else
         {
+            endedByRemote = NO;
             [self releaseResources];
         }
     }
@@ -119,6 +158,7 @@
         if (ssh_channel_is_eof(channel))
         {
             hasReadData = YES;   // I am not sure if the EOF implies that data has been read from the SSH session: play on the safe side.
+            endedByRemote = YES;
             [self releaseResources];
         }
     }
@@ -140,6 +180,7 @@
 
 -(void)disconnect
 {
+    endedByRemote = NO;
     [self releaseResources];
 }
 

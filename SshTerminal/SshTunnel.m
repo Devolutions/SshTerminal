@@ -9,7 +9,25 @@
 #import "SshTunnel.h"
 
 
-int resolveHost(struct sockaddr_in* address, const char* host)
+struct addrinfo* findSockaddr(int family, struct addrinfo* info)
+{
+    while (1)
+    {
+        if (info->ai_family == family && info->ai_socktype == SOCK_STREAM)
+        {
+            return info;
+        }
+        if (info->ai_next == NULL)
+        {
+            break;
+        }
+        info = info->ai_next;
+    }
+    return NULL;
+}
+
+
+int resolveHost(NetworkAddress* address, const char* host)
 {
     if (host == NULL || strlen(host) == 0)
     {
@@ -32,24 +50,20 @@ int resolveHost(struct sockaddr_in* address, const char* host)
     
     // Parse the address info to find the most appropriate sockaddr.
     int addressSize = 0;
-    struct addrinfo* selectedInfo = info;
-    while (1)
+    struct addrinfo* selectedInfo = findSockaddr(PF_INET, info);
+    if (selectedInfo == NULL)
     {
-        if ((selectedInfo->ai_family == PF_INET || selectedInfo->ai_family == PF_INET6) && selectedInfo->ai_socktype == SOCK_STREAM)
-        {
-            addressSize = selectedInfo->ai_addrlen;
-            break;
-        }
-        if (selectedInfo->ai_next == NULL)
-        {
-            break;
-        }
-        selectedInfo = selectedInfo->ai_next;
+        selectedInfo = findSockaddr(PF_INET6, info);
+    }
+    if (selectedInfo != NULL)
+    {
+        addressSize = selectedInfo->ai_addrlen;
     }
     
     // Copy the result.
     if (addressSize > 0)
     {
+        assert(addressSize <= sizeof(NetworkAddress));
         memcpy(address, selectedInfo->ai_addr, addressSize);
     }
     freeaddrinfo(info);
@@ -83,14 +97,14 @@ int resolveHost(struct sockaddr_in* address, const char* host)
 
 -(BOOL)startListeningAndDispatchTo:(dispatch_block_t)handler onQueue:(dispatch_queue_t)queue
 {
-    struct sockaddr_in address;
+    NetworkAddress address;
     int addressSize = resolveHost(&address, [host UTF8String]);
     if (addressSize <= 0)
     {
         return NO;
     }
     
-    listenFd = socket(address.sin_family, SOCK_STREAM, IPPROTO_TCP);
+    listenFd = socket(address.family, SOCK_STREAM, IPPROTO_TCP);
     if (listenFd < 0)
     {
         return NO;
@@ -99,8 +113,8 @@ int resolveHost(struct sockaddr_in* address, const char* host)
     int reuseAddress = 1;
     setsockopt(listenFd, SOL_SOCKET, SO_REUSEADDR, &reuseAddress, sizeof(reuseAddress));
     
-    address.sin_port = htons(port);
-    int result = bind(listenFd, (struct sockaddr*)&address, addressSize);
+    address.port = htons(port);
+    int result = bind(listenFd, &address.ip, address.len);
     if (result != 0)
     {
         close(listenFd);
@@ -136,37 +150,39 @@ int resolveHost(struct sockaddr_in* address, const char* host)
     {
         return -1;
     }
-    struct sockaddr address;
+    NetworkAddress address;
     socklen_t size = sizeof(address);
-    return accept(listenFd, &address, &size);
+    return accept(listenFd, &address.ip, &size);
 }
 
 
 -(int)connectToLocal
 {
-    struct sockaddr_in hostAddress;
+    NetworkAddress hostAddress;
     int hostAddressSize = resolveHost(&hostAddress, [host UTF8String]);
     if (hostAddressSize <= 0)
     {
         return -1;
     }
     
-    int fd = socket(hostAddress.sin_family, SOCK_STREAM, IPPROTO_TCP);
+    int fd = socket(hostAddress.family, SOCK_STREAM, IPPROTO_TCP);
     if (fd < 0)
     {
         return -1;
     }
-    struct sockaddr bindAddress;
+    NetworkAddress bindAddress;
     memset(&bindAddress, 0, sizeof(bindAddress));
-    int result = bind(fd, &bindAddress, sizeof(bindAddress));
+    bindAddress.len = hostAddress.len;
+    bindAddress.family = hostAddress.family;
+    int result = bind(fd, &bindAddress.ip, bindAddress.len);
     if (result < 0)
     {
         close(fd);
         return -1;
     }
     
-    hostAddress.sin_port = htons(port);
-    result = connect(fd, (struct sockaddr*)&hostAddress, hostAddressSize);
+    hostAddress.port = htons(port);
+    result = connect(fd, &hostAddress.ip, hostAddressSize);
     if (result < 0)
     {
         close(fd);
