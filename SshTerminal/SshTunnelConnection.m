@@ -56,7 +56,7 @@
         {
             return nil;
         }
-        dispatch_source_set_event_handler(tunnelConnection->readSource, ^(void){ [tunnelConnection newLocalDataAvailable]; });
+        dispatch_source_set_event_handler(tunnelConnection->readSource, ^{ [tunnelConnection newLocalDataAvailable]; });
         dispatch_resume(tunnelConnection->readSource);
         
         NetworkAddress address;

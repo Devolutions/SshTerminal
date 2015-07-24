@@ -113,7 +113,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 {
     UInt8* writeBuffer = malloc(count);
     memcpy(writeBuffer, buffer, count);
-    dispatch_async(queue, ^(void){
+    dispatch_async(queue, ^{
         ssh_channel_write(channel, writeBuffer, count);
         free(writeBuffer);
     });
@@ -123,7 +123,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)startConnection
 {
-    dispatch_async(queue, ^(void){ [self connect]; });
+    dispatch_async(queue, ^{ [self connect]; });
 }
 
 
@@ -133,13 +133,13 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     {
         ssh_write_knownhost(session);
     }
-    dispatch_async(queue, ^(void){ [self authenticateUser]; });
+    dispatch_async(queue, ^{ [self authenticateUser]; });
 }
 
 
 -(void)endConnection
 {
-    dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+    dispatch_async(queue, ^{ [self closeAllChannels]; });
 }
 
 
@@ -166,7 +166,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)eventNotify:(int)code
 {
-    dispatch_async(mainQueue, ^(void){ [eventDelegate signalError:code]; });
+    dispatch_async(mainQueue, ^{ [eventDelegate signalError:code]; });
 }
 
 
@@ -176,11 +176,11 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     if (result != SSH_OK)
     {
         [self eventNotify:CONNECTION_ERROR];
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
     
-    dispatch_async(queue, ^(void){ [self authenticateServer]; });
+    dispatch_async(queue, ^{ [self authenticateServer]; });
 }
 
 
@@ -230,7 +230,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         if (key == NULL)
         {
             [self eventNotify:OUT_OF_MEMORY_ERROR];
-            dispatch_async(queue, ^(void){ [self disconnect]; });
+            dispatch_async(queue, ^{ [self disconnect]; });
             return;
         }
         int result = ssh_pki_import_privkey_file([keyFilePath UTF8String], [keyFilePassword UTF8String], PrivateKeyAuthCallback, NULL, &key);
@@ -249,7 +249,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
                 {
                     [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
                 }
-                dispatch_async(queue, ^(void){ [self disconnect]; });
+                dispatch_async(queue, ^{ [self disconnect]; });
                 return;
             }
         }
@@ -263,7 +263,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             {
                 [self eventNotify:FATAL_ERROR];
             }
-            dispatch_async(queue, ^(void){ [self disconnect]; });
+            dispatch_async(queue, ^{ [self disconnect]; });
             return;
         }
     }
@@ -281,18 +281,18 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             {
                 [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
             }
-            dispatch_async(queue, ^(void){ [self disconnect]; });
+            dispatch_async(queue, ^{ [self disconnect]; });
             return;
         }
     }
     
     if (forwardTunnels.count > 0 || reverseTunnels.count > 0)
     {
-        dispatch_async(queue, ^(void){ [self openTunnelChannels]; });
+        dispatch_async(queue, ^{ [self openTunnelChannels]; });
     }
     else
     {
-        dispatch_async(queue, ^(void){ [self openTerminalChannel]; });
+        dispatch_async(queue, ^{ [self openTerminalChannel]; });
     }
 }
 
@@ -304,16 +304,16 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     if (readSource == nil)
     {
         [self eventNotify:OUT_OF_MEMORY_ERROR];
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
-    dispatch_source_set_event_handler(readSource, ^(void){ [self newTerminalDataAvailable]; });
+    dispatch_source_set_event_handler(readSource, ^{ [self newTerminalDataAvailable]; });
     
     channel = ssh_channel_new(session);
     if (channel == NULL)
     {
         [self eventNotify:OUT_OF_MEMORY_ERROR];
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
     
@@ -321,7 +321,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     if (result != SSH_OK)
     {
         [self eventNotify:CHANNEL_ERROR];
-        dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+        dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
     }
     
@@ -329,14 +329,14 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     if (result != SSH_OK)
     {
         [self eventNotify:CHANNEL_ERROR];
-        dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+        dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
     }
     result = ssh_channel_change_pty_size(channel, width, height);
     if (result != SSH_OK)
     {
         [self eventNotify:CHANNEL_ERROR];
-        dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+        dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
     }
     
@@ -344,7 +344,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     if (result != SSH_OK)
     {
         [self eventNotify:CHANNEL_ERROR];
-        dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+        dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
     }
 
@@ -363,22 +363,22 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         if (buffer == NULL)
         {
             [self eventNotify:OUT_OF_MEMORY_ERROR];
-            dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+            dispatch_async(queue, ^{ [self closeAllChannels]; });
             return;
         }
         ssh_channel_read_nonblocking(channel, buffer, availableCount, 0);
-        dispatch_async(mainQueue, ^(void){
+        dispatch_async(mainQueue, ^{
             [dataDelegate newDataAvailableIn:buffer length:availableCount];
             free(buffer);
         });
         
         // Some data might still be available: reschedule this task to be sure the channel is completely emptied.
-        dispatch_async(queue, ^(void){ [self newTerminalDataAvailable]; } );
+        dispatch_async(queue, ^{ [self newTerminalDataAvailable]; } );
     }
     else if (ssh_channel_is_eof(channel))
     {
         // The terminal has closed the connection:
-        dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+        dispatch_async(queue, ^{ [self closeAllChannels]; });
     }
 }
 
@@ -390,16 +390,16 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     if (readSource == nil)
     {
         [self eventNotify:OUT_OF_MEMORY_ERROR];
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
-    dispatch_source_set_event_handler(readSource, ^(void){ [self newSshDataAvailable]; });
+    dispatch_source_set_event_handler(readSource, ^{ [self newSshDataAvailable]; });
     dispatch_resume(readSource);
     
     for (int i = 0; i < [forwardTunnels count]; i++)
     {
         SshTunnel* tunnel = [forwardTunnels objectAtIndex:i];
-        BOOL success = [tunnel startListeningAndDispatchTo:^(void){ [self newTunnelConnection:tunnel]; } onQueue:queue];
+        BOOL success = [tunnel startListeningAndDispatchTo:^{ [self newTunnelConnection:tunnel]; } onQueue:queue];
         if (success == NO)
         {
             [self eventNotify:TUNNEL_ERROR];
@@ -421,7 +421,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         }
     }
     
-    dispatch_async(mainQueue, ^(void){
+    dispatch_async(mainQueue, ^{
         char* host;
         ssh_options_get(session, SSH_OPTIONS_HOST, &host);
         char stringBuffer[80];
@@ -488,7 +488,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             [tunnelConnections removeObjectAtIndex:i];
             i--;
             
-            dispatch_async(mainQueue, ^(void){ [self disconnectionMessage:tunnelConnection]; });
+            dispatch_async(mainQueue, ^{ [self disconnectionMessage:tunnelConnection]; });
         }
     }
     
@@ -511,7 +511,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
                     tunnelConnection.tunnel = tunnel;
                     [tunnelConnections addObject:tunnelConnection];
                     
-                    dispatch_async(mainQueue, ^(void){ [self remoteConnectionMessage:tunnelConnection]; });
+                    dispatch_async(mainQueue, ^{ [self remoteConnectionMessage:tunnelConnection]; });
                 }
                 else
                 {
@@ -526,7 +526,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     if (dataHasBeenRead == YES)
     {
         // Some data might still be available: reschedule this task to be sure all channels are emptied.
-        dispatch_async(queue, ^(void){ [self newSshDataAvailable]; } );
+        dispatch_async(queue, ^{ [self newSshDataAvailable]; } );
     }
 }
 
@@ -576,7 +576,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     tunnelConnection.tunnel = tunnel;
     [tunnelConnections addObject:tunnelConnection];
 
-    dispatch_async(mainQueue, ^(void){ [self localConnectionMessage:tunnelConnection]; });
+    dispatch_async(mainQueue, ^{ [self localConnectionMessage:tunnelConnection]; });
 }
 
 
@@ -626,18 +626,18 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     // Some dispatch sources might have been triggered after the beginning of this method and before they were canceled. Since they will
     // be executed later and might result in new tunnel connections, the removal of all tunnelConnection objects is performed in
     // a queued task that will necessary happen after all tasks queued by the cancelled sources will have been executed.
-    dispatch_async(queue, ^(void){
+    dispatch_async(queue, ^{
         for (int i = 0; i < [tunnelConnections count]; i++)
         {
             SshTunnelConnection* tunnelConnection = [tunnelConnections objectAtIndex:i];
             [tunnelConnection disconnect];
             
-            dispatch_async(mainQueue, ^(void){ [self brutalDisconnectMessage:tunnelConnection]; });
+            dispatch_async(mainQueue, ^{ [self brutalDisconnectMessage:tunnelConnection]; });
         }
         [tunnelConnections removeAllObjects];
     });
     
-    dispatch_async(queue, ^(void){ [self disconnect]; });
+    dispatch_async(queue, ^{ [self disconnect]; });
 }
 
 
@@ -648,7 +648,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         ssh_disconnect(session);
     }
     
-    dispatch_async(mainQueue, ^(void){
+    dispatch_async(mainQueue, ^{
         [dataDelegate newDataAvailableIn:(UInt8*)"\r\nLogged out\r\n" length:14];
     });
     [self eventNotify:DISCONNECTED];

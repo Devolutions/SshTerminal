@@ -140,7 +140,7 @@ typedef struct
 {
     UInt8* writeBuffer = malloc(count);
     memcpy(writeBuffer, buffer, count);
-    dispatch_async(queue, ^(void){
+    dispatch_async(queue, ^{
         int result = (int)send(fd, writeBuffer, count, 0);
         assert(result == count);
         free(writeBuffer);
@@ -151,13 +151,13 @@ typedef struct
 
 -(void)startConnection
 {
-    dispatch_async(queue, ^(void){ [self connect]; });
+    dispatch_async(queue, ^{ [self connect]; });
 }
 
 
 -(void)endConnection
 {
-    dispatch_async(queue, ^(void){ [self closeAllChannels]; });
+    dispatch_async(queue, ^{ [self closeAllChannels]; });
 }
 
 
@@ -165,7 +165,7 @@ typedef struct
 
 -(void)eventNotify:(int)code
 {
-    dispatch_async(mainQueue, ^(void){ [eventDelegate signalError:code]; });
+    dispatch_async(mainQueue, ^{ [eventDelegate signalError:code]; });
 }
 
 
@@ -176,14 +176,14 @@ typedef struct
     if (addressSize <= 0)
     {
         // Unable to resolve host.
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
     
     fd = socket(address.family, SOCK_STREAM, IPPROTO_TCP);
     if (fd < 0)
     {
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
     
@@ -194,7 +194,7 @@ typedef struct
     int result = bind(fd, &bindAddress.ip, bindAddress.len);
     if (result != 0 )
     {
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
     
@@ -202,17 +202,17 @@ typedef struct
     result = connect(fd, &address.ip, address.len);
     if (result != 0)
     {
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
     
     readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
     if (readSource == nil)
     {
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
-    dispatch_source_set_event_handler(readSource, ^(void){ [self newTerminalDataAvailable]; });
+    dispatch_source_set_event_handler(readSource, ^{ [self newTerminalDataAvailable]; });
     dispatch_resume(readSource);
 }
 
@@ -437,7 +437,7 @@ typedef struct
     int result = (int)recv(fd, inBuffer + inIndex, INPUT_BUFFER_SIZE - inIndex, 0);
     if (result <= 0)
     {
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
     
@@ -449,7 +449,7 @@ typedef struct
     if (terminalBuffer == NULL)
     {
         // Out of memeory:
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
     while (i < inIndex)
@@ -491,7 +491,7 @@ typedef struct
 
     if (terminalIndex > 0)
     {
-        dispatch_async(mainQueue, ^(void){
+        dispatch_async(mainQueue, ^{
             [dataDelegate newDataAvailableIn:terminalBuffer length:terminalIndex];
             free(terminalBuffer);
         });
@@ -540,7 +540,7 @@ typedef struct
         fd = -1;
     }
     
-    dispatch_async(mainQueue, ^(void){
+    dispatch_async(mainQueue, ^{
         [dataDelegate newDataAvailableIn:(UInt8*)"\r\nLogged out\r\n" length:14];
     });
     [self eventNotify:tceDisconnected];
