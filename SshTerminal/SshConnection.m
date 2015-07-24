@@ -7,7 +7,7 @@
 //
 
 #import "SshConnection.h"
-#import "SshTerminalView.h"
+#import "VT100TerminalView.h"
 
 
 int gInstanceCount = 0;
@@ -22,7 +22,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 @implementation SshConnection
 
--(void)setDataDelegate:(id<SshConnectionDataDelegate>)newDataDelegate
+-(void)setDataDelegate:(id<VT100TerminalDataDelegate>)newDataDelegate
 {
     dataDelegate = newDataDelegate;
 }
@@ -378,7 +378,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     else if (ssh_channel_is_eof(channel))
     {
         // The terminal has closed the connection:
-        dispatch_async(queue, ^(void){ [self disconnect]; });
+        dispatch_async(queue, ^(void){ [self closeAllChannels]; });
     }
 }
 

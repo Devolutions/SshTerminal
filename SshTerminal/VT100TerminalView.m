@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 Denis Vincent. All rights reserved.
 //
 
-#import "SshTerminalView.h"
-#import "SshStorage.h"
+#import "VT100TerminalView.h"
+#import "VT100Storage.h"
 
 #ifdef DEBUG
 //#define PRINT_INPUT 1
@@ -26,9 +26,9 @@
 NSString* TAName = @"TerminalAttributeName";
 
 
-@implementation SshTerminalView
+@implementation VT100TerminalView
 
--(void)setConnection:(SshConnection *)newConnection
+-(void)setConnection:(id<VT100Connection>)newConnection
 {
     connection = newConnection;
     [connection setDataDelegate:self];
@@ -83,6 +83,11 @@ NSString* TAName = @"TerminalAttributeName";
 
 -(void)keyDown:(NSEvent *)theEvent
 {
+    if (isCursorVisible == NO)
+    {
+        return;
+    }
+    
     NSString* theKey = [theEvent charactersIgnoringModifiers];
     int length = (int)[theKey length];
     if (length == 0)
@@ -2058,7 +2063,7 @@ NSString* TAName = @"TerminalAttributeName";
         [self setVerticallyResizable:YES];
         [self setHorizontallyResizable:NO];
         [self setTextContainerInset:NSMakeSize(0, 0)];
-        storage = [[SshStorage alloc] init];
+        storage = [[VT100Storage alloc] init];
         [self.layoutManager replaceTextStorage:storage];
         [self.textContainer setWidthTracksTextView:NO];
         [self.textContainer setHeightTracksTextView:NO];

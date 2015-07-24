@@ -7,7 +7,7 @@
 //
 
 #import "SshTerminal.h"
-#import "SshTerminalView.h"
+#import "VT100TerminalView.h"
 #import "SshConnection.h"
 
 
@@ -27,7 +27,7 @@
 // Private extension.
 @interface SshTerminal () <SshConnectionEventDelegate>
 {
-    SshTerminalView* terminalView;
+    VT100TerminalView* terminalView;
     SshConnection* connection;
 
     NSString* password;
@@ -191,7 +191,7 @@
 -(void)autoSetHorizontalScroller
 {
     int width = self.contentSize.width;
-    int containerWidth = ((SshTerminalView*)terminalView).textContainer.containerSize.width;
+    int containerWidth = ((VT100TerminalView*)terminalView).textContainer.containerSize.width;
     if (width < containerWidth)
     {
         [self setHasHorizontalScroller:YES];
@@ -297,7 +297,7 @@
     rect.origin = NSMakePoint(0, 0);
     rect.size = self.contentSize;
 
-    terminalView = [[SshTerminalView alloc] initWithFrame:rect];
+    terminalView = [[VT100TerminalView alloc] initWithFrame:rect];
     [terminalView setEditable:NO];
     
     [self setDocumentView:terminalView];

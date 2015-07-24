@@ -7,6 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F4989F0E1B5FDC7900693A47 /* TelnetTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */; };
+		F4989F0F1B5FDC7900693A47 /* TelnetTerminal.m in Sources */ = {isa = PBXBuildFile; fileRef = F4989F0D1B5FDC7900693A47 /* TelnetTerminal.m */; };
+		F4989F121B5FE59300693A47 /* TelnetConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F4989F101B5FE59300693A47 /* TelnetConnection.h */; };
+		F4989F131B5FE59300693A47 /* TelnetConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = F4989F111B5FE59300693A47 /* TelnetConnection.m */; };
+		F4989F161B5FEED800693A47 /* VT100Connection.h in Headers */ = {isa = PBXBuildFile; fileRef = F4989F141B5FEED800693A47 /* VT100Connection.h */; };
+		F4989F191B6008A200693A47 /* NetworkHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = F4989F181B6008A200693A47 /* NetworkHelpers.m */; };
+		F4989F1B1B6008D600693A47 /* NetworkHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = F4989F1A1B6008D600693A47 /* NetworkHelpers.h */; };
+		F4989F5B1B601D3600693A47 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F4989F5A1B601D3600693A47 /* AppDelegate.m */; };
+		F4989F5D1B601D3600693A47 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F4989F5C1B601D3600693A47 /* main.m */; };
+		F4989F5F1B601D3600693A47 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4989F5E1B601D3600693A47 /* Images.xcassets */; };
+		F4989F621B601D3600693A47 /* TelnetMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = F4989F601B601D3600693A47 /* TelnetMenu.xib */; };
+		F4989F751B601D5600693A47 /* SshTerminal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4AE90331B41733E007AC63E /* SshTerminal.framework */; };
 		F4A3E2F71B5693A30007D4C0 /* SshTunnel.h in Headers */ = {isa = PBXBuildFile; fileRef = F4A3E2F51B5693A30007D4C0 /* SshTunnel.h */; };
 		F4A3E2F81B5693A30007D4C0 /* SshTunnel.m in Sources */ = {isa = PBXBuildFile; fileRef = F4A3E2F61B5693A30007D4C0 /* SshTunnel.m */; };
 		F4A3E2FB1B5694420007D4C0 /* SshTunnelConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F4A3E2F91B5694420007D4C0 /* SshTunnelConnection.h */; };
@@ -14,12 +26,12 @@
 		F4A3E2FE1B569B930007D4C0 /* SshFoundation.h in Headers */ = {isa = PBXBuildFile; fileRef = F4A3E2FD1B569B930007D4C0 /* SshFoundation.h */; };
 		F4AE90391B41733E007AC63E /* SshTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE90381B41733E007AC63E /* SshTerminal.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F4AE90661B418EBF007AC63E /* SshConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE905F1B418EBF007AC63E /* SshConnection.h */; };
-		F4AE90671B418EBF007AC63E /* SshStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE90601B418EBF007AC63E /* SshStorage.h */; };
-		F4AE90681B418EBF007AC63E /* SshTerminalView.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE90611B418EBF007AC63E /* SshTerminalView.h */; };
+		F4AE90671B418EBF007AC63E /* VT100Storage.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE90601B418EBF007AC63E /* VT100Storage.h */; };
+		F4AE90681B418EBF007AC63E /* VT100TerminalView.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE90611B418EBF007AC63E /* VT100TerminalView.h */; };
 		F4AE90691B418EBF007AC63E /* SshConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90621B418EBF007AC63E /* SshConnection.m */; };
-		F4AE906A1B418EBF007AC63E /* SshStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90631B418EBF007AC63E /* SshStorage.m */; };
+		F4AE906A1B418EBF007AC63E /* VT100Storage.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90631B418EBF007AC63E /* VT100Storage.m */; };
 		F4AE906B1B418EBF007AC63E /* SshTerminal.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90641B418EBF007AC63E /* SshTerminal.m */; };
-		F4AE906C1B418EBF007AC63E /* SshTerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90651B418EBF007AC63E /* SshTerminalView.m */; };
+		F4AE906C1B418EBF007AC63E /* VT100TerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90651B418EBF007AC63E /* VT100TerminalView.m */; };
 		F4AE906E1B419457007AC63E /* libssh.4.5.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F4AE906D1B419457007AC63E /* libssh.4.5.1.dylib */; };
 		F4AE90791B4198E2007AC63E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90781B4198E2007AC63E /* AppDelegate.m */; };
 		F4AE907B1B4198E2007AC63E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE907A1B4198E2007AC63E /* main.m */; };
@@ -29,6 +41,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TelnetTerminal.h; sourceTree = "<group>"; };
+		F4989F0D1B5FDC7900693A47 /* TelnetTerminal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TelnetTerminal.m; sourceTree = "<group>"; };
+		F4989F101B5FE59300693A47 /* TelnetConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TelnetConnection.h; sourceTree = "<group>"; };
+		F4989F111B5FE59300693A47 /* TelnetConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TelnetConnection.m; sourceTree = "<group>"; };
+		F4989F141B5FEED800693A47 /* VT100Connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Connection.h; sourceTree = "<group>"; };
+		F4989F181B6008A200693A47 /* NetworkHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NetworkHelpers.m; sourceTree = "<group>"; };
+		F4989F1A1B6008D600693A47 /* NetworkHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NetworkHelpers.h; sourceTree = "<group>"; };
+		F4989F551B601D3600693A47 /* TelnetTerminalClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TelnetTerminalClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F4989F581B601D3600693A47 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F4989F591B601D3600693A47 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		F4989F5A1B601D3600693A47 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		F4989F5C1B601D3600693A47 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		F4989F5E1B601D3600693A47 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		F4989F611B601D3600693A47 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/TelnetMenu.xib; sourceTree = "<group>"; };
 		F4A3E2F51B5693A30007D4C0 /* SshTunnel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshTunnel.h; sourceTree = "<group>"; };
 		F4A3E2F61B5693A30007D4C0 /* SshTunnel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SshTunnel.m; sourceTree = "<group>"; };
 		F4A3E2F91B5694420007D4C0 /* SshTunnelConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshTunnelConnection.h; sourceTree = "<group>"; };
@@ -38,12 +64,12 @@
 		F4AE90371B41733E007AC63E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F4AE90381B41733E007AC63E /* SshTerminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SshTerminal.h; sourceTree = "<group>"; };
 		F4AE905F1B418EBF007AC63E /* SshConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshConnection.h; sourceTree = "<group>"; };
-		F4AE90601B418EBF007AC63E /* SshStorage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshStorage.h; sourceTree = "<group>"; };
-		F4AE90611B418EBF007AC63E /* SshTerminalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshTerminalView.h; sourceTree = "<group>"; };
+		F4AE90601B418EBF007AC63E /* VT100Storage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Storage.h; sourceTree = "<group>"; };
+		F4AE90611B418EBF007AC63E /* VT100TerminalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100TerminalView.h; sourceTree = "<group>"; };
 		F4AE90621B418EBF007AC63E /* SshConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SshConnection.m; sourceTree = "<group>"; };
-		F4AE90631B418EBF007AC63E /* SshStorage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SshStorage.m; sourceTree = "<group>"; };
+		F4AE90631B418EBF007AC63E /* VT100Storage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Storage.m; sourceTree = "<group>"; };
 		F4AE90641B418EBF007AC63E /* SshTerminal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SshTerminal.m; sourceTree = "<group>"; };
-		F4AE90651B418EBF007AC63E /* SshTerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SshTerminalView.m; sourceTree = "<group>"; };
+		F4AE90651B418EBF007AC63E /* VT100TerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TerminalView.m; sourceTree = "<group>"; };
 		F4AE906D1B419457007AC63E /* libssh.4.5.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssh.4.5.1.dylib; path = SshTerminal/libssh/libssh.4.5.1.dylib; sourceTree = "<group>"; };
 		F4AE90731B4198E2007AC63E /* SshTerminalClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SshTerminalClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4AE90761B4198E2007AC63E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -55,6 +81,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		F4989F521B601D3600693A47 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F4989F751B601D5600693A47 /* SshTerminal.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F4AE902F1B41733E007AC63E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -74,6 +108,27 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F4989F561B601D3600693A47 /* TelnetTerminalClient */ = {
+			isa = PBXGroup;
+			children = (
+				F4989F591B601D3600693A47 /* AppDelegate.h */,
+				F4989F5A1B601D3600693A47 /* AppDelegate.m */,
+				F4989F5E1B601D3600693A47 /* Images.xcassets */,
+				F4989F601B601D3600693A47 /* TelnetMenu.xib */,
+				F4989F571B601D3600693A47 /* Supporting Files */,
+			);
+			path = TelnetTerminalClient;
+			sourceTree = "<group>";
+		};
+		F4989F571B601D3600693A47 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				F4989F581B601D3600693A47 /* Info.plist */,
+				F4989F5C1B601D3600693A47 /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
 		F4AE90291B41733E007AC63E = {
 			isa = PBXGroup;
 			children = (
@@ -82,6 +137,7 @@
 				F4AE904F1B4178BE007AC63E /* Sources */,
 				F4AE90351B41733E007AC63E /* SshTerminal */,
 				F4AE90741B4198E2007AC63E /* SshTerminalClient */,
+				F4989F561B601D3600693A47 /* TelnetTerminalClient */,
 				F4AE90341B41733E007AC63E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -91,6 +147,7 @@
 			children = (
 				F4AE90331B41733E007AC63E /* SshTerminal.framework */,
 				F4AE90731B4198E2007AC63E /* SshTerminalClient.app */,
+				F4989F551B601D3600693A47 /* TelnetTerminalClient.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -98,19 +155,26 @@
 		F4AE90351B41733E007AC63E /* SshTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				F4989F1A1B6008D600693A47 /* NetworkHelpers.h */,
+				F4989F181B6008A200693A47 /* NetworkHelpers.m */,
 				F4AE905F1B418EBF007AC63E /* SshConnection.h */,
 				F4AE90621B418EBF007AC63E /* SshConnection.m */,
 				F4A3E2FD1B569B930007D4C0 /* SshFoundation.h */,
-				F4AE90601B418EBF007AC63E /* SshStorage.h */,
-				F4AE90631B418EBF007AC63E /* SshStorage.m */,
 				F4AE90381B41733E007AC63E /* SshTerminal.h */,
 				F4AE90641B418EBF007AC63E /* SshTerminal.m */,
-				F4AE90611B418EBF007AC63E /* SshTerminalView.h */,
-				F4AE90651B418EBF007AC63E /* SshTerminalView.m */,
+				F4989F141B5FEED800693A47 /* VT100Connection.h */,
+				F4AE90601B418EBF007AC63E /* VT100Storage.h */,
+				F4AE90631B418EBF007AC63E /* VT100Storage.m */,
+				F4AE90611B418EBF007AC63E /* VT100TerminalView.h */,
+				F4AE90651B418EBF007AC63E /* VT100TerminalView.m */,
 				F4A3E2F51B5693A30007D4C0 /* SshTunnel.h */,
 				F4A3E2F61B5693A30007D4C0 /* SshTunnel.m */,
 				F4A3E2F91B5694420007D4C0 /* SshTunnelConnection.h */,
 				F4A3E2FA1B5694420007D4C0 /* SshTunnelConnection.m */,
+				F4989F101B5FE59300693A47 /* TelnetConnection.h */,
+				F4989F111B5FE59300693A47 /* TelnetConnection.m */,
+				F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */,
+				F4989F0D1B5FDC7900693A47 /* TelnetTerminal.m */,
 				F4AE90361B41733E007AC63E /* Supporting Files */,
 			);
 			path = SshTerminal;
@@ -166,19 +230,40 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4AE90681B418EBF007AC63E /* SshTerminalView.h in Headers */,
+				F4AE90681B418EBF007AC63E /* VT100TerminalView.h in Headers */,
 				F4A3E2FB1B5694420007D4C0 /* SshTunnelConnection.h in Headers */,
 				F4A3E2FE1B569B930007D4C0 /* SshFoundation.h in Headers */,
+				F4989F1B1B6008D600693A47 /* NetworkHelpers.h in Headers */,
 				F4AE90391B41733E007AC63E /* SshTerminal.h in Headers */,
-				F4AE90671B418EBF007AC63E /* SshStorage.h in Headers */,
+				F4AE90671B418EBF007AC63E /* VT100Storage.h in Headers */,
 				F4A3E2F71B5693A30007D4C0 /* SshTunnel.h in Headers */,
+				F4989F0E1B5FDC7900693A47 /* TelnetTerminal.h in Headers */,
 				F4AE90661B418EBF007AC63E /* SshConnection.h in Headers */,
+				F4989F161B5FEED800693A47 /* VT100Connection.h in Headers */,
+				F4989F121B5FE59300693A47 /* TelnetConnection.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		F4989F541B601D3600693A47 /* TelnetTerminalClient */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F4989F6F1B601D3600693A47 /* Build configuration list for PBXNativeTarget "TelnetTerminalClient" */;
+			buildPhases = (
+				F4989F511B601D3600693A47 /* Sources */,
+				F4989F521B601D3600693A47 /* Frameworks */,
+				F4989F531B601D3600693A47 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TelnetTerminalClient;
+			productName = TelnetTerminalClient;
+			productReference = F4989F551B601D3600693A47 /* TelnetTerminalClient.app */;
+			productType = "com.apple.product-type.application";
+		};
 		F4AE90321B41733E007AC63E /* SshTerminal */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F4AE90491B41733E007AC63E /* Build configuration list for PBXNativeTarget "SshTerminal" */;
@@ -223,6 +308,9 @@
 				LastUpgradeCheck = 0630;
 				ORGANIZATIONNAME = "Denis Vincent";
 				TargetAttributes = {
+					F4989F541B601D3600693A47 = {
+						CreatedOnToolsVersion = 6.3.1;
+					};
 					F4AE90321B41733E007AC63E = {
 						CreatedOnToolsVersion = 6.3.1;
 					};
@@ -246,11 +334,21 @@
 			targets = (
 				F4AE90321B41733E007AC63E /* SshTerminal */,
 				F4AE90721B4198E2007AC63E /* SshTerminalClient */,
+				F4989F541B601D3600693A47 /* TelnetTerminalClient */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		F4989F531B601D3600693A47 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F4989F5F1B601D3600693A47 /* Images.xcassets in Resources */,
+				F4989F621B601D3600693A47 /* TelnetMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F4AE90311B41733E007AC63E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -270,16 +368,28 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		F4989F511B601D3600693A47 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F4989F5D1B601D3600693A47 /* main.m in Sources */,
+				F4989F5B1B601D3600693A47 /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F4AE902E1B41733E007AC63E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4AE906A1B418EBF007AC63E /* SshStorage.m in Sources */,
-				F4AE906C1B418EBF007AC63E /* SshTerminalView.m in Sources */,
+				F4989F191B6008A200693A47 /* NetworkHelpers.m in Sources */,
+				F4AE906A1B418EBF007AC63E /* VT100Storage.m in Sources */,
+				F4989F131B5FE59300693A47 /* TelnetConnection.m in Sources */,
+				F4AE906C1B418EBF007AC63E /* VT100TerminalView.m in Sources */,
 				F4A3E2FC1B5694420007D4C0 /* SshTunnelConnection.m in Sources */,
 				F4AE90691B418EBF007AC63E /* SshConnection.m in Sources */,
 				F4A3E2F81B5693A30007D4C0 /* SshTunnel.m in Sources */,
 				F4AE906B1B418EBF007AC63E /* SshTerminal.m in Sources */,
+				F4989F0F1B5FDC7900693A47 /* TelnetTerminal.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -295,6 +405,14 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		F4989F601B601D3600693A47 /* TelnetMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F4989F611B601D3600693A47 /* Base */,
+			);
+			name = TelnetMenu.xib;
+			sourceTree = "<group>";
+		};
 		F4AE907E1B4198E2007AC63E /* MainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -306,6 +424,34 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		F4989F701B601D3600693A47 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = TelnetTerminalClient/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		F4989F711B601D3600693A47 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = TelnetTerminalClient/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		F4AE90471B41733E007AC63E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -470,6 +616,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		F4989F6F1B601D3600693A47 /* Build configuration list for PBXNativeTarget "TelnetTerminalClient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F4989F701B601D3600693A47 /* Debug */,
+				F4989F711B601D3600693A47 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		F4AE902D1B41733E007AC63E /* Build configuration list for PBXProject "SshTerminal" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -7,7 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "SshConnection.h"
+#import "VT100Connection.h"
 
 #define TERMINAL_BUFFER_SIZE 1024
 
@@ -23,9 +23,9 @@ typedef union
 } TerminalAttribute;
 
 
-@interface SshTerminalView : NSTextView <SshConnectionDataDelegate>
+@interface VT100TerminalView : NSTextView <VT100TerminalDataDelegate>
 {
-    SshConnection* connection;
+    id<VT100Connection> connection;
     NSTextStorage* storage;
     UInt8 inBuffer[TERMINAL_BUFFER_SIZE];
     UInt32 inIndex;
@@ -74,7 +74,7 @@ typedef union
 -(void)setRowCountForHeight:(int)height;
 -(void)initScreen;
 
--(void)setConnection:(SshConnection*)newConnection;
+-(void)setConnection:(id<VT100Connection>)newConnection;
 -(void)setCursorVisible:(BOOL)visible;
 
 -(void)newDataAvailableIn:(UInt8*)buffer length:(int)size;

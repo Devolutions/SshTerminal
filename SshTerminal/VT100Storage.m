@@ -6,9 +6,9 @@
 //  Copyright (c) 2015 Denis Vincent. All rights reserved.
 //
 
-#import "SshStorage.h"
+#import "VT100Storage.h"
 
-@implementation SshStorage
+@implementation VT100Storage
 
 -(NSString*)string
 {
@@ -56,7 +56,7 @@
 }
 
 
--(SshStorage*)init
+-(VT100Storage*)init
 {
     self = [super init];
     if (self != nil)

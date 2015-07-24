@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "VT100Connection.h"
 #import "SshFoundation.h"
 #import "SshTunnel.h"
 #import "SshTunnelConnection.h"
@@ -36,13 +37,6 @@ enum ConnectionEvent
 };
 
 
-@protocol SshConnectionDataDelegate <NSObject>
-
--(void)newDataAvailableIn:(UInt8*)buffer length:(int)size;
-
-@end
-
-
 @protocol SshConnectionEventDelegate <NSObject>
 
 -(void)signalError:(int)code;
@@ -50,7 +44,7 @@ enum ConnectionEvent
 @end
 
 
-@interface SshConnection : NSObject
+@interface SshConnection : NSObject <VT100Connection>
 {
     ssh_session session;
     ssh_channel channel;
@@ -73,7 +67,7 @@ enum ConnectionEvent
     NSMutableArray* reverseTunnels;
     NSMutableArray* tunnelConnections;
     
-    id<SshConnectionDataDelegate> dataDelegate;
+    id<VT100TerminalDataDelegate> dataDelegate;
     id<SshConnectionEventDelegate> eventDelegate;
 }
 
@@ -83,15 +77,12 @@ enum ConnectionEvent
 -(void)setUser:(NSString*)newUser;
 -(void)setKeyFilePath:(NSString*)newKeyFilePath withPassword:(NSString*)newPassword;
 -(void)setPassword:(NSString*)newPassword;
--(void)setWidth:(int)newWidth;
 
 -(void)addForwardTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 -(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 
--(void)setDataDelegate:(id<SshConnectionDataDelegate>)newDataDelegate;
 -(void)setEventDelegate:(id<SshConnectionEventDelegate>)newEventDelegate;
 
--(int)writeFrom:(const UInt8*)buffer length:(int)count;
 -(void)resume:(BOOL)isResuming andSaveHost:(BOOL)needsSaveHost;
 -(void)startConnection;
 -(void)endConnection;

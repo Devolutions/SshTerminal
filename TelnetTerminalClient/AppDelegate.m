@@ -1,22 +1,32 @@
 //
 //  AppDelegate.m
-//  LibSshTest
+//  TelnetTerminalClient
 //
-//  Created by Denis Vincent on 2015-06-03.
+//  Created by Denis Vincent on 2015-07-22.
 //  Copyright (c) 2015 Denis Vincent. All rights reserved.
 //
 
 #import "AppDelegate.h"
-#import "SshConnection.h"
+#import "TelnetTerminal.h"
 
+@interface AppDelegate () <TelnetTerminalEvent>
+{
+    BOOL resume;
+}
 
-SshConnection* sshConnection = NULL;
+@property (weak) IBOutlet NSWindow *window;
+@property (weak) IBOutlet TelnetTerminal *terminal;
+@property (weak) IBOutlet NSButton *connectButton;
+@property (weak) IBOutlet NSButton *disconnectButton;
+@property (weak) IBOutlet NSTextField *statusText;
+@property (weak) IBOutlet NSTextField *errorText;
+
+@end
 
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    resume = NO;
     [_terminal setEventDelegate:self];
 }
 
@@ -40,26 +50,9 @@ SshConnection* sshConnection = NULL;
 #define TEST_SERVER 0
         
 #if (TEST_SERVER == 0)
-        _terminal.userName = @"david";
-        _terminal.hostName = @"192.168.7.60";
-        [_terminal setPassword:@"123456"];
-#elif (TEST_SERVER == 1)
-        _terminal.userName = @"dvincent";
-        _terminal.hostName = @"192.168.4.1";
+        _terminal.userName = @"devolutions\\test";
+        _terminal.hostName = @"VDEVOSRV-TST.devolutions.loc";
         [_terminal setPassword:@"Price2011"];
-        [_terminal clearAllTunnels];
-#elif (TEST_SERVER == 2)
-        _terminal.userName = @"dvincent";
-        _terminal.hostName = @"192.168.4.1";
-        _terminal.keyFilePath = @"~/dvincentkey";
-        [_terminal setKeyFilePassword:@"123456"];
-#elif (TEST_SERVER == 3)
-        _terminal.userName = @"dvincent";
-        _terminal.hostName = @"192.168.4.1";
-        [_terminal setPassword:@"Price2011"];
-        [_terminal clearAllTunnels];
-        [_terminal addForwardTunnelWithPort:15500 onHost:@"localhost" andRemotePort:15501 onRemoteHost:@"localhost"];
-        [_terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
 #endif
         _terminal.columnCount = 80;
         [_terminal connect];
@@ -68,7 +61,6 @@ SshConnection* sshConnection = NULL;
     }
     else   // Resume.
     {
-        [_terminal resumeAndRememberServer];
         [_connectButton setTitle:@"Connect"];
         [_connectButton setEnabled:NO];
         resume = NO;

@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface SshStorage : NSTextStorage
+@interface VT100Storage : NSTextStorage
 {
     NSMutableAttributedString* theString;
     BOOL isEditing;
