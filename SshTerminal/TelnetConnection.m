@@ -35,6 +35,7 @@
 #define optionBinaryTransmission 0x00
 #define optionEcho 0x01
 #define optionSuppressGoAhead 0x03
+#define optionTerminalType 0x18
 #define optionAuthenticate 0x25
 #define optionNewEnvironment 0x27
 #define optionNegotiateAboutWindowSize 0x1f
@@ -51,6 +52,18 @@ typedef struct
     UInt8 remoteValue;
 } TelnetOption;
 
+// Sub option commands
+#define optionNewEnvironmentIs 0
+#define optionNewEnvironmentSend 1
+#define optionNewEnvironmentInfo 2
+#define optionNewEnvironmentVar 0
+#define optionNewEnvironmentValue 1
+#define optionNewEnvironmentEsc 2
+#define optionNewEnvironmentUserVar 3
+
+#define optionTerminalTypeIs 0
+#define optionTerminalTypeSend 1
+
 
 #define INPUT_BUFFER_SIZE 1024
 #define OUTPUT_BUFFER_SIZE 1024
@@ -64,7 +77,9 @@ typedef struct
     UInt16 port;
     int width;
     int height;
+    
     int fd;
+    BOOL userNameSent;
     
     UInt8 inBuffer[INPUT_BUFFER_SIZE];
     UInt8 outBuffer[OUTPUT_BUFFER_SIZE];
@@ -83,10 +98,11 @@ typedef struct
 
 // Methods called from the private queue thread.
 -(void)connect;
--(void)interpretRequest:(UInt8)request forOption:(UInt8)option;
--(int)interpretCommand:(int)i;
+-(void)send:(const void*)buffer withSize:(int)size;
+-(void)parseRequest:(UInt8)request forOption:(UInt8)option;
+-(int)parseSubOption:(int)i;
+-(int)parseCommand:(int)i;
 -(void)newTerminalDataAvailable;
--(void)closeAllChannels;
 -(void)disconnect;
 
 @end
@@ -141,8 +157,7 @@ typedef struct
     UInt8* writeBuffer = malloc(count);
     memcpy(writeBuffer, buffer, count);
     dispatch_async(queue, ^{
-        int result = (int)send(fd, writeBuffer, count, 0);
-        assert(result == count);
+        [self send:writeBuffer withSize:count];
         free(writeBuffer);
     });
     return count;
@@ -157,7 +172,7 @@ typedef struct
 
 -(void)endConnection
 {
-    dispatch_async(queue, ^{ [self closeAllChannels]; });
+    dispatch_async(queue, ^{ [self disconnect]; });
 }
 
 
@@ -214,6 +229,27 @@ typedef struct
     }
     dispatch_source_set_event_handler(readSource, ^{ [self newTerminalDataAvailable]; });
     dispatch_resume(readSource);
+    
+    // The connection process will continue when the server iniate options negotiation, which will result in a call to newTerminalDataAvailable.
+}
+
+
+-(void)send:(const void *)buffer withSize:(int)size
+{
+    for (int i = 0; i < 10; i++)
+    {
+        int result = (int)send(fd, buffer, size, 0);
+        if (result == size)
+        {
+            return;
+        }
+        buffer += result;
+        size -= result;
+        [NSThread sleepForTimeInterval:0.100];
+    }
+    
+    // If it gets here, it means there is a connection problem.
+    dispatch_async(queue, ^{ [self disconnect]; });
 }
 
 
@@ -223,8 +259,7 @@ typedef struct
     buffer[0] = IAC;
     buffer[1] = request;
     buffer[2] = option;
-    int result = (int)send(fd, buffer, 3, 0);
-    assert(result == 3);
+    [self send:buffer withSize:3];
 }
 
 
@@ -250,12 +285,70 @@ typedef struct
     buffer[i++] = IAC;
     buffer[i++] = SE;
     
-    int result = (int)send(fd, buffer, i, 0);
-    assert(result == i);
+    [self send:buffer withSize:i];
 }
 
 
--(void)interpretRequest:(UInt8)request forOption:(UInt8)option
+-(void)writePassword
+{
+    const char* passwordString = [password UTF8String];
+    int passwordSize = (int)strlen(passwordString);
+    char* buffer = malloc(passwordSize + 1);
+    if (buffer == NULL)
+    {
+        return;
+    }
+    
+    memcpy(buffer, passwordString, passwordSize);
+    buffer[passwordSize] = '\r';
+    
+    [self send:buffer withSize:passwordSize + 1];
+    [self eventNotify:tceConnected];
+}
+
+
+-(void)writeNewEnvironment
+{
+    const char* userString = [user UTF8String];
+    int bufferSize = (userNameSent == NO ? 12 + (int)strlen(userString) : 6);
+    UInt8* buffer = malloc(bufferSize);
+    if (buffer == NULL)
+    {
+        return;
+    }
+    
+    int i = 0;
+    buffer[i++] = IAC;
+    buffer[i++] = SB;
+    buffer[i++] = optionNewEnvironment;
+    buffer[i++] = optionNewEnvironmentIs;
+    if (userNameSent == NO)
+    {
+        buffer[i++] = optionNewEnvironmentVar;
+        strcpy((char*)buffer + i, "USER");
+        i += 4;
+        buffer[i++] = optionNewEnvironmentValue;
+        strcpy((char*)buffer + i, userString);
+        i += strlen(userString);
+        userNameSent = YES;
+        
+        dispatch_async(queue, ^{ [self writePassword]; });
+    }
+    buffer[i++] = IAC;
+    buffer[i++] = SE;
+    
+    [self send:buffer withSize:bufferSize];
+}
+
+
+-(void)writeTerminalType
+{
+    static const char vt100Command[] = { IAC, SB, optionTerminalType, optionTerminalTypeIs, 'D', 'E', 'C', '-', 'V', 'T', '1', '0', '0', IAC, SE };
+    [self send:vt100Command withSize:sizeof(vt100Command)];
+}
+
+
+-(void)parseRequest:(UInt8)request forOption:(UInt8)option
 {
     printf("interpretRequest:%d forOption:%d\r\n", request, option);
     TelnetOption* telnetOption = options + option;
@@ -294,10 +387,12 @@ typedef struct
             }
             break;
         }*/
-            
+
         case optionBinaryTransmission:
         case optionEcho:
         case optionSuppressGoAhead:
+        case optionNewEnvironment:
+        case optionTerminalType:
         {
             // Standard options:
             if (request == DO)
@@ -381,6 +476,7 @@ typedef struct
             
         default:
         {
+            // Unknown options: refuse them.
             if (request == DO)
             {
                 [self writeOption:option withRequest:WONT];
@@ -395,7 +491,63 @@ typedef struct
 }
 
 
--(int)interpretCommand:(int)i
+-(void)parseNewEnvironmentFrom:(int)i to:(int)end
+{
+    if (inBuffer[i] == optionNewEnvironmentSend)
+    {
+        // For now, there is only the USER variable, so send it for any variable request.
+        [self writeNewEnvironment];
+    }
+}
+
+
+-(void)parseTerminalTypeFrom:(int)i to:(int)end
+{
+    if (inBuffer[i] == optionTerminalTypeSend)
+    {
+        // For now, there is only the VT-100 terminal type, so send it for any terminal type request.
+        [self writeTerminalType];
+    }
+}
+
+
+-(int)parseSubOption:(int)i
+{
+    int subOptionBegin = i;
+    
+    // Find the sub option end.
+    int subOptionEnd = i;
+    for (int j = i + 2; j + 1 < inIndex; j++)
+    {
+        if (inBuffer[j] == IAC && inBuffer[j + 1] == SE)
+        {
+            subOptionEnd = j;
+            break;
+        }
+    }
+    
+    // Interpret the sub option.
+    switch (inBuffer[i + 2])
+    {
+        case optionNewEnvironment:
+        {
+            [self parseNewEnvironmentFrom:subOptionBegin + 3 to:subOptionEnd];
+            break;
+        }
+            
+        case optionTerminalType:
+        {
+            [self parseTerminalTypeFrom:subOptionBegin + 3 to:subOptionEnd];
+            break;
+        }
+    }
+    
+    // Return the sub otion length, zero if incomplete.
+    return subOptionEnd - subOptionBegin + 2;
+}
+
+
+-(int)parseCommand:(int)i
 {
     if (i + 1 >= inIndex)
     {
@@ -408,8 +560,7 @@ typedef struct
         case SB:
         {
             // Sub option begin:
-            printf("SB\r\n");
-            break;
+            return [self parseSubOption:i];
         }
             
         case WILL:
@@ -422,7 +573,7 @@ typedef struct
                 // Not enough data to interpret an option request:
                 return 0;
             }
-            [self interpretRequest:inBuffer[i + 1] forOption:inBuffer[i + 2]];
+            [self parseRequest:inBuffer[i + 1] forOption:inBuffer[i + 2]];
             return 3;
         }
     }
@@ -472,7 +623,7 @@ typedef struct
             else
             {
                 // This is really a command:
-                int commandLen = [self interpretCommand:i];
+                int commandLen = [self parseCommand:i];
                 if (commandLen == 0)
                 {
                     // The command is not complete:
@@ -506,24 +657,6 @@ typedef struct
         memmove(inBuffer, inBuffer + i, inIndex - i);
     }
     inIndex -= i;
-}
-
-
--(void)openTunnelChannels
-{
-
-}
-
-
--(void)newSshDataAvailable
-{
-
-}
-
-
--(void)closeAllChannels
-{
-
 }
 
 
