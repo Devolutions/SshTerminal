@@ -32,12 +32,12 @@
 		F4AE906A1B418EBF007AC63E /* VT100Storage.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90631B418EBF007AC63E /* VT100Storage.m */; };
 		F4AE906B1B418EBF007AC63E /* SshTerminal.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90641B418EBF007AC63E /* SshTerminal.m */; };
 		F4AE906C1B418EBF007AC63E /* VT100TerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90651B418EBF007AC63E /* VT100TerminalView.m */; };
-		F4AE906E1B419457007AC63E /* libssh.4.5.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F4AE906D1B419457007AC63E /* libssh.4.5.1.dylib */; };
 		F4AE90791B4198E2007AC63E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90781B4198E2007AC63E /* AppDelegate.m */; };
 		F4AE907B1B4198E2007AC63E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE907A1B4198E2007AC63E /* main.m */; };
 		F4AE907D1B4198E2007AC63E /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4AE907C1B4198E2007AC63E /* Images.xcassets */; };
 		F4AE90801B4198E2007AC63E /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = F4AE907E1B4198E2007AC63E /* MainMenu.xib */; };
 		F4AE90931B419911007AC63E /* SshTerminal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4AE90331B41733E007AC63E /* SshTerminal.framework */; };
+		F4E9654F1B7BC8D10072D98D /* libssh.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F4E9654E1B7BC8D10072D98D /* libssh.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -78,6 +78,7 @@
 		F4AE907A1B4198E2007AC63E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		F4AE907C1B4198E2007AC63E /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		F4AE907F1B4198E2007AC63E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		F4E9654E1B7BC8D10072D98D /* libssh.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssh.dylib; path = SshTerminal/libssh/libssh.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,7 +94,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4AE906E1B419457007AC63E /* libssh.4.5.1.dylib in Frameworks */,
+				F4E9654F1B7BC8D10072D98D /* libssh.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -132,6 +133,7 @@
 		F4AE90291B41733E007AC63E = {
 			isa = PBXGroup;
 			children = (
+				F4E9654E1B7BC8D10072D98D /* libssh.dylib */,
 				F4AE906D1B419457007AC63E /* libssh.4.5.1.dylib */,
 				F4AE905E1B418D56007AC63E /* LibSsh */,
 				F4AE904F1B4178BE007AC63E /* Sources */,
@@ -623,6 +625,7 @@
 				F4989F711B601D3600693A47 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		F4AE902D1B41733E007AC63E /* Build configuration list for PBXProject "SshTerminal" */ = {
 			isa = XCConfigurationList;

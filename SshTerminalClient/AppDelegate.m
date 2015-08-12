@@ -58,8 +58,8 @@ SshConnection* sshConnection = NULL;
         _terminal.hostName = @"192.168.4.1";
         [_terminal setPassword:@"Price2011"];
         [_terminal clearAllTunnels];
-        [_terminal addForwardTunnelWithPort:15500 onHost:@"localhost" andRemotePort:15501 onRemoteHost:@"localhost"];
-        [_terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
+        [_terminal addForwardTunnelWithPort:3389 onHost:@"" andRemotePort:3389 onRemoteHost:@"NEO-CB"];
+        //[_terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
 #endif
         _terminal.columnCount = 80;
         [_terminal connect];

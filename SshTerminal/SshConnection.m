@@ -412,7 +412,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     {
         SshTunnel* tunnel = [reverseTunnels objectAtIndex:i];
         int boundPort;
-        int result = ssh_forward_listen(session, [tunnel.remoteHost UTF8String], tunnel.remotePort, &boundPort);
+        int result = ssh_channel_listen_forward(session, [tunnel.remoteHost UTF8String], tunnel.remotePort, &boundPort);
         if (result != SSH_OK)
         {
             [self eventNotify:TUNNEL_ERROR];
@@ -619,7 +619,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     for (int i = 0; i < [reverseTunnels count]; i++)
     {
         SshTunnel* tunnel = [reverseTunnels objectAtIndex:i];
-        ssh_forward_cancel(session, [tunnel.remoteHost UTF8String], tunnel.remotePort);
+        ssh_channel_cancel_forward(session, [tunnel.remoteHost UTF8String], tunnel.remotePort);
     }
     [reverseTunnels removeAllObjects];
     
