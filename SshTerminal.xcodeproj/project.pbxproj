@@ -70,7 +70,6 @@
 		F4AE90631B418EBF007AC63E /* VT100Storage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Storage.m; sourceTree = "<group>"; };
 		F4AE90641B418EBF007AC63E /* SshTerminal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SshTerminal.m; sourceTree = "<group>"; };
 		F4AE90651B418EBF007AC63E /* VT100TerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TerminalView.m; sourceTree = "<group>"; };
-		F4AE906D1B419457007AC63E /* libssh.4.5.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssh.4.5.1.dylib; path = SshTerminal/libssh/libssh.4.5.1.dylib; sourceTree = "<group>"; };
 		F4AE90731B4198E2007AC63E /* SshTerminalClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SshTerminalClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4AE90761B4198E2007AC63E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F4AE90771B4198E2007AC63E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -134,7 +133,6 @@
 			isa = PBXGroup;
 			children = (
 				F4E9654E1B7BC8D10072D98D /* libssh.dylib */,
-				F4AE906D1B419457007AC63E /* libssh.4.5.1.dylib */,
 				F4AE905E1B418D56007AC63E /* LibSsh */,
 				F4AE904F1B4178BE007AC63E /* Sources */,
 				F4AE90351B41733E007AC63E /* SshTerminal */,
