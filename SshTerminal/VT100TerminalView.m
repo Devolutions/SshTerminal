@@ -105,6 +105,7 @@ NSString* TAName = @"TerminalAttributeName";
         NSArray* classes = [[NSArray alloc] initWithObjects:[NSString class], nil];
         NSDictionary* options = [NSDictionary dictionary];
         NSArray* copiedItems = [pasteboard readObjectsForClasses:classes options:options];
+        [classes release];
         if (copiedItems != nil)
         {
             for (int i = 0; i < copiedItems.count; i++)
@@ -1409,6 +1410,7 @@ NSString* TAName = @"TerminalAttributeName";
         [storage replaceCharactersInRange:range withAttributedString:testLine];
         range.location += STORAGE_WIDTH;
     }
+    [testLine release];
 }
 
 
@@ -1594,6 +1596,7 @@ NSString* TAName = @"TerminalAttributeName";
                     {
                         NSString* argString = [[NSString alloc] initWithBytes:inBuffer + argStart length:j - argStart encoding:NSUTF8StringEncoding];
                         args[argIndex] = [argString intValue];
+                        [argString release];
                         argStart = -1;
                     }
                     argIndex++;

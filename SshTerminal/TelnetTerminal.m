@@ -168,6 +168,7 @@
     
     NSClipView* clip = [[NSClipView alloc] init];
     [self setContentView:clip];
+    [clip release];
 
     NSRect rect;
     rect.origin = NSMakePoint(0, 0);

@@ -270,6 +270,7 @@
     
     [self send:buffer withSize:passwordSize + 1];
     [self eventNotify:tceConnected];
+    free(buffer);
 }
 
 
@@ -304,6 +305,7 @@
     buffer[i++] = SE;
     
     [self send:buffer withSize:bufferSize];
+    free(buffer);
 }
 
 

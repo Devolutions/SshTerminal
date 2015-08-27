@@ -55,6 +55,7 @@
         tunnelConnection->readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, tunnelConnection->fd, 0, queue);
         if (tunnelConnection->readSource == nil)
         {
+            [tunnelConnection release];
             return nil;
         }
         dispatch_source_set_event_handler(tunnelConnection->readSource, ^{ [tunnelConnection newLocalDataAvailable]; });

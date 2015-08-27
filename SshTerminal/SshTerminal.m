@@ -74,6 +74,7 @@
     tunnel.remoteHostName = newRemoteHostName;
     tunnel.reverse = NO;
     [tunnels addObject:tunnel];
+    [tunnel release];
 }
 
 
@@ -86,6 +87,7 @@
     tunnel.remoteHostName = newRemoteHostName;
     tunnel.reverse = YES;
     [tunnels addObject:tunnel];
+    [tunnel release];
 }
 
 
@@ -289,6 +291,7 @@
     
     NSClipView* clip = [[NSClipView alloc] init];
     [self setContentView:clip];
+    [clip release];
 
     NSRect rect;
     rect.origin = NSMakePoint(0, 0);

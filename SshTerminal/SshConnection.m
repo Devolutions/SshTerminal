@@ -100,6 +100,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     tunnel.reverse = NO;
     
     [forwardTunnels addObject:tunnel];
+    [tunnel release];
 }
 
 
@@ -114,6 +115,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     tunnel.reverse = YES;
     
     [reverseTunnels addObject:tunnel];
+    [tunnel release];
 }
 
 
@@ -161,7 +163,6 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     
     char* hexString = ssh_get_hexa(hash, len);
     NSString* returnString = [NSString stringWithUTF8String:hexString];
-    [returnString autorelease];
     
     free(hexString);
     free(hash);
