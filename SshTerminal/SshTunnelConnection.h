@@ -14,6 +14,7 @@
 
 @interface SshTunnelConnection : NSObject
 {
+    SshTunnel* tunnel;
     int fd;
     ssh_channel channel;
     dispatch_source_t readSource;

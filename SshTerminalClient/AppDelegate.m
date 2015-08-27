@@ -14,16 +14,24 @@ SshConnection* sshConnection = NULL;
 
 @implementation AppDelegate
 
+@synthesize terminal;
+@synthesize errorText;
+@synthesize statusText;
+@synthesize connectButton;
+@synthesize disconnectButton;
+@synthesize window;
+
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     resume = NO;
-    [_terminal setEventDelegate:self];
+    [terminal setEventDelegate:self];
 }
 
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification
 {
-    _terminal = NULL;
+    terminal = NULL;
 }
 
 
@@ -40,37 +48,37 @@ SshConnection* sshConnection = NULL;
 #define TEST_SERVER 0
         
 #if (TEST_SERVER == 0)
-        _terminal.userName = @"david";
-        _terminal.hostName = @"192.168.7.60";
-        [_terminal setPassword:@"123456"];
+        terminal.userName = @"david";
+        terminal.hostName = @"192.168.7.60";
+        [terminal setPassword:@"123456"];
 #elif (TEST_SERVER == 1)
-        _terminal.userName = @"dvincent";
-        _terminal.hostName = @"192.168.4.1";
-        [_terminal setPassword:@"Price2011"];
-        [_terminal clearAllTunnels];
+        terminal.userName = @"dvincent";
+        terminal.hostName = @"192.168.4.1";
+        [terminal setPassword:@"Price2011"];
+        [terminal clearAllTunnels];
 #elif (TEST_SERVER == 2)
-        _terminal.userName = @"dvincent";
-        _terminal.hostName = @"192.168.4.1";
-        _terminal.keyFilePath = @"~/dvincentkey";
-        [_terminal setKeyFilePassword:@"123456"];
+        terminal.userName = @"dvincent";
+        terminal.hostName = @"192.168.4.1";
+        terminal.keyFilePath = @"~/dvincentkey";
+        [terminal setKeyFilePassword:@"123456"];
 #elif (TEST_SERVER == 3)
-        _terminal.userName = @"dvincent";
-        _terminal.hostName = @"192.168.4.1";
-        [_terminal setPassword:@"Price2011"];
-        [_terminal clearAllTunnels];
-        [_terminal addForwardTunnelWithPort:3389 onHost:@"" andRemotePort:3389 onRemoteHost:@"NEO-CB"];
-        //[_terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
+        terminal.userName = @"dvincent";
+        terminal.hostName = @"192.168.4.1";
+        [terminal setPassword:@"Price2011"];
+        [terminal clearAllTunnels];
+        [terminal addForwardTunnelWithPort:3389 onHost:@"" andRemotePort:3389 onRemoteHost:@"NEO-CB"];
+        //[terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
 #endif
-        _terminal.columnCount = 80;
-        [_terminal connect];
-        [_statusText setStringValue:@"Connecting"];
-        [_connectButton setEnabled:NO];
+        terminal.columnCount = 80;
+        [terminal connect];
+        [statusText setStringValue:@"Connecting"];
+        [connectButton setEnabled:NO];
     }
     else   // Resume.
     {
-        [_terminal resumeAndRememberServer];
-        [_connectButton setTitle:@"Connect"];
-        [_connectButton setEnabled:NO];
+        [terminal resumeAndRememberServer];
+        [connectButton setTitle:@"Connect"];
+        [connectButton setEnabled:NO];
         resume = NO;
     }
 }
@@ -78,34 +86,34 @@ SshConnection* sshConnection = NULL;
 
 - (IBAction)disconnect:(id)sender
 {
-    [_terminal disconnect];
-    [_connectButton setTitle:@"Connect"];
-    [_connectButton setEnabled:NO];
+    [terminal disconnect];
+    [connectButton setTitle:@"Connect"];
+    [connectButton setEnabled:NO];
     resume = NO;
 }
 
 
 -(void)connected
 {
-    [_statusText setStringValue:@"Connected"];
-    [_disconnectButton setEnabled:YES];
+    [statusText setStringValue:@"Connected"];
+    [disconnectButton setEnabled:YES];
 }
 
 
 -(void)disconnected
 {
-    [_statusText setStringValue:@"Disconnected"];
-    [_disconnectButton setEnabled:NO];
-    [_connectButton setEnabled:YES];
+    [statusText setStringValue:@"Disconnected"];
+    [disconnectButton setEnabled:NO];
+    [connectButton setEnabled:YES];
 }
 
 
 -(void)serverMismatch:(NSString *)fingerPrint
 {
-    [_errorText setStringValue:fingerPrint];
-    [_connectButton setTitle:@"Resume"];
-    [_connectButton setEnabled:YES];
-    [_disconnectButton setEnabled:YES];
+    [errorText setStringValue:fingerPrint];
+    [connectButton setTitle:@"Resume"];
+    [connectButton setEnabled:YES];
+    [disconnectButton setEnabled:YES];
     resume = YES;
 }
 
@@ -113,7 +121,7 @@ SshConnection* sshConnection = NULL;
 -(void)error:(int)code
 {
     NSString* errorString = [NSString stringWithFormat:@"Error: %d", code];
-    [_errorText setStringValue:errorString];
+    [errorText setStringValue:errorString];
 }
 
 

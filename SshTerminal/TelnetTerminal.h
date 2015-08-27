@@ -26,7 +26,22 @@ enum
 @end
 
 
+@class VT100TerminalView;
+@class TelnetConnection;
+
 @interface TelnetTerminal : NSScrollView
+{
+    VT100TerminalView* terminalView;
+    TelnetConnection* connection;
+    
+    NSString* password;
+    NSString* hostName;
+    NSString* userName;
+    UInt16 port;
+    int columnCount;
+    int state;
+    id<TelnetTerminalEvent> eventDelegate;
+}
 
 @property(copy,nonatomic)NSString* hostName;   // Host name or IP address.
 @property(assign)UInt16 port;

@@ -25,12 +25,14 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 -(void)setDataDelegate:(id<VT100TerminalDataDelegate>)newDataDelegate
 {
     dataDelegate = newDataDelegate;
+    [newDataDelegate retain];
 }
 
 
 -(void)setEventDelegate:(id<SshConnectionEventDelegate>)newEventDelegate
 {
     eventDelegate = newEventDelegate;
+    [newEventDelegate retain];
 }
 
 
@@ -60,18 +62,24 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     {
         if ([newKeyFilePath length] > 0)
         {
+            [keyFilePath release];
             keyFilePath = newKeyFilePath;
+            [keyFilePath retain];
             useKeyAuthentication = YES;
         }
     }
     
+    [keyFilePassword release];
     keyFilePassword = newPassword;
+    [keyFilePassword retain];
 }
 
 
 -(void)setPassword:(NSString*)passwordString
 {
+    [password release];
     password = passwordString;
+    [password retain];
 }
 
 
@@ -153,6 +161,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     
     char* hexString = ssh_get_hexa(hash, len);
     NSString* returnString = [NSString stringWithUTF8String:hexString];
+    [returnString autorelease];
     
     free(hexString);
     free(hash);
@@ -693,6 +702,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             ssh_finalize();
         }
     }
+    [super dealloc];
 }
 
 

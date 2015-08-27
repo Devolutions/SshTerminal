@@ -33,7 +33,25 @@ enum
 @end
 
 
+@class VT100TerminalView;
+@class SshConnection;
+
 @interface SshTerminal : NSScrollView
+{
+    VT100TerminalView* terminalView;
+    SshConnection* connection;
+    
+    NSString* password;
+    NSString* hostName;
+    NSString* userName;
+    NSString* keyFilePath;
+    NSString* keyFilePassword;
+    UInt16 port;
+    int columnCount;
+    int state;
+    id<SshTerminalEvent> eventDelegate;
+    NSMutableArray* tunnels;
+}
 
 @property(copy,nonatomic)NSString* hostName;   // Host name or IP address.
 @property(assign)UInt16 port;

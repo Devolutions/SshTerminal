@@ -13,18 +13,6 @@
 
 // Private extension.
 @interface TelnetTerminal () <TelnetConnectionEventDelegate>
-{
-    VT100TerminalView* terminalView;
-    TelnetConnection* connection;
-
-    NSString* password;
-    NSString* hostName;
-    NSString* userName;
-    UInt16 port;
-    int columnCount;
-    int state;
-    id<TelnetTerminalEvent> eventDelegate;
-}
 
 @end
 

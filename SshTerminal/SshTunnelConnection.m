@@ -11,6 +11,7 @@
 @implementation SshTunnelConnection
 
 @synthesize fd;
+@synthesize tunnel;
 @synthesize endedByRemote;
 
 
@@ -200,6 +201,7 @@
 -(void)dealloc
 {
     [self releaseResources];
+    [super dealloc];
 }
 
 

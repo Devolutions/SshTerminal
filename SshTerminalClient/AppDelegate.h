@@ -11,6 +11,12 @@
 
 @interface AppDelegate : NSObject <NSApplicationDelegate, SshTerminalEvent>
 {
+    IBOutlet NSWindow *window;
+    IBOutlet SshTerminal *terminal;
+    IBOutlet NSTextField *errorText;
+    IBOutlet NSTextField *statusText;
+    IBOutlet NSButton *connectButton;
+    IBOutlet NSButton *disconnectButton;
     NSTextStorage* storage;
     BOOL resume;
 }

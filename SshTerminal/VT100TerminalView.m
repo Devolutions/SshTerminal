@@ -1350,7 +1350,7 @@ NSString* TAName = @"TerminalAttributeName";
                         row -= topMargin;
                     }
                     SInt32 col = curX + 1;
-                    sprintf((char*)report, "\x1B[%d;%dR", row, col);
+                    sprintf((char*)report, "\x1B[%d;%dR", (int)row, (int)col);
                     [connection writeFrom:report length:(int)strlen((char*)report)];
                 }
             }
@@ -2077,6 +2077,7 @@ NSString* TAName = @"TerminalAttributeName";
         [paragraphStyle setLineBreakMode:NSLineBreakByCharWrapping];
         [paragraphStyle setParagraphSpacing:0];
         newLineAttributes = [NSDictionary dictionaryWithObjectsAndKeys:normalFont, NSFontAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil];
+        [newLineAttributes retain];
         blankChar = [[NSAttributedString alloc] initWithString:@" " attributes:newLineAttributes];
         lineFeed = [[NSAttributedString alloc] initWithString:@"\r\n" attributes:newLineAttributes];
         insert = [[NSMutableAttributedString alloc] init];

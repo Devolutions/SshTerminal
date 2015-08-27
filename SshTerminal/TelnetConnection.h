@@ -11,6 +11,10 @@
 #import "NetworkHelpers.h"
 
 
+#define INPUT_BUFFER_SIZE 1024
+#define OUTPUT_BUFFER_SIZE 1024
+
+
 enum TelnetConnectionEvent
 {
     tceFatalError,
@@ -27,7 +31,38 @@ enum TelnetConnectionEvent
 @end
 
 
+typedef struct
+{
+    UInt8 value;
+    UInt8 remoteValue;
+} TelnetOption;
+
 @interface TelnetConnection : NSObject <VT100Connection>
+{
+    NSString* host;
+    NSString* user;
+    NSString* password;
+    UInt16 port;
+    int width;
+    int height;
+    
+    int fd;
+    BOOL userNameSent;
+    
+    UInt8 inBuffer[INPUT_BUFFER_SIZE];
+    UInt8 outBuffer[OUTPUT_BUFFER_SIZE];
+    int inIndex;
+    int outIndex;
+    
+    dispatch_queue_t queue;
+    dispatch_queue_t mainQueue;
+    dispatch_source_t readSource;
+    
+    TelnetOption options[256];
+    
+    id<VT100TerminalDataDelegate> dataDelegate;
+    id<TelnetConnectionEventDelegate> eventDelegate;
+}
 
 // Methods called from the UI thread.
 -(void)setHost:(NSString*)newHost;

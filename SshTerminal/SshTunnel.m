@@ -11,6 +11,7 @@
 
 @implementation SshTunnel
 
+@synthesize reverse;
 @synthesize port;
 @synthesize remotePort;
 @synthesize host;
@@ -148,6 +149,7 @@
 -(void)dealloc
 {
     [self releaseResources];
+    [super dealloc];
 }
 
 

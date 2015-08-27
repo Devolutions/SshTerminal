@@ -11,6 +11,7 @@
 
 @interface SshTunnel : NSObject
 {
+    BOOL reverse;
     UInt16 port;
     UInt16 remotePort;
     int listenFd;

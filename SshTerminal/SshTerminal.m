@@ -13,6 +13,13 @@
 
 // Helper object.
 @interface TunnelProperties : NSObject
+{
+    NSString* hostName;
+    NSString* remoteHostName;
+    SInt16 port;
+    SInt16 remotePort;
+    BOOL reverse;
+}
 @property(copy,nonatomic)NSString* hostName;
 @property(assign)SInt16 port;
 @property(copy,nonatomic)NSString* remoteHostName;
@@ -21,26 +28,16 @@
 @end
 
 @implementation TunnelProperties
+@synthesize hostName;
+@synthesize port;
+@synthesize remoteHostName;
+@synthesize remotePort;
+@synthesize reverse;
 @end
 
 
 // Private extension.
 @interface SshTerminal () <SshConnectionEventDelegate>
-{
-    VT100TerminalView* terminalView;
-    SshConnection* connection;
-
-    NSString* password;
-    NSString* hostName;
-    NSString* userName;
-    NSString* keyFilePath;
-    NSString* keyFilePassword;
-    UInt16 port;
-    int columnCount;
-    int state;
-    id<SshTerminalEvent> eventDelegate;
-    NSMutableArray* tunnels;
-}
 
 @end
 

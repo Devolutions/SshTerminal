@@ -46,11 +46,6 @@
 #define optionWontRequest 0x11
 #define optionDoRequest 0x20
 #define optionDontRequest 0x21
-typedef struct
-{
-    UInt8 value;
-    UInt8 remoteValue;
-} TelnetOption;
 
 // Sub option commands
 #define optionNewEnvironmentIs 0
@@ -65,36 +60,7 @@ typedef struct
 #define optionTerminalTypeSend 1
 
 
-#define INPUT_BUFFER_SIZE 1024
-#define OUTPUT_BUFFER_SIZE 1024
-
-
 @interface TelnetConnection ()
-{
-    NSString* host;
-    NSString* user;
-    NSString* password;
-    UInt16 port;
-    int width;
-    int height;
-    
-    int fd;
-    BOOL userNameSent;
-    
-    UInt8 inBuffer[INPUT_BUFFER_SIZE];
-    UInt8 outBuffer[OUTPUT_BUFFER_SIZE];
-    int inIndex;
-    int outIndex;
-    
-    dispatch_queue_t queue;
-    dispatch_queue_t mainQueue;
-    dispatch_source_t readSource;
-    
-    TelnetOption options[256];
-    
-    id<VT100TerminalDataDelegate> dataDelegate;
-    id<TelnetConnectionEventDelegate> eventDelegate;
-}
 
 // Methods called from the private queue thread.
 -(void)connect;
@@ -696,7 +662,7 @@ typedef struct
 
 -(void)dealloc
 {
-
+    [super dealloc];
 }
 
 
