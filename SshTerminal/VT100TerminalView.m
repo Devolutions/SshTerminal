@@ -2112,6 +2112,7 @@ NSString* TAName = @"TerminalAttributeName";
         
         NSFontManager* fontManager = [NSFontManager sharedFontManager];
         boldFont = [fontManager convertFont:normalFont toHaveTrait:NSBoldFontMask];
+        [boldFont retain];
     }
     
     return self;

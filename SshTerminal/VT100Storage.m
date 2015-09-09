@@ -36,26 +36,6 @@
 }
 
 
--(void)beginEditing
-{
-    if (isEditing == NO)
-    {
-        [super beginEditing];
-        isEditing = YES;
-    }
-}
-
-
--(void)endEditing
-{
-    if (isEditing == YES && [self editedMask] != 0)
-    {
-        [super endEditing];
-        isEditing = NO;
-    }
-}
-
-
 -(VT100Storage*)init
 {
     self = [super init];

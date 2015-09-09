@@ -280,7 +280,12 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     else
     {
         // User authentication by password:
-        int result = ssh_userauth_password(session, NULL, [password UTF8String]);
+        int result;
+        do
+        {
+            result = ssh_userauth_password(session, NULL, [password UTF8String]);
+        } while (result == SSH_AUTH_AGAIN);
+        
         if (result != SSH_AUTH_SUCCESS)
         {
             if (result == SSH_AUTH_ERROR)

@@ -55,13 +55,13 @@
 
 -(void)setPassword:(NSString *)string
 {
-    password = string;
+    password = [string copy];
 }
 
 
 -(void)setKeyFilePassword:(NSString *)string
 {
-    keyFilePassword = string;
+    keyFilePassword = [string copy];
 }
 
 
