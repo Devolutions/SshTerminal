@@ -29,7 +29,7 @@
 
 -(void)setPassword:(NSString *)string
 {
-    password = string;
+    password = [string copy];
 }
 
 
