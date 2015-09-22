@@ -51,6 +51,8 @@ SshConnection* sshConnection = NULL;
         terminal.userName = @"david";
         terminal.hostName = @"192.168.7.60";
         [terminal setPassword:@"123456"];
+        terminal.x11Forwarding = YES;
+        //terminal.x11Display = @"192.168.4.1:0";
 #elif (TEST_SERVER == 1)
         terminal.userName = @"dvincent";
         terminal.hostName = @"192.168.4.1";
@@ -97,6 +99,7 @@ SshConnection* sshConnection = NULL;
 {
     [statusText setStringValue:@"Connected"];
     [disconnectButton setEnabled:YES];
+    //[terminal send:@"xeyes\r\n"];
 }
 
 

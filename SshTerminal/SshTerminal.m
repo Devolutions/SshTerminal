@@ -51,6 +51,8 @@
 @synthesize columnCount;
 @synthesize state;
 @synthesize port;
+@synthesize x11Forwarding;
+@synthesize x11Display;
 
 
 -(void)setPassword:(NSString *)string
@@ -130,6 +132,7 @@
             [connection addReverseTunnelPort:tunnel.port host:tunnel.hostName remotePort:tunnel.remotePort remoteHost:tunnel.remoteHostName];
         }
     }
+    [connection setX11Forwarding:x11Forwarding withDisplay:x11Display];
     
     [terminalView setColumnCount:columnCount];
     [terminalView setRowCountForHeight:self.contentSize.height];
@@ -177,6 +180,20 @@
         }
         state = sshTerminalDisconnected;
         [connection endConnection];
+    }
+}
+
+
+-(void)send:(NSString *)string
+{
+    if (connection != nil)
+    {
+        if (state != sshTerminalConnected)
+        {
+            return;
+        }
+        const char* utf8String = [string UTF8String];
+        [connection writeFrom:(const UInt8*)utf8String length:strlen(utf8String)];
     }
 }
 

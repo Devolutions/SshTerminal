@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <sys/un.h>
 
 
 #define LO_BYTE(x) (((UInt8*)(&x))[0])

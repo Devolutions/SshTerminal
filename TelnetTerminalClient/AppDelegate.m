@@ -7,33 +7,30 @@
 //
 
 #import "AppDelegate.h"
-#import "TelnetTerminal.h"
 
 @interface AppDelegate () <TelnetTerminalEvent>
-{
-    BOOL resume;
-}
 
-@property (weak) IBOutlet NSWindow *window;
-@property (weak) IBOutlet TelnetTerminal *terminal;
-@property (weak) IBOutlet NSButton *connectButton;
-@property (weak) IBOutlet NSButton *disconnectButton;
-@property (weak) IBOutlet NSTextField *statusText;
-@property (weak) IBOutlet NSTextField *errorText;
 
 @end
 
 @implementation AppDelegate
 
+@synthesize terminal;
+@synthesize connectButton;
+@synthesize statusText;
+@synthesize disconnectButton;
+@synthesize errorText;
+@synthesize window;
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    [_terminal setEventDelegate:self];
+    [terminal setEventDelegate:self];
 }
 
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification
 {
-    _terminal = NULL;
+    terminal = NULL;
 }
 
 
@@ -50,19 +47,19 @@
 #define TEST_SERVER 0
         
 #if (TEST_SERVER == 0)
-        _terminal.userName = @"devolutions\\test";
-        _terminal.hostName = @"VDEVOSRV-TST.devolutions.loc";
-        [_terminal setPassword:@"Price2011"];
+        terminal.userName = @"devolutions\\test";
+        terminal.hostName = @"VDEVOSRV-TST.devolutions.loc";
+        [terminal setPassword:@"Price2011"];
 #endif
-        _terminal.columnCount = 80;
-        [_terminal connect];
-        [_statusText setStringValue:@"Connecting"];
-        [_connectButton setEnabled:NO];
+        terminal.columnCount = 80;
+        [terminal connect];
+        [statusText setStringValue:@"Connecting"];
+        [connectButton setEnabled:NO];
     }
     else   // Resume.
     {
-        [_connectButton setTitle:@"Connect"];
-        [_connectButton setEnabled:NO];
+        [connectButton setTitle:@"Connect"];
+        [connectButton setEnabled:NO];
         resume = NO;
     }
 }
@@ -70,34 +67,34 @@
 
 - (IBAction)disconnect:(id)sender
 {
-    [_terminal disconnect];
-    [_connectButton setTitle:@"Connect"];
-    [_connectButton setEnabled:NO];
+    [terminal disconnect];
+    [connectButton setTitle:@"Connect"];
+    [connectButton setEnabled:NO];
     resume = NO;
 }
 
 
 -(void)connected
 {
-    [_statusText setStringValue:@"Connected"];
-    [_disconnectButton setEnabled:YES];
+    [statusText setStringValue:@"Connected"];
+    [disconnectButton setEnabled:YES];
 }
 
 
 -(void)disconnected
 {
-    [_statusText setStringValue:@"Disconnected"];
-    [_disconnectButton setEnabled:NO];
-    [_connectButton setEnabled:YES];
+    [statusText setStringValue:@"Disconnected"];
+    [disconnectButton setEnabled:NO];
+    [connectButton setEnabled:YES];
 }
 
 
 -(void)serverMismatch:(NSString *)fingerPrint
 {
-    [_errorText setStringValue:fingerPrint];
-    [_connectButton setTitle:@"Resume"];
-    [_connectButton setEnabled:YES];
-    [_disconnectButton setEnabled:YES];
+    [errorText setStringValue:fingerPrint];
+    [connectButton setTitle:@"Resume"];
+    [connectButton setEnabled:YES];
+    [disconnectButton setEnabled:YES];
     resume = YES;
 }
 
@@ -105,7 +102,7 @@
 -(void)error:(int)code
 {
     NSString* errorString = [NSString stringWithFormat:@"Error: %d", code];
-    [_errorText setStringValue:errorString];
+    [errorText setStringValue:errorString];
 }
 
 

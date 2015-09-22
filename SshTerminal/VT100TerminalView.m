@@ -97,23 +97,26 @@ NSString* TAName = @"TerminalAttributeName";
     
     if (theEvent.modifierFlags & NSCommandKeyMask)
     {
-        if ([theKey characterAtIndex:0] != 'v')
+        if ([theKey characterAtIndex:0] == 'v')
         {
-            return;
-        }
-        NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
-        NSArray* classes = [[NSArray alloc] initWithObjects:[NSString class], nil];
-        NSDictionary* options = [NSDictionary dictionary];
-        NSArray* copiedItems = [pasteboard readObjectsForClasses:classes options:options];
-        [classes release];
-        if (copiedItems != nil)
-        {
-            for (int i = 0; i < copiedItems.count; i++)
+            NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
+            NSArray* classes = [[NSArray alloc] initWithObjects:[NSString class], nil];
+            NSDictionary* options = [NSDictionary dictionary];
+            NSArray* copiedItems = [pasteboard readObjectsForClasses:classes options:options];
+            [classes release];
+            if (copiedItems != nil)
             {
-                NSString* string = [copiedItems objectAtIndex:i];
-                const char* chars = [string UTF8String];
-                [connection writeFrom:(const UInt8 *)chars length:(int)strlen(chars)];
+                for (int i = 0; i < copiedItems.count; i++)
+                {
+                    NSString* string = [copiedItems objectAtIndex:i];
+                    const char* chars = [string UTF8String];
+                    [connection writeFrom:(const UInt8 *)chars length:(int)strlen(chars)];
+                }
             }
+        }
+        else if ([theKey characterAtIndex:0] == 'c')
+        {
+            [super keyDown:theEvent];
         }
         return;
     }

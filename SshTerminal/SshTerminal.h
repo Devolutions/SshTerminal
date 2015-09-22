@@ -46,7 +46,9 @@ enum
     NSString* userName;
     NSString* keyFilePath;
     NSString* keyFilePassword;
+    NSString* x11Display;
     UInt16 port;
+    BOOL x11Forwarding;
     int columnCount;
     int state;
     id<SshTerminalEvent> eventDelegate;
@@ -63,6 +65,8 @@ enum
 -(void)addForwardTunnelWithPort:(SInt16)port onHost:(NSString*)hostName andRemotePort:(SInt16)remotePort onRemoteHost:(NSString*)remoteHostName;
 -(void)addReverseTunnelWithPort:(SInt16)port onHost:(NSString*)hostName andRemotePort:(SInt16)remotePort onRemoteHost:(NSString*)remoteHostName;
 -(void)clearAllTunnels;
+@property(assign)BOOL x11Forwarding;
+@property(copy,nonatomic)NSString* x11Display;
 
 @property(readonly)int state;
 
@@ -71,6 +75,7 @@ enum
 -(void)resume;
 -(void)resumeAndRememberServer;
 -(void)disconnect;
+-(void)send:(NSString*)string;
 
 
 @end

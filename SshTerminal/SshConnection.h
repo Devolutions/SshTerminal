@@ -31,6 +31,7 @@ enum ConnectionEvent
     KEY_FILE_NOT_FOUND_OR_DENIED,
     CHANNEL_ERROR,
     CHANNEL_RESIZE_ERROR,
+    X11_ERROR,
     
     CONNECTED,
     DISCONNECTED,
@@ -49,9 +50,14 @@ enum ConnectionEvent
     ssh_session session;
     ssh_channel channel;
     BOOL useKeyAuthentication;
+    BOOL x11Forwarding;
     NSString* password;
     NSString* keyFilePassword;
     NSString* keyFilePath;
+    NSString* x11DisplayName;
+    NSString* x11Host;
+    int x11DisplayNumber;
+    int x11ScreenNumber;
     int width;
     int height;
     
@@ -80,6 +86,8 @@ enum ConnectionEvent
 
 -(void)addForwardTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 -(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
+
+-(void)setX11Forwarding:(BOOL)enable withDisplay:(NSString*)display;
 
 -(void)setEventDelegate:(id<SshConnectionEventDelegate>)newEventDelegate;
 

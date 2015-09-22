@@ -119,6 +119,61 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 }
 
 
+-(void)setX11Forwarding:(BOOL)enable withDisplay:(NSString *)display
+{
+    [x11DisplayName release];
+    x11DisplayName = display;
+    [x11DisplayName retain];
+    if (x11DisplayName == nil)
+    {
+        char* displayEnv = getenv("DISPLAY");
+        if (displayEnv != NULL && strlen(displayEnv) > 0)
+        {
+            x11DisplayName = [NSString stringWithUTF8String:displayEnv];
+            [x11DisplayName retain];
+        }
+    }
+    if (x11DisplayName == nil)
+    {
+        enable = NO;
+    }
+    
+    if (enable == YES)
+    {
+        int displayNameLength = (int)[x11DisplayName length];
+        NSRange colonRange = [x11DisplayName rangeOfString:@":" options:NSBackwardsSearch];
+        if (colonRange.length > 0)
+        {
+            NSRange displayNumberRange = NSMakeRange(colonRange.location + 1, displayNameLength - colonRange.location - 1);
+            NSRange dotRange = [x11DisplayName rangeOfString:@"." options:0 range:displayNumberRange];
+            if (dotRange.length > 0)
+            {
+                NSRange screenNumberRange = NSMakeRange(dotRange.location + 1, [x11DisplayName length] - dotRange.location - 1);
+                displayNumberRange.length = dotRange.location - displayNumberRange.location;
+                NSString* screenNumberString = [x11DisplayName substringWithRange:screenNumberRange];
+                x11ScreenNumber = [screenNumberString intValue];
+                [screenNumberString release];
+            }
+            NSString* displayNumberString = [x11DisplayName substringWithRange:displayNumberRange];
+            x11DisplayNumber = [displayNumberString intValue];
+            [displayNumberString release];
+            
+            NSRange hostRange = NSMakeRange(0, colonRange.location);
+            [x11Host release];
+            x11Host = [x11DisplayName substringWithRange:hostRange];
+            [x11Host retain];
+        }
+        else
+        {
+            // Malformed X display name:
+            enable = NO;
+        }
+    }
+    
+    x11Forwarding = enable;
+}
+
+
 -(int)writeFrom:(const UInt8 *)buffer length:(int)count
 {
     UInt8* writeBuffer = malloc(count);
@@ -177,6 +232,67 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 -(void)eventNotify:(int)code
 {
     dispatch_async(mainQueue, ^{ [eventDelegate signalError:code]; });
+}
+
+
+-(int)x11ConnectSocket
+{
+    if (x11DisplayName == nil)
+    {
+        return -1;
+    }
+    
+    int fd = -1;
+    if ([x11DisplayName characterAtIndex:0] == '/')
+    {
+        fd = socket(PF_UNIX, SOCK_STREAM, 0);
+        struct sockaddr_un unixDomainAddress;
+        memset(&unixDomainAddress, 0, sizeof(unixDomainAddress));
+        unixDomainAddress.sun_family = AF_UNIX;
+        const char* displayAddress = [x11DisplayName UTF8String];
+        snprintf(unixDomainAddress.sun_path, sizeof(unixDomainAddress.sun_path), "%s", displayAddress);
+        int result = connect(fd, (struct sockaddr*)&unixDomainAddress, sizeof(unixDomainAddress));
+        if (result < 0)
+        {
+            close(fd);
+            return -1;
+        }
+    }
+    else
+    {
+        NetworkAddress hostAddress;
+        int hostAddressSize = resolveHost(&hostAddress, [x11Host UTF8String]);
+        if (hostAddressSize <= 0)
+        {
+            return -1;
+        }
+        
+        fd = socket(hostAddress.family, SOCK_STREAM, IPPROTO_TCP);
+        if (fd < 0)
+        {
+            return -1;
+        }
+        NetworkAddress bindAddress;
+        memset(&bindAddress, 0, sizeof(bindAddress));
+        bindAddress.len = hostAddress.len;
+        bindAddress.family = hostAddress.family;
+        int result = bind(fd, &bindAddress.ip, bindAddress.len);
+        if (result < 0)
+        {
+            close(fd);
+            return -1;
+        }
+        
+        hostAddress.port = htons(6000 + x11DisplayNumber);
+        result = connect(fd, &hostAddress.ip, hostAddressSize);
+        if (result < 0)
+        {
+            close(fd);
+            return -1;
+        }
+    }
+    
+    return fd;
 }
 
 
@@ -355,6 +471,15 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         return;
     }
     
+    if (x11Forwarding == YES)
+    {
+        result = ssh_channel_request_x11(channel, 0, NULL, NULL, x11ScreenNumber);
+        if (result != SSH_OK)
+        {
+            [self eventNotify:X11_ERROR];
+        }
+    }
+    
     result = ssh_channel_request_shell(channel);
     if (result != SSH_OK)
     {
@@ -362,7 +487,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
     }
-
+    
     [self eventNotify:CONNECTED];
     dispatch_resume(readSource);
 }
@@ -370,10 +495,13 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)newTerminalDataAvailable
 {
+    BOOL dataHasBeenRead = NO;
+    
     // This method is called by the dispatch source associated with the socket of the SSH session.
     int availableCount = ssh_channel_poll(channel, 0);
     if (availableCount > 0)
     {
+        dataHasBeenRead = YES;
         UInt8* buffer = malloc(availableCount);
         if (buffer == NULL)
         {
@@ -386,14 +514,49 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             [dataDelegate newDataAvailableIn:buffer length:availableCount];
             free(buffer);
         });
-        
-        // Some data might still be available: reschedule this task to be sure the channel is completely emptied.
-        dispatch_async(queue, ^{ [self newTerminalDataAvailable]; } );
     }
-    else if (ssh_channel_is_eof(channel))
+    
+    if (x11Forwarding == YES)
+    {
+        // Read data from the tunnel connection channels, if any.
+        for (int i = 0; i < [tunnelConnections count]; i++)
+        {
+            SshTunnelConnection* tunnelConnection = [tunnelConnections objectAtIndex:i];
+            dataHasBeenRead |= [tunnelConnection transferRemoteDataToLocal];
+            if ([tunnelConnection isAlive] == NO)
+            {
+                [tunnelConnections removeObjectAtIndex:i];
+                i--;
+            }
+        }
+        
+        ssh_channel x11Channel = ssh_channel_accept_x11(channel, 0);
+        if (x11Channel != NULL)
+        {
+            // A X11 tunnel is accepted:
+            dataHasBeenRead |= YES;
+            int tunnelFd = [self x11ConnectSocket];
+            SshTunnelConnection* tunnelConnection = [SshTunnelConnection connectionWithSocket:tunnelFd onChannel:x11Channel onQueue:queue];
+            if (tunnelConnection != nil)
+            {
+                [tunnelConnections addObject:tunnelConnection];
+            }
+            else
+            {
+                [self eventNotify:TUNNEL_ERROR];
+            }
+        }
+    }
+    
+    if (ssh_channel_is_eof(channel))
     {
         // The terminal has closed the connection:
         dispatch_async(queue, ^{ [self closeAllChannels]; });
+    }
+    else if (dataHasBeenRead == YES)
+    {
+        // Some data might still be available: reschedule this task to be sure the channel is completely emptied.
+        dispatch_async(queue, ^{ [self newTerminalDataAvailable]; } );
     }
 }
 
@@ -708,6 +871,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             ssh_finalize();
         }
     }
+    [forwardTunnels release];
+    [reverseTunnels release];
+    [tunnelConnections release];
     [super dealloc];
 }
 
