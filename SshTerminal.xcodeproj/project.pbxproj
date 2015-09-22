@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1412EC1D1BB1D24E00048A46 /* libssh.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = F4E9654E1B7BC8D10072D98D /* libssh.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F4989F0E1B5FDC7900693A47 /* TelnetTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */; };
 		F4989F0F1B5FDC7900693A47 /* TelnetTerminal.m in Sources */ = {isa = PBXBuildFile; fileRef = F4989F0D1B5FDC7900693A47 /* TelnetTerminal.m */; };
 		F4989F121B5FE59300693A47 /* TelnetConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F4989F101B5FE59300693A47 /* TelnetConnection.h */; };
@@ -39,6 +40,19 @@
 		F4AE90931B419911007AC63E /* SshTerminal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4AE90331B41733E007AC63E /* SshTerminal.framework */; };
 		F4E9654F1B7BC8D10072D98D /* libssh.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F4E9654E1B7BC8D10072D98D /* libssh.dylib */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		1412EC1C1BB1D24200048A46 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				1412EC1D1BB1D24E00048A46 /* libssh.dylib in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TelnetTerminal.h; sourceTree = "<group>"; };
@@ -289,6 +303,7 @@
 				F4AE906F1B4198E2007AC63E /* Sources */,
 				F4AE90701B4198E2007AC63E /* Frameworks */,
 				F4AE90711B4198E2007AC63E /* Resources */,
+				1412EC1C1BB1D24200048A46 /* CopyFiles */,
 			);
 			buildRules = (
 			);
