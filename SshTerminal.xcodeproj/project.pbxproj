@@ -20,6 +20,7 @@
 		F4989F5F1B601D3600693A47 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4989F5E1B601D3600693A47 /* Images.xcassets */; };
 		F4989F621B601D3600693A47 /* TelnetMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = F4989F601B601D3600693A47 /* TelnetMenu.xib */; };
 		F4989F751B601D5600693A47 /* SshTerminal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4AE90331B41733E007AC63E /* SshTerminal.framework */; };
+		F4A1F9B91BB1D7CD0057A9BC /* libssh.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = F4E9654E1B7BC8D10072D98D /* libssh.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F4A3E2F71B5693A30007D4C0 /* SshTunnel.h in Headers */ = {isa = PBXBuildFile; fileRef = F4A3E2F51B5693A30007D4C0 /* SshTunnel.h */; };
 		F4A3E2F81B5693A30007D4C0 /* SshTunnel.m in Sources */ = {isa = PBXBuildFile; fileRef = F4A3E2F61B5693A30007D4C0 /* SshTunnel.m */; };
 		F4A3E2FB1B5694420007D4C0 /* SshTunnelConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F4A3E2F91B5694420007D4C0 /* SshTunnelConnection.h */; };
@@ -49,6 +50,16 @@
 			dstSubfolderSpec = 10;
 			files = (
 				1412EC1D1BB1D24E00048A46 /* libssh.dylib in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F4A1F9B81BB1D7B80057A9BC /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F4A1F9B91BB1D7CD0057A9BC /* libssh.dylib in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -268,6 +279,7 @@
 				F4989F511B601D3600693A47 /* Sources */,
 				F4989F521B601D3600693A47 /* Frameworks */,
 				F4989F531B601D3600693A47 /* Resources */,
+				F4A1F9B81BB1D7B80057A9BC /* CopyFiles */,
 			);
 			buildRules = (
 			);

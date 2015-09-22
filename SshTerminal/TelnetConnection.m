@@ -318,7 +318,7 @@
 
 -(void)parseRequest:(UInt8)request forOption:(UInt8)option
 {
-    printf("interpretRequest:%d forOption:%d\r\n", request, option);
+    //printf("interpretRequest:%d forOption:%d\r\n", request, option);
     TelnetOption* telnetOption = options + option;
     switch (option)
     {
@@ -552,7 +552,7 @@
 
 -(void)newTerminalDataAvailable
 {
-    printf("newTerminalDataAvailable\r\n");
+    //printf("newTerminalDataAvailable\r\n");
     int result = (int)recv(fd, inBuffer + inIndex, INPUT_BUFFER_SIZE - inIndex, 0);
     if (result <= 0)
     {
