@@ -45,6 +45,7 @@ typedef struct
     UInt16 port;
     int width;
     int height;
+    int internetProtocol;
     
     int fd;
     BOOL userNameSent;
@@ -65,8 +66,7 @@ typedef struct
 }
 
 // Methods called from the UI thread.
--(void)setHost:(NSString*)newHost;
--(void)setPort:(SInt16)newPort;
+-(void)setHost:(NSString*)newHost port:(UInt16)newPort protocol:(int)newProtocol;
 -(void)setUser:(NSString*)newUser;
 -(void)setPassword:(NSString*)newPassword;
 -(void)setWidth:(int)newWidth;

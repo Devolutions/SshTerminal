@@ -88,15 +88,11 @@
 }
 
 
--(void)setHost:(NSString*)hostString
+-(void)setHost:(NSString *)newHost port:(UInt16)newPort protocol:(int)newProtocol
 {
-    host = hostString;
-}
-
-
--(void)setPort:(SInt16)newPort
-{
+    host = newHost;
     port = newPort;
+    internetProtocol = newProtocol;
 }
 
 
@@ -152,16 +148,24 @@
 
 -(void)connect
 {
-    NetworkAddress address;
-    int addressSize = resolveHost(&address, [host UTF8String]);
-    if (addressSize <= 0)
+    NetworkAddress addresses[2];
+    int addressCount = resolveHost(addresses, [host UTF8String]);
+    if (addressCount == 0)
     {
         // Unable to resolve host.
         dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
+    int selectedAddress = 0;
+    if (addressCount > 1 && internetProtocol != PF_UNSPEC)
+    {
+        if (addresses[0].family != internetProtocol)
+        {
+            selectedAddress = 1;
+        }
+    }
     
-    fd = socket(address.family, SOCK_STREAM, IPPROTO_TCP);
+    fd = socket(addresses[selectedAddress].family, SOCK_STREAM, IPPROTO_TCP);
     if (fd < 0)
     {
         dispatch_async(queue, ^{ [self disconnect]; });
@@ -170,8 +174,8 @@
     
     NetworkAddress bindAddress;
     memset(&bindAddress, 0, sizeof(NetworkAddress));
-    bindAddress.len = address.len;
-    bindAddress.family = address.family;
+    bindAddress.len = addresses[selectedAddress].len;
+    bindAddress.family = addresses[selectedAddress].family;
     int result = bind(fd, &bindAddress.ip, bindAddress.len);
     if (result != 0 )
     {
@@ -179,8 +183,8 @@
         return;
     }
     
-    address.port = htons(port);
-    result = connect(fd, &address.ip, address.len);
+    addresses[selectedAddress].port = htons(port);
+    result = connect(fd, &addresses[selectedAddress].ip, addresses[selectedAddress].len);
     if (result != 0)
     {
         dispatch_async(queue, ^{ [self disconnect]; });

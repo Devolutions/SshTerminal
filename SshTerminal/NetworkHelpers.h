@@ -36,7 +36,7 @@ typedef struct
 
 
 struct addrinfo* findSockaddr(int family, struct addrinfo* info);
-int resolveHost(NetworkAddress* address, const char* host);
+int resolveHost(NetworkAddress* addresses, const char* host);
 
 
 #endif

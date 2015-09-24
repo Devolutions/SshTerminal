@@ -51,6 +51,7 @@ enum ConnectionEvent
     ssh_channel channel;
     BOOL useKeyAuthentication;
     BOOL x11Forwarding;
+    NSString* host;
     NSString* password;
     NSString* keyFilePassword;
     NSString* keyFilePath;
@@ -60,6 +61,7 @@ enum ConnectionEvent
     int x11ScreenNumber;
     int width;
     int height;
+    int internetProtocol;
     
     UInt8 inBuffer[INPUT_BUFFER_SIZE];
     UInt8 outBuffer[OUTPUT_BUFFER_SIZE];
@@ -78,8 +80,7 @@ enum ConnectionEvent
 }
 
 // Methods called from the UI thread.
--(void)setHost:(NSString*)newHost;
--(void)setPort:(SInt16)newPort;
+-(void)setHost:(NSString*)newHost port:(UInt16)newPort protocol:(int)newProtocol;
 -(void)setUser:(NSString*)newUser;
 -(void)setKeyFilePath:(NSString*)newKeyFilePath withPassword:(NSString*)newPassword;
 -(void)setPassword:(NSString*)newPassword;

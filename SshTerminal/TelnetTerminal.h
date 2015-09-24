@@ -29,6 +29,13 @@ enum
 @class VT100TerminalView;
 @class TelnetConnection;
 
+enum
+{
+    telnetTerminalIpDefault,
+    telnetTerminalIpv4,
+    telnetTerminalIpv6,
+};
+
 @interface TelnetTerminal : NSScrollView
 {
     VT100TerminalView* terminalView;
@@ -38,6 +45,7 @@ enum
     NSString* hostName;
     NSString* userName;
     UInt16 port;
+    int internetProtocol;
     int columnCount;
     int state;
     id<TelnetTerminalEvent> eventDelegate;
@@ -48,6 +56,7 @@ enum
 -(void)setPassword:(NSString *)string;
 @property(copy,nonatomic)NSString* userName;
 @property(assign)int columnCount;
+@property(assign)int internetProtocol;
 
 @property(readonly)int state;
 

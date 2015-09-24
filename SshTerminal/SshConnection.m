@@ -36,15 +36,12 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 }
 
 
--(void)setHost:(NSString*)hostString
+-(void)setHost:(NSString *)newHost port:(UInt16)newPort protocol:(int)newProtocol
 {
-    ssh_options_set(session, SSH_OPTIONS_HOST, [hostString UTF8String]);
-}
-
-
--(void)setPort:(SInt16)newPort
-{
+    [host release];
+    host = [newHost copy];
     ssh_options_set(session, SSH_OPTIONS_PORT, &newPort);
+    internetProtocol = newProtocol;
 }
 
 
@@ -260,22 +257,22 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     }
     else
     {
-        NetworkAddress hostAddress;
-        int hostAddressSize = resolveHost(&hostAddress, [x11Host UTF8String]);
-        if (hostAddressSize <= 0)
+        NetworkAddress hostAddresses[2];
+        int addressCount = resolveHost(hostAddresses, [x11Host UTF8String]);
+        if (addressCount == 0)
         {
             return -1;
         }
         
-        fd = socket(hostAddress.family, SOCK_STREAM, IPPROTO_TCP);
+        fd = socket(hostAddresses[0].family, SOCK_STREAM, IPPROTO_TCP);
         if (fd < 0)
         {
             return -1;
         }
         NetworkAddress bindAddress;
         memset(&bindAddress, 0, sizeof(bindAddress));
-        bindAddress.len = hostAddress.len;
-        bindAddress.family = hostAddress.family;
+        bindAddress.len = hostAddresses[0].len;
+        bindAddress.family = hostAddresses[0].family;
         int result = bind(fd, &bindAddress.ip, bindAddress.len);
         if (result < 0)
         {
@@ -283,8 +280,8 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             return -1;
         }
         
-        hostAddress.port = htons(6000 + x11DisplayNumber);
-        result = connect(fd, &hostAddress.ip, hostAddressSize);
+        hostAddresses[0].port = htons(6000 + x11DisplayNumber);
+        result = connect(fd, &hostAddresses[0].ip, hostAddresses[0].len);
         if (result < 0)
         {
             close(fd);
@@ -298,6 +295,25 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)connect
 {
+    NetworkAddress addresses[2];
+    int addressCount = resolveHost(addresses, [host UTF8String]);
+    if (addressCount == 0)
+    {
+        [self eventNotify:CONNECTION_ERROR];
+        dispatch_async(queue, ^{ [self disconnect]; });
+        return;
+    }
+    int selectedAddress = 0;
+    if (addressCount > 1 && internetProtocol != PF_UNSPEC)
+    {
+        if (addresses[0].family != internetProtocol)
+        {
+            selectedAddress = 1;
+        }
+    }
+    char addressString[45];
+    getnameinfo(&addresses[selectedAddress].ip, addresses[selectedAddress].len, addressString, sizeof(addressString), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
+    ssh_options_set(session, SSH_OPTIONS_HOST, addressString);
     int result = ssh_connect(session);
     if (result != SSH_OK)
     {
@@ -473,7 +489,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     
     if (x11Forwarding == YES)
     {
-        result = ssh_channel_request_x11(channel, 0, NULL, NULL, x11ScreenNumber);
+        const char* protocol = NULL;
+        const char* cookie = NULL;
+
+        result = ssh_channel_request_x11(channel, 0, protocol, cookie, x11ScreenNumber);
         if (result != SSH_OK)
         {
             [self eventNotify:X11_ERROR];
@@ -600,10 +619,8 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     }
     
     dispatch_async(mainQueue, ^{
-        char* host;
-        ssh_options_get(session, SSH_OPTIONS_HOST, &host);
-        char stringBuffer[80];
-        sprintf(stringBuffer, "Logged in to: %s\r\n", host);
+        char stringBuffer[81];
+        snprintf(stringBuffer, 80, "Logged in to: %s\r\n", [host UTF8String]);
         [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
     });
     [self eventNotify:CONNECTED];

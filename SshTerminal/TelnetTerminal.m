@@ -25,6 +25,7 @@
 @synthesize columnCount;
 @synthesize state;
 @synthesize port;
+@synthesize internetProtocol;
 
 
 -(void)setPassword:(NSString *)string
@@ -48,8 +49,16 @@
     [connection setEventDelegate:self];
     [terminalView setConnection:connection];
 
-    [connection setHost:hostName];
-    [connection setPort:port];
+    int family = PF_UNSPEC;
+    if (internetProtocol == telnetTerminalIpv4)
+    {
+        family = PF_INET;
+    }
+    else if (internetProtocol == telnetTerminalIpv6)
+    {
+        family = PF_INET6;
+    }
+    [connection setHost:hostName port:port protocol:family];
     [connection setUser:userName];
     [connection setPassword:password];
     

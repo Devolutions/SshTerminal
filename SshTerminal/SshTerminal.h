@@ -36,6 +36,13 @@ enum
 @class VT100TerminalView;
 @class SshConnection;
 
+enum
+{
+    sshTerminalIpDefault,
+    sshTerminalIpv4,
+    sshTerminalIpv6,
+};
+
 @interface SshTerminal : NSScrollView
 {
     VT100TerminalView* terminalView;
@@ -47,8 +54,11 @@ enum
     NSString* keyFilePath;
     NSString* keyFilePassword;
     NSString* x11Display;
+    NSString* x11Authentication;
+    NSString* x11AuthorityFile;
     UInt16 port;
     BOOL x11Forwarding;
+    int internetProtocol;
     int columnCount;
     int state;
     id<SshTerminalEvent> eventDelegate;
@@ -67,6 +77,9 @@ enum
 -(void)clearAllTunnels;
 @property(assign)BOOL x11Forwarding;
 @property(copy,nonatomic)NSString* x11Display;
+@property(copy,nonatomic)NSString* x11Authentication;   // Either @"MIT-MAGIC-COOKIE-1" or @"XDM-AUTHORIZATION-1".
+@property(copy,nonatomic)NSString* x11AuthorityFile;
+@property(assign)int internetProtocol;
 
 @property(readonly)int state;
 

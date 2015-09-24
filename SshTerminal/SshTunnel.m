@@ -35,14 +35,24 @@
 
 -(BOOL)startListeningAndDispatchTo:(dispatch_block_t)handler onQueue:(dispatch_queue_t)queue
 {
-    NetworkAddress address;
-    int addressSize = resolveHost(&address, [host UTF8String]);
-    if (addressSize <= 0)
+    NetworkAddress addresses[2];
+    int addressCount = resolveHost(addresses, [host UTF8String]);
+    if (addressCount == 0)
     {
         return NO;
     }
     
-    listenFd = socket(address.family, SOCK_STREAM, IPPROTO_TCP);
+    int selected = 0;
+    if (addressCount > 1)
+    {
+        // Select the IPV4 preferably, to keep the behavior of the preceding release until required otherwise.
+        if (addresses[0].family == PF_INET6)
+        {
+            selected = 1;
+        }
+    }
+    
+    listenFd = socket(addresses[selected].family, SOCK_STREAM, IPPROTO_TCP);
     if (listenFd < 0)
     {
         return NO;
@@ -51,8 +61,8 @@
     int reuseAddress = 1;
     setsockopt(listenFd, SOL_SOCKET, SO_REUSEADDR, &reuseAddress, sizeof(reuseAddress));
     
-    address.port = htons(port);
-    int result = bind(listenFd, &address.ip, address.len);
+    addresses[selected].port = htons(port);
+    int result = bind(listenFd, &addresses[selected].ip, addresses[selected].len);
     if (result != 0)
     {
         close(listenFd);
@@ -96,22 +106,32 @@
 
 -(int)connectToLocal
 {
-    NetworkAddress hostAddress;
-    int hostAddressSize = resolveHost(&hostAddress, [host UTF8String]);
-    if (hostAddressSize <= 0)
+    NetworkAddress hostAddresses[2];
+    int addressCount = resolveHost(hostAddresses, [host UTF8String]);
+    if (addressCount == 0)
     {
         return -1;
     }
     
-    int fd = socket(hostAddress.family, SOCK_STREAM, IPPROTO_TCP);
+    int selected = 0;
+    if (addressCount > 1)
+    {
+        // Select the IPV4 preferably, to keep the behavior of the preceding release until required otherwise.
+        if (hostAddresses[0].family == PF_INET6)
+        {
+            selected = 1;
+        }
+    }
+    
+    int fd = socket(hostAddresses[selected].family, SOCK_STREAM, IPPROTO_TCP);
     if (fd < 0)
     {
         return -1;
     }
     NetworkAddress bindAddress;
     memset(&bindAddress, 0, sizeof(bindAddress));
-    bindAddress.len = hostAddress.len;
-    bindAddress.family = hostAddress.family;
+    bindAddress.len = hostAddresses[selected].len;
+    bindAddress.family = hostAddresses[selected].family;
     int result = bind(fd, &bindAddress.ip, bindAddress.len);
     if (result < 0)
     {
@@ -119,8 +139,8 @@
         return -1;
     }
     
-    hostAddress.port = htons(port);
-    result = connect(fd, &hostAddress.ip, hostAddressSize);
+    hostAddresses[selected].port = htons(port);
+    result = connect(fd, &hostAddresses[selected].ip, hostAddresses[selected].len);
     if (result < 0)
     {
         close(fd);

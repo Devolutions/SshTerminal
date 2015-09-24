@@ -28,13 +28,13 @@ struct addrinfo* findSockaddr(int family, struct addrinfo* info)
 }
 
 
-int resolveHost(NetworkAddress* address, const char* host)
+int resolveHost(NetworkAddress* addresses, const char* host)
 {
-    if (host == NULL || strlen(host) == 0)
+    if (host == NULL)
     {
-        host = "0.0.0.0";
+        host = "";
     }
-    
+
     // Get the address info for the host.
     struct addrinfo* info;
     struct addrinfo hint;
@@ -49,27 +49,25 @@ int resolveHost(NetworkAddress* address, const char* host)
         return 0;
     }
     
-    // Parse the address info to find the most appropriate sockaddr.
-    int addressSize = 0;
-    struct addrinfo* selectedInfo = findSockaddr(PF_INET, info);
-    if (selectedInfo == NULL)
+    // Parse the address info to find appropriate IPV4 and IPV6 sockaddr.
+    int addressCount = 0;
+    while (1)
     {
-        selectedInfo = findSockaddr(PF_INET6, info);
+        if ((info->ai_family == PF_INET || info->ai_family == PF_INET6) && info->ai_socktype == SOCK_STREAM)
+        {
+            memcpy(addresses + addressCount, info->ai_addr, info->ai_addrlen);
+            addressCount++;
+        }
+        if (info->ai_next == NULL || addressCount >= 2)
+        {
+            break;
+        }
+        info = info->ai_next;
     }
-    if (selectedInfo != NULL)
-    {
-        addressSize = selectedInfo->ai_addrlen;
-    }
-    
-    // Copy the result.
-    if (addressSize > 0)
-    {
-        assert(addressSize <= sizeof(NetworkAddress));
-        memcpy(address, selectedInfo->ai_addr, addressSize);
-    }
+
     freeaddrinfo(info);
     
-    return addressSize;
+    return addressCount;
 }
 
 
