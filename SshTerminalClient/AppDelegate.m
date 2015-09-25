@@ -45,11 +45,11 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 3
+#define TEST_SERVER 4
         
 #if (TEST_SERVER == 0)
         terminal.userName = @"david";
-        terminal.hostName = @"vsrv-ubu1";
+        terminal.hostName = @"192.168.7.60";
         [terminal setPassword:@"123456"];
         terminal.x11Forwarding = YES;
         terminal.internetProtocol = sshTerminalIpv6;
@@ -71,6 +71,10 @@ SshConnection* sshConnection = NULL;
         [terminal addForwardTunnelWithPort:15500 onHost:@"::1" andRemotePort:15500 onRemoteHost:@"localhost"];
         //terminal.internetProtocol = sshTerminalIpv6;
         //[terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
+#elif (TEST_SERVER == 4)
+        terminal.userName = @"david";
+        terminal.hostName = @"192.168.1.141";
+        [terminal setPassword:@"123456"];
 #endif
         terminal.columnCount = 80;
         [terminal connect];
@@ -100,7 +104,7 @@ SshConnection* sshConnection = NULL;
 {
     [statusText setStringValue:@"Connected"];
     [disconnectButton setEnabled:YES];
-    [terminal send:@"xclock\r\n"];
+    //[terminal send:@"xclock\r\n"];
 }
 
 

@@ -412,11 +412,46 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     else
     {
         // User authentication by password:
-        int result;
-        do
+        int result = ssh_userauth_none(session, NULL);   // This call is required for ssh_userauth_list() to succeed.
+        int authList = ssh_userauth_list(session, NULL);
+        if (authList & SSH_AUTH_METHOD_PASSWORD)
         {
-            result = ssh_userauth_password(session, NULL, [password UTF8String]);
-        } while (result == SSH_AUTH_AGAIN);
+            do
+            {
+                result = ssh_userauth_password(session, NULL, [password UTF8String]);
+                if (result == SSH_AUTH_AGAIN)
+                {
+                    [NSThread sleepForTimeInterval:0.1];
+                }
+            } while (result == SSH_AUTH_AGAIN);
+        }
+        
+        if (result != SSH_AUTH_SUCCESS && (authList & SSH_AUTH_METHOD_INTERACTIVE))
+        {
+            result = ssh_userauth_kbdint(session, NULL, NULL);
+            if (result == SSH_AUTH_INFO)
+            {
+                int promptCount = ssh_userauth_kbdint_getnprompts(session);
+                if (promptCount >= 1)
+                {
+                    result = ssh_userauth_kbdint_setanswer(session, 0, [password UTF8String]);
+                    result = ssh_userauth_kbdint(session, NULL, NULL);
+                    if (result == SSH_AUTH_INFO)
+                    {
+                        promptCount = ssh_userauth_kbdint_getnprompts(session);
+                        result = ssh_userauth_kbdint(session, NULL, NULL);
+                    }
+                }
+            }
+        }
+        
+        if (result != SSH_AUTH_SUCCESS && (authList & SSH_AUTH_METHOD_GSSAPI_MIC))
+        {
+            do
+            {
+                result = ssh_userauth_gssapi(session);
+            } while (result == SSH_AUTH_AGAIN);
+        }
         
         if (result != SSH_AUTH_SUCCESS)
         {
