@@ -15,6 +15,7 @@
     UInt16 port;
     UInt16 remotePort;
     int listenFd;
+    NetworkAddress address;
     dispatch_source_t listenSource;
     NSString* host;
     NSString* remoteHost;
@@ -26,6 +27,7 @@
 @property(strong,nonatomic)NSString* host;
 @property(strong,nonatomic)NSString* remoteHost;
 
+-(instancetype)resolveHost;
 -(BOOL)startListeningAndDispatchTo:(dispatch_block_t)handler onQueue:(dispatch_queue_t)queue;
 -(void)endListening;
 -(int)acceptConnection;

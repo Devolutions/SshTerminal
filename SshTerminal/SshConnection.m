@@ -631,12 +631,27 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     for (int i = 0; i < [forwardTunnels count]; i++)
     {
         SshTunnel* tunnel = [forwardTunnels objectAtIndex:i];
+        SshTunnel* counterPartTunnel = [tunnel resolveHost];
         BOOL success = [tunnel startListeningAndDispatchTo:^{ [self newTunnelConnection:tunnel]; } onQueue:queue];
         if (success == NO)
         {
             [self eventNotify:TUNNEL_ERROR];
             [forwardTunnels removeObjectAtIndex:i];
             i--;
+        }
+        if (counterPartTunnel != nil)
+        {
+            success = [counterPartTunnel startListeningAndDispatchTo:^{ [self newTunnelConnection:counterPartTunnel]; } onQueue:queue];
+            if (success == YES)
+            {
+                [forwardTunnels insertObject:counterPartTunnel atIndex:i];
+                i++;
+            }
+            else
+            {
+                [self eventNotify:TUNNEL_ERROR];
+            }
+            [counterPartTunnel release];
         }
     }
     

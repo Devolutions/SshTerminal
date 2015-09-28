@@ -33,26 +33,38 @@
 }
 
 
--(BOOL)startListeningAndDispatchTo:(dispatch_block_t)handler onQueue:(dispatch_queue_t)queue
+-(instancetype)resolveHost
 {
+    SshTunnel* counterPartTunnel = nil;
+    
     NetworkAddress addresses[2];
     int addressCount = resolveHost(addresses, [host UTF8String]);
-    if (addressCount == 0)
+    if (addressCount != 0)
     {
-        return NO;
+        address = addresses[0];
     }
     
-    int selected = 0;
     if (addressCount > 1)
     {
-        // Select the IPV4 preferably, to keep the behavior of the preceding release until required otherwise.
-        if (addresses[0].family == PF_INET6)
+        counterPartTunnel = [SshTunnel new];
+        if (counterPartTunnel != nil)
         {
-            selected = 1;
+            counterPartTunnel.port = port;
+            counterPartTunnel.remotePort = remotePort;
+            counterPartTunnel.host = host;
+            counterPartTunnel.remoteHost = remoteHost;
+            counterPartTunnel.reverse = reverse;
+            counterPartTunnel->address = addresses[1];
         }
     }
     
-    listenFd = socket(addresses[selected].family, SOCK_STREAM, IPPROTO_TCP);
+    return counterPartTunnel;
+}
+
+
+-(BOOL)startListeningAndDispatchTo:(dispatch_block_t)handler onQueue:(dispatch_queue_t)queue
+{
+    listenFd = socket(address.family, SOCK_STREAM, IPPROTO_TCP);
     if (listenFd < 0)
     {
         return NO;
@@ -61,8 +73,8 @@
     int reuseAddress = 1;
     setsockopt(listenFd, SOL_SOCKET, SO_REUSEADDR, &reuseAddress, sizeof(reuseAddress));
     
-    addresses[selected].port = htons(port);
-    int result = bind(listenFd, &addresses[selected].ip, addresses[selected].len);
+    address.port = htons(port);
+    int result = bind(listenFd, &address.ip, address.len);
     if (result != 0)
     {
         close(listenFd);
@@ -98,9 +110,9 @@
     {
         return -1;
     }
-    NetworkAddress address;
-    socklen_t size = sizeof(address);
-    return accept(listenFd, &address.ip, &size);
+    NetworkAddress acceptedAddress;
+    socklen_t size = sizeof(acceptedAddress);
+    return accept(listenFd, &acceptedAddress.ip, &size);
 }
 
 
