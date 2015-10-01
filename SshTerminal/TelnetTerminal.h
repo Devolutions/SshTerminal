@@ -36,6 +36,22 @@ enum
     telnetTerminalIpv6,
 };
 
+enum
+{
+    telnetTerminalProxyNone,
+    telnetTerminalProxySocks4,
+    telnetTerminalProxySocks5,
+    telnetTerminalProxyHttp,
+    telnetTerminalProxyLocal,
+};
+
+enum
+{
+    telnetTerminalDnsLookupAuto,
+    telnetTerminalDnsLookupProxyEnd,
+    telnetTerminalDnsLookupLocal,
+};
+
 @interface TelnetTerminal : NSScrollView
 {
     VT100TerminalView* terminalView;
@@ -44,8 +60,14 @@ enum
     NSString* password;
     NSString* hostName;
     NSString* userName;
+    NSString* proxyHost;
+    NSString* proxyUser;
+    NSString* proxyPassword;
     UInt16 port;
+    UInt16 proxyPort;
+    int proxyDnsLookup;
     int internetProtocol;
+    int proxyType;
     int columnCount;
     int state;
     id<TelnetTerminalEvent> eventDelegate;
@@ -57,6 +79,12 @@ enum
 @property(copy,nonatomic)NSString* userName;
 @property(assign)int columnCount;
 @property(assign)int internetProtocol;
+@property(assign)int proxyType;
+@property(copy,nonatomic)NSString* proxyHost;
+@property(assign)UInt16 proxyPort;
+@property(copy,nonatomic)NSString* proxyUser;
+@property(copy,nonatomic)NSString* proxyPassword;
+@property(assign)int proxyDnsLookup;
 
 @property(readonly)int state;
 

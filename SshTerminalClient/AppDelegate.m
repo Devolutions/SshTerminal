@@ -51,8 +51,8 @@ SshConnection* sshConnection = NULL;
         terminal.userName = @"david";
         terminal.hostName = @"192.168.7.60";
         [terminal setPassword:@"123456"];
-        terminal.x11Forwarding = YES;
-        terminal.internetProtocol = sshTerminalIpv6;
+        //terminal.x11Forwarding = YES;
+        //terminal.internetProtocol = sshTerminalIpv6;
 #elif (TEST_SERVER == 1)
         terminal.userName = @"dvincent";
         terminal.hostName = @"192.168.4.1";

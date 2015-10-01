@@ -44,9 +44,17 @@
 {
     if (resume == NO)
     {
-#define TEST_SERVER 0
+#define TEST_SERVER 1
         
 #if (TEST_SERVER == 0)
+        terminal.userName = @"devolutions\\test";
+        terminal.hostName = @"VDEVOSRV-TST.devolutions.loc";
+        [terminal setPassword:@"Price2011"];
+#elif (TEST_SERVER == 1)
+        terminal.proxyPort = 8080;
+        terminal.proxyHost = @"127.0.0.1";
+        terminal.proxyType = telnetTerminalProxyHttp;
+        terminal.proxyDnsLookup = telnetTerminalDnsLookupLocal;
         terminal.userName = @"devolutions\\test";
         terminal.hostName = @"VDEVOSRV-TST.devolutions.loc";
         [terminal setPassword:@"Price2011"];

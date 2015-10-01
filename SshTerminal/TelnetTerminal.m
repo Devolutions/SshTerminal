@@ -9,6 +9,9 @@
 #import "TelnetTerminal.h"
 #import "VT100TerminalView.h"
 #import "TelnetConnection.h"
+#import "ConnectionSocks4.h"
+#import "ConnectionSocks5.h"
+#import "ConnectionHttp.h"
 
 
 // Private extension.
@@ -26,6 +29,12 @@
 @synthesize state;
 @synthesize port;
 @synthesize internetProtocol;
+@synthesize proxyType;
+@synthesize proxyHost;
+@synthesize proxyPort;
+@synthesize proxyPassword;
+@synthesize proxyUser;
+@synthesize proxyDnsLookup;
 
 
 -(void)setPassword:(NSString *)string
@@ -61,6 +70,32 @@
     [connection setHost:hostName port:port protocol:family];
     [connection setUser:userName];
     [connection setPassword:password];
+    
+    if (proxyType == telnetTerminalProxySocks4)
+    {
+        ConnectionSocks4* proxy = [ConnectionSocks4 new];
+        proxy.proxyHost = proxyHost;
+        proxy.proxyPort = proxyPort;
+        [connection setProxy:proxy];
+    }
+    else if (proxyType == telnetTerminalProxySocks5)
+    {
+        ConnectionSocks5* proxy = [ConnectionSocks5 new];
+        proxy.proxyHost = proxyHost;
+        proxy.proxyPort = proxyPort;
+        proxy.proxyPassword = proxyPassword;
+        proxy.proxyResolveHostAddress = (proxyDnsLookup == telnetTerminalDnsLookupLocal ? YES : NO);
+        [connection setProxy:proxy];
+    }
+    else if (proxyType == telnetTerminalProxyHttp)
+    {
+        ConnectionHttp* proxy = [ConnectionHttp new];
+        proxy.proxyHost = proxyHost;
+        proxy.proxyPort = proxyPort;
+        proxy.proxyPassword = proxyPassword;
+        proxy.proxyResolveHostAddress = (proxyDnsLookup == telnetTerminalDnsLookupLocal ? YES : NO);
+        [connection setProxy:proxy];
+    }
     
     [terminalView setColumnCount:columnCount];
     [terminalView setRowCountForHeight:self.contentSize.height];

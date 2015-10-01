@@ -88,6 +88,14 @@
 }
 
 
+-(void)setProxy:(ConnectionTcp *)newProxy
+{
+    [connection release];
+    connection = newProxy;
+    [connection retain];
+}
+
+
 -(void)setHost:(NSString *)newHost port:(UInt16)newPort protocol:(int)newProtocol
 {
     host = newHost;
@@ -148,50 +156,16 @@
 
 -(void)connect
 {
-    NetworkAddress addresses[2];
-    int addressCount = resolveHost(addresses, [host UTF8String]);
-    if (addressCount == 0)
-    {
-        // Unable to resolve host.
-        dispatch_async(queue, ^{ [self disconnect]; });
-        return;
-    }
-    int selectedAddress = 0;
-    if (addressCount > 1 && internetProtocol != PF_UNSPEC)
-    {
-        if (addresses[0].family != internetProtocol)
-        {
-            selectedAddress = 1;
-        }
-    }
-    
-    fd = socket(addresses[selectedAddress].family, SOCK_STREAM, IPPROTO_TCP);
-    if (fd < 0)
+    connection.host = host;
+    connection.port = port;
+    int result = [connection connect];
+    if (result != CONNECTION_RESULT_SUCCEEDED)
     {
         dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
     
-    NetworkAddress bindAddress;
-    memset(&bindAddress, 0, sizeof(NetworkAddress));
-    bindAddress.len = addresses[selectedAddress].len;
-    bindAddress.family = addresses[selectedAddress].family;
-    int result = bind(fd, &bindAddress.ip, bindAddress.len);
-    if (result != 0 )
-    {
-        dispatch_async(queue, ^{ [self disconnect]; });
-        return;
-    }
-    
-    addresses[selectedAddress].port = htons(port);
-    result = connect(fd, &addresses[selectedAddress].ip, addresses[selectedAddress].len);
-    if (result != 0)
-    {
-        dispatch_async(queue, ^{ [self disconnect]; });
-        return;
-    }
-    
-    readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
+    readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, connection.fd, 0, queue);
     if (readSource == nil)
     {
         dispatch_async(queue, ^{ [self disconnect]; });
@@ -206,20 +180,12 @@
 
 -(void)send:(const void *)buffer withSize:(int)size
 {
-    for (int i = 0; i < 10; i++)
+    int result = [connection send:buffer size:size];
+    if (result != size)
     {
-        int result = (int)send(fd, buffer, size, 0);
-        if (result == size)
-        {
-            return;
-        }
-        buffer += result;
-        size -= result;
-        [NSThread sleepForTimeInterval:0.100];
+        dispatch_async(queue, ^{ [self disconnect]; });
+        return;
     }
-    
-    // If it gets here, it means there is a connection problem.
-    dispatch_async(queue, ^{ [self disconnect]; });
 }
 
 
@@ -557,7 +523,7 @@
 -(void)newTerminalDataAvailable
 {
     //printf("newTerminalDataAvailable\r\n");
-    int result = (int)recv(fd, inBuffer + inIndex, INPUT_BUFFER_SIZE - inIndex, 0);
+    int result = [connection receiveIn:inBuffer + inIndex size:INPUT_BUFFER_SIZE - inIndex];
     if (result <= 0)
     {
         dispatch_async(queue, ^{ [self disconnect]; });
@@ -639,11 +605,7 @@
         dispatch_source_cancel(readSource);
         readSource = NULL;
     }
-    if (fd >= 0)
-    {
-        close(fd);
-        fd = -1;
-    }
+    [connection disconnect];
     
     dispatch_async(mainQueue, ^{
         [dataDelegate newDataAvailableIn:(UInt8*)"\r\nLogged out\r\n" length:14];
@@ -657,7 +619,7 @@
     self = [super init];
     if (self != nil)
     {
-        fd = -1;
+        connection = [ConnectionTcp new];
         queue = dispatch_queue_create("com.Devolutions.SshConnectionQueue", DISPATCH_QUEUE_SERIAL);
         mainQueue = dispatch_get_main_queue();
     }
@@ -668,6 +630,8 @@
 
 -(void)dealloc
 {
+    [connection release];
+    dispatch_release(queue);
     [super dealloc];
 }
 

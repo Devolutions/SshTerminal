@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "VT100Connection.h"
-#import "NetworkHelpers.h"
+#import "ConnectionTcp.h"
 
 
 #define INPUT_BUFFER_SIZE 1024
@@ -47,7 +47,6 @@ typedef struct
     int height;
     int internetProtocol;
     
-    int fd;
     BOOL userNameSent;
     
     UInt8 inBuffer[INPUT_BUFFER_SIZE];
@@ -55,6 +54,7 @@ typedef struct
     int inIndex;
     int outIndex;
     
+    ConnectionTcp* connection;
     dispatch_queue_t queue;
     dispatch_queue_t mainQueue;
     dispatch_source_t readSource;
@@ -72,6 +72,7 @@ typedef struct
 -(void)setWidth:(int)newWidth;
 
 -(void)setEventDelegate:(id<TelnetConnectionEventDelegate>)newEventDelegate;
+-(void)setProxy:(ConnectionTcp*)newProxy;
 
 -(int)writeFrom:(const UInt8*)buffer length:(int)count;
 -(void)startConnection;

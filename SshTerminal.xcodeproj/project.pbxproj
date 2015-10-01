@@ -39,6 +39,14 @@
 		F4AE907D1B4198E2007AC63E /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4AE907C1B4198E2007AC63E /* Images.xcassets */; };
 		F4AE90801B4198E2007AC63E /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = F4AE907E1B4198E2007AC63E /* MainMenu.xib */; };
 		F4AE90931B419911007AC63E /* SshTerminal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4AE90331B41733E007AC63E /* SshTerminal.framework */; };
+		F4BA047A1BBAD03B0025F526 /* ConnectionTcp.h in Headers */ = {isa = PBXBuildFile; fileRef = F4BA04781BBAD03B0025F526 /* ConnectionTcp.h */; };
+		F4BA047B1BBAD03B0025F526 /* ConnectionTcp.m in Sources */ = {isa = PBXBuildFile; fileRef = F4BA04791BBAD03B0025F526 /* ConnectionTcp.m */; };
+		F4BA047E1BBAFDE50025F526 /* ConnectionSocks4.h in Headers */ = {isa = PBXBuildFile; fileRef = F4BA047C1BBAFDE50025F526 /* ConnectionSocks4.h */; };
+		F4BA047F1BBAFDE50025F526 /* ConnectionSocks4.m in Sources */ = {isa = PBXBuildFile; fileRef = F4BA047D1BBAFDE50025F526 /* ConnectionSocks4.m */; };
+		F4BA04821BBC0C620025F526 /* ConnectionSocks5.h in Headers */ = {isa = PBXBuildFile; fileRef = F4BA04801BBC0C620025F526 /* ConnectionSocks5.h */; };
+		F4BA04831BBC0C620025F526 /* ConnectionSocks5.m in Sources */ = {isa = PBXBuildFile; fileRef = F4BA04811BBC0C620025F526 /* ConnectionSocks5.m */; };
+		F4BA04861BBC59CF0025F526 /* ConnectionHttp.h in Headers */ = {isa = PBXBuildFile; fileRef = F4BA04841BBC59CF0025F526 /* ConnectionHttp.h */; };
+		F4BA04871BBC59CF0025F526 /* ConnectionHttp.m in Sources */ = {isa = PBXBuildFile; fileRef = F4BA04851BBC59CF0025F526 /* ConnectionHttp.m */; };
 		F4E9654F1B7BC8D10072D98D /* libssh.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F4E9654E1B7BC8D10072D98D /* libssh.dylib */; };
 /* End PBXBuildFile section */
 
@@ -102,6 +110,14 @@
 		F4AE907A1B4198E2007AC63E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		F4AE907C1B4198E2007AC63E /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		F4AE907F1B4198E2007AC63E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		F4BA04781BBAD03B0025F526 /* ConnectionTcp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConnectionTcp.h; sourceTree = "<group>"; };
+		F4BA04791BBAD03B0025F526 /* ConnectionTcp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConnectionTcp.m; sourceTree = "<group>"; };
+		F4BA047C1BBAFDE50025F526 /* ConnectionSocks4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConnectionSocks4.h; sourceTree = "<group>"; };
+		F4BA047D1BBAFDE50025F526 /* ConnectionSocks4.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConnectionSocks4.m; sourceTree = "<group>"; };
+		F4BA04801BBC0C620025F526 /* ConnectionSocks5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConnectionSocks5.h; sourceTree = "<group>"; };
+		F4BA04811BBC0C620025F526 /* ConnectionSocks5.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConnectionSocks5.m; sourceTree = "<group>"; };
+		F4BA04841BBC59CF0025F526 /* ConnectionHttp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConnectionHttp.h; sourceTree = "<group>"; };
+		F4BA04851BBC59CF0025F526 /* ConnectionHttp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConnectionHttp.m; sourceTree = "<group>"; };
 		F4E9654E1B7BC8D10072D98D /* libssh.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssh.dylib; path = SshTerminal/libssh/libssh.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -180,6 +196,14 @@
 		F4AE90351B41733E007AC63E /* SshTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				F4BA04841BBC59CF0025F526 /* ConnectionHttp.h */,
+				F4BA04851BBC59CF0025F526 /* ConnectionHttp.m */,
+				F4BA047C1BBAFDE50025F526 /* ConnectionSocks4.h */,
+				F4BA047D1BBAFDE50025F526 /* ConnectionSocks4.m */,
+				F4BA04801BBC0C620025F526 /* ConnectionSocks5.h */,
+				F4BA04811BBC0C620025F526 /* ConnectionSocks5.m */,
+				F4BA04781BBAD03B0025F526 /* ConnectionTcp.h */,
+				F4BA04791BBAD03B0025F526 /* ConnectionTcp.m */,
 				F4989F1A1B6008D600693A47 /* NetworkHelpers.h */,
 				F4989F181B6008A200693A47 /* NetworkHelpers.m */,
 				F4AE905F1B418EBF007AC63E /* SshConnection.h */,
@@ -259,10 +283,14 @@
 				F4A3E2FB1B5694420007D4C0 /* SshTunnelConnection.h in Headers */,
 				F4A3E2FE1B569B930007D4C0 /* SshFoundation.h in Headers */,
 				F4989F1B1B6008D600693A47 /* NetworkHelpers.h in Headers */,
+				F4BA047E1BBAFDE50025F526 /* ConnectionSocks4.h in Headers */,
 				F4AE90391B41733E007AC63E /* SshTerminal.h in Headers */,
 				F4AE90671B418EBF007AC63E /* VT100Storage.h in Headers */,
+				F4BA04861BBC59CF0025F526 /* ConnectionHttp.h in Headers */,
 				F4A3E2F71B5693A30007D4C0 /* SshTunnel.h in Headers */,
 				F4989F0E1B5FDC7900693A47 /* TelnetTerminal.h in Headers */,
+				F4BA047A1BBAD03B0025F526 /* ConnectionTcp.h in Headers */,
+				F4BA04821BBC0C620025F526 /* ConnectionSocks5.h in Headers */,
 				F4AE90661B418EBF007AC63E /* SshConnection.h in Headers */,
 				F4989F161B5FEED800693A47 /* VT100Connection.h in Headers */,
 				F4989F121B5FE59300693A47 /* TelnetConnection.h in Headers */,
@@ -408,9 +436,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4BA04871BBC59CF0025F526 /* ConnectionHttp.m in Sources */,
+				F4BA047F1BBAFDE50025F526 /* ConnectionSocks4.m in Sources */,
 				F4989F191B6008A200693A47 /* NetworkHelpers.m in Sources */,
 				F4AE906A1B418EBF007AC63E /* VT100Storage.m in Sources */,
 				F4989F131B5FE59300693A47 /* TelnetConnection.m in Sources */,
+				F4BA047B1BBAD03B0025F526 /* ConnectionTcp.m in Sources */,
+				F4BA04831BBC0C620025F526 /* ConnectionSocks5.m in Sources */,
 				F4AE906C1B418EBF007AC63E /* VT100TerminalView.m in Sources */,
 				F4A3E2FC1B5694420007D4C0 /* SshTunnelConnection.m in Sources */,
 				F4AE90691B418EBF007AC63E /* SshConnection.m in Sources */,
