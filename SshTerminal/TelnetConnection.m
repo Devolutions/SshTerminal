@@ -166,9 +166,6 @@
 
 -(void)connect
 {
-    dispatch_async(queue, ^{ [self disconnect]; });
-    return;
-    
     connection.host = host;
     connection.port = port;
     int result = [connection connect];
@@ -282,7 +279,8 @@
         i += strlen(userString);
         userNameSent = YES;
         
-        dispatch_async(queue, ^{ [self writePassword]; });
+        // The next time data will be received, it will be time to send the password.
+        needsSendingPassword = YES;
     }
     buffer[i++] = IAC;
     buffer[i++] = SE;
@@ -601,6 +599,13 @@
     else
     {
         free(terminalBuffer);
+    }
+    
+    if (needsSendingPassword == YES)
+    {
+        // This is the first data received after the user name has been sent, most probably the "password:" prompt: schedule to write the password.
+        needsSendingPassword = NO;
+        dispatch_async(queue, ^{ [self writePassword]; });
     }
     
     if (i < inIndex)

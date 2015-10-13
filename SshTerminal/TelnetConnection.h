@@ -48,6 +48,7 @@ typedef struct
     int internetProtocol;
     
     BOOL userNameSent;
+    BOOL needsSendingPassword;
     
     UInt8 inBuffer[INPUT_BUFFER_SIZE];
     UInt8 outBuffer[OUTPUT_BUFFER_SIZE];

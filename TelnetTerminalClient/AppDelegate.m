@@ -44,7 +44,7 @@
 {
     if (resume == NO)
     {
-#define TEST_SERVER 1
+#define TEST_SERVER 0
         
 #if (TEST_SERVER == 0)
         terminal.userName = @"devolutions\\test";
