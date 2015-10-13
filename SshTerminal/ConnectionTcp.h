@@ -32,6 +32,7 @@ enum
 -(int)connect;
 -(int)send:(const UInt8*)buffer size:(int)byteCount;
 -(int)receiveIn:(UInt8*)buffer size:(int)bufferSize;
+-(int)peekIn:(UInt8 *)buffer size:(int)bufferSize;
 -(void)disconnect;
 
 -(int)createSocketAndConnectToHost:(const char*)newHost onPort:(UInt16)newPort;

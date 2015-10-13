@@ -42,7 +42,7 @@ enum
     telnetTerminalProxySocks4,
     telnetTerminalProxySocks5,
     telnetTerminalProxyHttp,
-    telnetTerminalProxyLocal,
+    telnetTerminalProxyTelnet,
 };
 
 enum
@@ -63,6 +63,8 @@ enum
     NSString* proxyHost;
     NSString* proxyUser;
     NSString* proxyPassword;
+    NSString* proxyConnectCommand;
+    NSString* proxyExclusion;
     UInt16 port;
     UInt16 proxyPort;
     int proxyDnsLookup;
@@ -70,6 +72,7 @@ enum
     int proxyType;
     int columnCount;
     int state;
+    BOOL proxyIncludeLocal;
     id<TelnetTerminalEvent> eventDelegate;
 }
 
@@ -84,7 +87,10 @@ enum
 @property(assign)UInt16 proxyPort;
 @property(copy,nonatomic)NSString* proxyUser;
 @property(copy,nonatomic)NSString* proxyPassword;
+@property(copy,nonatomic)NSString* proxyConnectCommand;
+@property(copy,nonatomic)NSString* proxyExclusion;
 @property(assign)int proxyDnsLookup;
+@property(assign)BOOL proxyIncludeLocal;
 
 @property(readonly)int state;
 

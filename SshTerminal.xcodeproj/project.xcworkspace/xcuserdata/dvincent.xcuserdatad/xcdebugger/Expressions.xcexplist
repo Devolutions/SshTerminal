@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "-[TelnetTerminal connect]:TelnetTerminal.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[VT100TerminalView setRowCountForHeight:]:VT100TerminalView.m">
+      </ContextState>
+      <ContextState
+         contextName = "-[VT100TerminalView initScreen]:VT100TerminalView.m">
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>

@@ -6,9 +6,9 @@
 //  Copyright (c) 2015 Denis Vincent. All rights reserved.
 //
 
-#import "ConnectionSocks4.h"
+#import "ProxySocks4.h"
 
-@implementation ConnectionSocks4
+@implementation ProxySocks4
 
 @synthesize proxyHost;
 @synthesize proxyUser;

@@ -78,13 +78,17 @@
 
 -(void)setDataDelegate:(id<VT100TerminalDataDelegate>)newDataDelegate
 {
+    [dataDelegate release];
     dataDelegate = newDataDelegate;
+    [dataDelegate retain];
 }
 
 
 -(void)setEventDelegate:(id<TelnetConnectionEventDelegate>)newEventDelegate
 {
+    [eventDelegate release];
     eventDelegate = newEventDelegate;
+    [eventDelegate retain];
 }
 
 
@@ -98,7 +102,9 @@
 
 -(void)setHost:(NSString *)newHost port:(UInt16)newPort protocol:(int)newProtocol
 {
+    [host release];
     host = newHost;
+    [host retain];
     port = newPort;
     internetProtocol = newProtocol;
 }
@@ -106,13 +112,17 @@
 
 -(void)setUser:(NSString*)userString
 {
+    [user release];
     user = userString;
+    [user retain];
 }
 
 
 -(void)setPassword:(NSString*)passwordString
 {
+    [passwordString release];
     password = passwordString;
+    [passwordString retain];
 }
 
 
@@ -156,6 +166,9 @@
 
 -(void)connect
 {
+    dispatch_async(queue, ^{ [self disconnect]; });
+    return;
+    
     connection.host = host;
     connection.port = port;
     int result = [connection connect];
@@ -537,7 +550,7 @@
     UInt8* terminalBuffer = malloc(inIndex);
     if (terminalBuffer == NULL)
     {
-        // Out of memeory:
+        // Out of memory:
         dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }

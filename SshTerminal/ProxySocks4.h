@@ -13,7 +13,7 @@
 #define SOCKS4_REPLY_REQUEST_GRANTED 90
 
 
-@interface ConnectionSocks4 : ConnectionTcp
+@interface ProxySocks4 : ConnectionTcp
 {
     NSString* proxyHost;
     NSString* proxyUser;

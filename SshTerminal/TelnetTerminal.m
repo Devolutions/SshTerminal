@@ -9,15 +9,95 @@
 #import "TelnetTerminal.h"
 #import "VT100TerminalView.h"
 #import "TelnetConnection.h"
-#import "ConnectionSocks4.h"
-#import "ConnectionSocks5.h"
-#import "ConnectionHttp.h"
+#import "ProxySocks4.h"
+#import "ProxySocks5.h"
+#import "ProxyHttp.h"
+#import "ProxyTelnet.h"
 
 
-// Private extension.
-@interface TelnetTerminal () <TelnetConnectionEventDelegate>
-
-@end
+BOOL isMatch(NSString* host, NSString* excluded)
+{
+    NSRange searchRange;
+    NSRange wildCardRange;
+    NSRange range;
+    
+    NSUInteger hostLength = [host length];
+    NSUInteger hostLocation = 0;
+    NSUInteger excludedLength = [excluded length];
+    NSUInteger excludedLocation = 0;
+    while (excludedLocation < excludedLength)
+    {
+        searchRange = NSMakeRange(excludedLocation, excludedLength - excludedLocation);
+        wildCardRange = [excluded rangeOfString:@"*" options:0 range:searchRange];
+        if (wildCardRange.length == 0)
+        {
+            if (excludedLocation == 0)
+            {
+                // No wild card in the excluded string: do a simple compare.
+                if ([host compare:excluded] == NSOrderedSame)
+                {
+                    return YES;
+                }
+                return NO;
+            }
+            else
+            {
+                // This is the last substring of the exclusion pattern:
+                wildCardRange.location = excludedLength;
+            }
+        }
+        
+        range.location = excludedLocation;
+        range.length = wildCardRange.location - excludedLocation;
+        if (range.length == 0)
+        {
+            // No substring between the last wild card and this one:
+            excludedLocation++;
+            continue;
+        }
+        
+        if (range.location == 0)
+        {
+            // This substring must be found at the beginning of the host string:
+            NSString* subExcluded = [excluded substringWithRange:range];
+            searchRange = NSMakeRange(hostLocation, hostLength - hostLocation);
+            NSRange matchRange = [host rangeOfString:subExcluded options:NSAnchoredSearch range:searchRange];
+            if (matchRange.length == 0)
+            {
+                return NO;
+            }
+            hostLocation = range.length;
+            excludedLocation = wildCardRange.location + 1;
+        }
+        else if (range.location + range.length >= excludedLength)
+        {
+            // This substring must be found at the end of the host string:
+            NSString* subExcluded = [excluded substringWithRange:range];
+            searchRange = NSMakeRange(hostLocation, hostLength - hostLocation);
+            NSRange matchRange = [host rangeOfString:subExcluded options:NSAnchoredSearch | NSBackwardsSearch range:searchRange];
+            if (matchRange.length == 0)
+            {
+                return NO;
+            }
+            excludedLocation = excludedLength;
+        }
+        else
+        {
+            // This substring must be found within the host string starting from the current search location:
+            NSString* subExcluded = [excluded substringWithRange:range];
+            searchRange = NSMakeRange(hostLocation, hostLength - hostLocation);
+            NSRange matchRange = [host rangeOfString:subExcluded options:0 range:searchRange];
+            if (matchRange.length == 0)
+            {
+                return NO;
+            }
+            hostLocation = matchRange.location + matchRange.length;
+            excludedLocation = wildCardRange.location + 1;
+        }
+    }
+    
+    return YES;
+}
 
 
 // Implementation.
@@ -34,12 +114,48 @@
 @synthesize proxyPort;
 @synthesize proxyPassword;
 @synthesize proxyUser;
+@synthesize proxyConnectCommand;
+@synthesize proxyExclusion;
 @synthesize proxyDnsLookup;
+@synthesize proxyIncludeLocal;
 
 
 -(void)setPassword:(NSString *)string
 {
-    password = [string copy];
+    [password release];
+    password = string;
+    [password retain];
+}
+
+
+-(BOOL)isProxyNeeded
+{
+    if (proxyType == telnetTerminalProxyNone)
+    {
+        return NO;
+    }
+    
+    if (proxyIncludeLocal == NO)
+    {
+        if (isMatch(hostName, @"localhost") == YES || isMatch(hostName, @"127.*.*.*") == YES || isMatch(hostName, @"::1") == YES)
+        {
+            return NO;
+        }
+    }
+    
+    if (proxyExclusion.length > 0)
+    {
+        NSArray* hosts = [proxyExclusion componentsSeparatedByString:@","];
+        for (int i = 0; i < hosts.count; i++)
+        {
+            if (isMatch(hostName, [hosts objectAtIndex:i]) == YES)
+            {
+                return NO;
+            }
+        }
+    }
+    
+    return YES;
 }
 
 
@@ -54,8 +170,9 @@
     }
     state = telnetTerminalConnected;
     
+    // Setup the main connection properties.
     connection = [[TelnetConnection alloc] init];
-    [connection setEventDelegate:self];
+    [connection setEventDelegate:(id<TelnetConnectionEventDelegate>)self];
     [terminalView setConnection:connection];
 
     int family = PF_UNSPEC;
@@ -71,32 +188,53 @@
     [connection setUser:userName];
     [connection setPassword:password];
     
-    if (proxyType == telnetTerminalProxySocks4)
+    // Setup the proxy if required.
+    if ([self isProxyNeeded] == YES)
     {
-        ConnectionSocks4* proxy = [ConnectionSocks4 new];
-        proxy.proxyHost = proxyHost;
-        proxy.proxyPort = proxyPort;
-        [connection setProxy:proxy];
-    }
-    else if (proxyType == telnetTerminalProxySocks5)
-    {
-        ConnectionSocks5* proxy = [ConnectionSocks5 new];
-        proxy.proxyHost = proxyHost;
-        proxy.proxyPort = proxyPort;
-        proxy.proxyPassword = proxyPassword;
-        proxy.proxyResolveHostAddress = (proxyDnsLookup == telnetTerminalDnsLookupLocal ? YES : NO);
-        [connection setProxy:proxy];
-    }
-    else if (proxyType == telnetTerminalProxyHttp)
-    {
-        ConnectionHttp* proxy = [ConnectionHttp new];
-        proxy.proxyHost = proxyHost;
-        proxy.proxyPort = proxyPort;
-        proxy.proxyPassword = proxyPassword;
-        proxy.proxyResolveHostAddress = (proxyDnsLookup == telnetTerminalDnsLookupLocal ? YES : NO);
-        [connection setProxy:proxy];
+        if (proxyType == telnetTerminalProxySocks4)
+        {
+            ProxySocks4* proxy = [ProxySocks4 new];
+            proxy.proxyHost = proxyHost;
+            proxy.proxyPort = proxyPort;
+            [connection setProxy:proxy];
+            [proxy release];
+        }
+        else if (proxyType == telnetTerminalProxySocks5)
+        {
+            ProxySocks5* proxy = [ProxySocks5 new];
+            proxy.proxyHost = proxyHost;
+            proxy.proxyPort = proxyPort;
+            proxy.proxyPassword = proxyPassword;
+            proxy.proxyResolveHostAddress = (proxyDnsLookup == telnetTerminalDnsLookupProxyEnd ? NO : YES);
+            [connection setProxy:proxy];
+            [proxy release];
+        }
+        else if (proxyType == telnetTerminalProxyHttp)
+        {
+            ProxyHttp* proxy = [ProxyHttp new];
+            proxy.proxyHost = proxyHost;
+            proxy.proxyPort = proxyPort;
+            proxy.proxyUser = proxyUser;
+            proxy.proxyPassword = proxyPassword;
+            proxy.proxyResolveHostAddress = (proxyDnsLookup == telnetTerminalDnsLookupLocal ? YES : NO);
+            [connection setProxy:proxy];
+            [proxy release];
+        }
+        else if (proxyType == telnetTerminalProxyTelnet)
+        {
+            ProxyTelnet* proxy = [ProxyTelnet new];
+            proxy.proxyHost = proxyHost;
+            proxy.proxyPort = proxyPort;
+            proxy.proxyUser = proxyUser;
+            proxy.proxyPassword = proxyPassword;
+            proxy.connectCommand = proxyConnectCommand;
+            proxy.proxyResolveHostAddress = (proxyDnsLookup == telnetTerminalDnsLookupLocal ? YES : NO);
+            [connection setProxy:proxy];
+            [proxy release];
+        }
     }
     
+    // Setup the terminal.
     [terminalView setColumnCount:columnCount];
     [terminalView setRowCountForHeight:self.contentSize.height];
     [terminalView initScreen];
@@ -158,7 +296,9 @@
 
 -(void)setEventDelegate:(id)delegate
 {
+    [eventDelegate release];
     eventDelegate = delegate;
+    [eventDelegate retain];
 }
 
 
@@ -252,6 +392,22 @@
 -(instancetype)init
 {
     return [self initWithFrame:NSMakeRect(0, 0, 0, 0)];
+}
+
+
+-(void)dealloc
+{
+    [password release];
+    [hostName release];
+    [userName release];
+    [proxyHost release];
+    [proxyUser release];
+    [proxyPassword release];
+    [proxyConnectCommand release];
+    [proxyExclusion release];
+    [eventDelegate release];
+    
+    [super dealloc];
 }
 
 

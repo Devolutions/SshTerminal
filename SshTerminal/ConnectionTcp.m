@@ -87,7 +87,36 @@
     }
     
     int result = recv(fd, buffer, bufferSize, 0);
-    if (result < 0)
+    if (result == 0)
+    {
+        return CONNECTION_RESULT_CLOSED;
+    }
+    else if (result < 0)
+    {
+        if (errno != EAGAIN)
+        {
+            return CONNECTION_RESULT_FAILED;
+        }
+        result = 0;
+    }
+    
+    return result;
+}
+
+
+-(int)peekIn:(UInt8 *)buffer size:(int)bufferSize
+{
+    if (fd == -1)
+    {
+        return CONNECTION_RESULT_CLOSED;
+    }
+    
+    int result = recv(fd, buffer, bufferSize, MSG_PEEK);
+    if (result == 0)
+    {
+        return CONNECTION_RESULT_CLOSED;
+    }
+    else if (result < 0)
     {
         if (errno != EAGAIN)
         {

@@ -45,7 +45,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 4
+#define TEST_SERVER 0
         
 #if (TEST_SERVER == 0)
         terminal.userName = @"david";

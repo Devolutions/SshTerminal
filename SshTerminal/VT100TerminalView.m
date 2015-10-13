@@ -30,7 +30,9 @@ NSString* TAName = @"TerminalAttributeName";
 
 -(void)setConnection:(id<VT100Connection>)newConnection
 {
+    [connection release];
     connection = newConnection;
+    [connection retain];
     [connection setDataDelegate:self];
 }
 
@@ -1915,6 +1917,7 @@ NSString* TAName = @"TerminalAttributeName";
     columnCount = newCount;
     [connection setWidth:newCount];
     NSString* blankString = [@" " stringByPaddingToLength:columnCount withString:@" " startingAtIndex:0];
+    [blankLine release];
     blankLine = [[NSAttributedString alloc] initWithString:blankString attributes:newLineAttributes];
     
     NSSize containerSize = [self.textContainer containerSize];
@@ -2119,6 +2122,29 @@ NSString* TAName = @"TerminalAttributeName";
     }
     
     return self;
+}
+
+
+-(void)dealloc
+{
+    [connection release];
+    [storage release];
+    [normalFont release];
+    [boldFont release];
+    for (int i = 0; i < 9; i++)
+    {
+        [backColors[i] release];
+        [textColors[i] release];
+    }
+    [paragraphStyle release];
+    [newLineAttributes release];
+    [blankLine release];
+    [blankChar release];
+    [lineFeed release];
+    [insert release];
+    [tabStops release];
+    
+    [super dealloc];
 }
 
 

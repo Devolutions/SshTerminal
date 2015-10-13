@@ -21,7 +21,7 @@
 #define SOCKS5_USERNAME_PASSWORD_VERSION 1
 
 
-@interface ConnectionSocks5 : ConnectionTcp
+@interface ProxySocks5 : ConnectionTcp
 {
     NSString* proxyHost;
     NSString* proxyUser;

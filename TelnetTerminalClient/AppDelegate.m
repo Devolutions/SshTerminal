@@ -51,12 +51,17 @@
         terminal.hostName = @"VDEVOSRV-TST.devolutions.loc";
         [terminal setPassword:@"Price2011"];
 #elif (TEST_SERVER == 1)
-        terminal.proxyPort = 8080;
+        terminal.proxyExclusion = @"VDEV*.dev*.loc";
+        terminal.proxyPort = 463;
         terminal.proxyHost = @"127.0.0.1";
-        terminal.proxyType = telnetTerminalProxyHttp;
+        terminal.proxyType = telnetTerminalProxyTelnet;
+        terminal.proxyUser = @"testUser";
+        terminal.proxyPassword = @"123456";
+        terminal.proxyConnectCommand = @"connect %host:%port \\xFF %user,%pass\\t%proxyhost\\\\%proxyport%%\\r\\n";
         terminal.proxyDnsLookup = telnetTerminalDnsLookupLocal;
         terminal.userName = @"devolutions\\test";
         terminal.hostName = @"VDEVOSRV-TST.devolutions.loc";
+        //terminal.hostName = @"192.168.1.118";
         [terminal setPassword:@"Price2011"];
 #endif
         terminal.columnCount = 80;
