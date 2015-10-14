@@ -123,7 +123,7 @@ BOOL isMatch(NSString* host, NSString* excluded)
 -(void)setPassword:(NSString *)string
 {
     [password release];
-    password = string;
+    password = [string copy];
     [password retain];
 }
 

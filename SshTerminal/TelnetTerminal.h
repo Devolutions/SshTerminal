@@ -43,6 +43,7 @@ enum
     telnetTerminalProxySocks5,
     telnetTerminalProxyHttp,
     telnetTerminalProxyTelnet,
+    telnetTerminalProxyLocal,
 };
 
 enum
