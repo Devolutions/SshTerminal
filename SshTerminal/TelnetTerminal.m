@@ -256,6 +256,19 @@ BOOL isMatch(NSString* host, NSString* excluded)
     }
 }
 
+-(void)send:(NSString *)string
+{
+    if (connection != nil)
+    {
+        if (state != telnetTerminalConnected)
+        {
+            return;
+        }
+        const char* utf8String = [string UTF8String];
+        [connection writeFrom:(const UInt8*)utf8String length:strlen(utf8String)];
+    }
+}
+
 
 -(void)viewDidEndLiveResize
 {

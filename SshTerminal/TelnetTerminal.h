@@ -98,6 +98,6 @@ enum
 -(void)setEventDelegate:(id<TelnetTerminalEvent>) delegate;
 -(void)connect;
 -(void)disconnect;
-
+-(void)send:(NSString *)string;
 
 @end
