@@ -58,6 +58,7 @@ enum
     NSString* x11AuthorityFile;
     UInt16 port;
     BOOL x11Forwarding;
+    BOOL verbose;
     int internetProtocol;
     int columnCount;
     int state;
@@ -80,6 +81,7 @@ enum
 @property(copy,nonatomic)NSString* x11Authentication;   // Either @"MIT-MAGIC-COOKIE-1" or @"XDM-AUTHORIZATION-1".
 @property(copy,nonatomic)NSString* x11AuthorityFile;
 @property(assign)int internetProtocol;
+@property(assign)BOOL verbose;
 
 @property(readonly)int state;
 

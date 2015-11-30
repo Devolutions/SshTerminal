@@ -56,6 +56,7 @@
 @synthesize x11Authentication;
 @synthesize x11AuthorityFile;
 @synthesize internetProtocol;
+@synthesize verbose;
 
 
 -(void)setPassword:(NSString *)string
@@ -144,6 +145,7 @@
         }
     }
     [connection setX11Forwarding:x11Forwarding withDisplay:x11Display];
+    [connection setVerbose:verbose];
     
     [terminalView setColumnCount:columnCount];
     [terminalView setRowCountForHeight:self.contentSize.height];

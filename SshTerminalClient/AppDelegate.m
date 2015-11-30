@@ -73,9 +73,11 @@ SshConnection* sshConnection = NULL;
         //[terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
 #elif (TEST_SERVER == 4)
         terminal.userName = @"david";
-        terminal.hostName = @"192.168.1.141";
+        terminal.hostName = @"macmini2";
+        terminal.internetProtocol = sshTerminalIpv6;
         [terminal setPassword:@"123456"];
 #endif
+        terminal.verbose = YES;
         terminal.columnCount = 80;
         [terminal connect];
         [statusText setStringValue:@"Connecting"];

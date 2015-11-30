@@ -80,6 +80,12 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 }
 
 
+-(void)setVerbose:(BOOL)newVerbose
+{
+    verbose = newVerbose;
+}
+
+
 -(void)setWidth:(int)newWidth
 {
     width = newWidth;
@@ -232,6 +238,17 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 }
 
 
+-(void)verboseNotify:(NSString*)verboseString
+{
+    dispatch_async(mainQueue, ^{
+        [verboseString retain];
+        const char* stringBuffer = [verboseString UTF8String];
+        [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+        [verboseString release];
+    });
+}
+
+
 -(int)x11ConnectSocket
 {
     if (x11DisplayName == nil)
@@ -295,10 +312,18 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)connect
 {
+    if (verbose == YES)
+    {
+        [self verboseNotify:@"Initiating connection\r\n"];
+    }
     NetworkAddress addresses[2];
     int addressCount = resolveHost(addresses, [host UTF8String]);
     if (addressCount == 0)
     {
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Host not found\r\n"];
+        }
         [self eventNotify:CONNECTION_ERROR];
         dispatch_async(queue, ^{ [self disconnect]; });
         return;
@@ -313,10 +338,19 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     }
     char addressString[45];
     getnameinfo(&addresses[selectedAddress].ip, addresses[selectedAddress].len, addressString, sizeof(addressString), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
+    if (verbose == YES)
+    {
+        NSString* message = [NSString stringWithFormat:@"Connecting to %s\r\n", addressString];
+        [self verboseNotify:message];
+    }
     ssh_options_set(session, SSH_OPTIONS_HOST, addressString);
     int result = ssh_connect(session);
     if (result != SSH_OK)
     {
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Ssh connection failed\r\n"];
+        }
         [self eventNotify:CONNECTION_ERROR];
         dispatch_async(queue, ^{ [self disconnect]; });
         return;
@@ -328,6 +362,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)authenticateServer
 {
+    if (verbose == YES)
+    {
+        [self verboseNotify:@"Authenticating server\r\n"];
+    }
     int result = ssh_is_server_known(session);
     switch (result)
     {
@@ -339,24 +377,44 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         
         // Potential attack errors (the client will be notified and will need to either -(void)resume or -(void)disconnect).
         case SSH_SERVER_KNOWN_CHANGED:
+            if (verbose == YES)
+            {
+                [self verboseNotify:@"Server key has changed\r\n"];
+            }
             [self eventNotify:SERVER_KEY_CHANGED];
             break;
             
         case SSH_SERVER_FOUND_OTHER:
+            if (verbose == YES)
+            {
+                [self verboseNotify:@"Server key has unexpected type\r\n"];
+            }
             [self eventNotify:SERVER_KEY_FOUND_OTHER];
             break;
             
         case SSH_SERVER_NOT_KNOWN:
+            if (verbose == YES)
+            {
+                [self verboseNotify:@"Server is unknown\r\n"];
+            }
             [self eventNotify:SERVER_NOT_KNOWN];
             break;
         
         // Fatal errors.
         case SSH_SERVER_FILE_NOT_FOUND:
+            if (verbose == YES)
+            {
+                [self verboseNotify:@"Server is unknown, knownhost file does not exist\r\n"];
+            }
             [self eventNotify:SERVER_FILE_NOT_FOUND];
             break;
             
         case SSH_SERVER_ERROR:
         default:
+            if (verbose == YES)
+            {
+                [self verboseNotify:@"Unexpected error\r\n"];
+            }
             [self eventNotify:SERVER_ERROR];
             break;
     }
@@ -365,9 +423,17 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)authenticateUser
 {
+    if (verbose == YES)
+    {
+        [self verboseNotify:@"Authenticating user\r\n"];
+    }
     if (useKeyAuthentication == YES)
     {
         // User authentication by key:
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Authentication by key\r\n"];
+        }
         ssh_key key = ssh_key_new();
         if (key == NULL)
         {
@@ -378,6 +444,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         int result = ssh_pki_import_privkey_file([keyFilePath UTF8String], [keyFilePassword UTF8String], PrivateKeyAuthCallback, NULL, &key);
         if (result == SSH_OK)
         {
+            if (verbose == YES)
+            {
+                [self verboseNotify:@"Key file successfully loaded, sending to server\r\n"];
+            }
             result = ssh_userauth_publickey(session, NULL, key);
             ssh_key_free(key);
             
@@ -385,10 +455,18 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             {
                 if (result == SSH_AUTH_ERROR)
                 {
+                    if (verbose == YES)
+                    {
+                        [self verboseNotify:@"Unexpected error\r\n"];
+                    }
                     [self eventNotify:FATAL_ERROR];
                 }
                 else
                 {
+                    if (verbose == YES)
+                    {
+                        [self verboseNotify:@"Server refused the key\r\n"];
+                    }
                     [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
                 }
                 dispatch_async(queue, ^{ [self disconnect]; });
@@ -399,10 +477,18 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         {
             if (result == SSH_EOF)
             {
+                if (verbose == YES)
+                {
+                    [self verboseNotify:@"Key file not found or access denied\r\n"];
+                }
                 [self eventNotify:KEY_FILE_NOT_FOUND_OR_DENIED];
             }
             else
             {
+                if (verbose == YES)
+                {
+                    [self verboseNotify:@"Unexpected error loading the key file\r\n"];
+                }
                 [self eventNotify:FATAL_ERROR];
             }
             dispatch_async(queue, ^{ [self disconnect]; });
@@ -412,6 +498,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     else
     {
         // User authentication by password:
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Authentication by password\r\n"];
+        }
         int result;
         do
         {
@@ -424,6 +514,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         
         if (result != SSH_AUTH_SUCCESS)
         {
+            if (verbose == YES)
+            {
+                [self verboseNotify:@"Using alternative method\r\n"];
+            }
             result = ssh_userauth_kbdint(session, NULL, NULL);
             if (result == SSH_AUTH_INFO)
             {
@@ -445,10 +539,18 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         {
             if (result == SSH_AUTH_ERROR)
             {
+                if (verbose == YES)
+                {
+                    [self verboseNotify:@"Unexpected error\r\n"];
+                }
                 [self eventNotify:FATAL_ERROR];
             }
             else
             {
+                if (verbose == YES)
+                {
+                    [self verboseNotify:@"Server has refused password\r\n"];
+                }
                 [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
             }
             dispatch_async(queue, ^{ [self disconnect]; });
@@ -469,6 +571,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)openTerminalChannel
 {
+    if (verbose == YES)
+    {
+        [self verboseNotify:@"Opening terminal\r\n"];
+    }
     int fd = ssh_get_fd(session);
     readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
     if (readSource == nil)
@@ -482,6 +588,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     channel = ssh_channel_new(session);
     if (channel == NULL)
     {
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Unable to open channel\r\n"];
+        }
         [self eventNotify:OUT_OF_MEMORY_ERROR];
         dispatch_async(queue, ^{ [self disconnect]; });
         return;
@@ -490,6 +600,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     int result = ssh_channel_open_session(channel);
     if (result != SSH_OK)
     {
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Unable to open session\r\n"];
+        }
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
@@ -498,6 +612,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     result = ssh_channel_request_pty(channel);
     if (result != SSH_OK)
     {
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Unable to open pty\r\n"];
+        }
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
@@ -505,6 +623,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     result = ssh_channel_change_pty_size(channel, width, height);
     if (result != SSH_OK)
     {
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Setting pty size failed\r\n"];
+        }
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
@@ -512,12 +634,20 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     
     if (x11Forwarding == YES)
     {
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Opening X channel\r\n"];
+        }
         const char* protocol = NULL;
         const char* cookie = NULL;
 
         result = ssh_channel_request_x11(channel, 0, protocol, cookie, x11ScreenNumber);
         if (result != SSH_OK)
         {
+            if (verbose == YES)
+            {
+                [self verboseNotify:@"Unable to open X channel\r\n"];
+            }
             [self eventNotify:X11_ERROR];
         }
     }
@@ -525,6 +655,10 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     result = ssh_channel_request_shell(channel);
     if (result != SSH_OK)
     {
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Unable to open shell\r\n"];
+        }
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
