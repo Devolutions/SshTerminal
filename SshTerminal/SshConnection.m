@@ -344,12 +344,23 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         [self verboseNotify:message];
     }
     ssh_options_set(session, SSH_OPTIONS_HOST, addressString);
-    int result = ssh_connect(session);
+    int result;
+    while (1)
+    {
+        result = ssh_connect(session);
+        if (result != SSH_AGAIN)
+        {
+            break;
+        }
+        [NSThread sleepForTimeInterval:0.050];
+    }
     if (result != SSH_OK)
     {
         if (verbose == YES)
         {
-            [self verboseNotify:@"Ssh connection failed\r\n"];
+            const char* errorString = ssh_get_error(session);
+            NSString* message = [NSString stringWithFormat:@"Ssh connection failed: %s\r\n", errorString];
+            [self verboseNotify:message];
         }
         [self eventNotify:CONNECTION_ERROR];
         dispatch_async(queue, ^{ [self disconnect]; });
@@ -413,7 +424,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         default:
             if (verbose == YES)
             {
-                [self verboseNotify:@"Unexpected error\r\n"];
+                const char* errorString = ssh_get_error(session);
+                NSString* message = [NSString stringWithFormat:@"Unexpected error: %s\r\n", errorString];
+                [self verboseNotify:message];
             }
             [self eventNotify:SERVER_ERROR];
             break;
@@ -457,7 +470,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
                 {
                     if (verbose == YES)
                     {
-                        [self verboseNotify:@"Unexpected error\r\n"];
+                        const char* errorString = ssh_get_error(session);
+                        NSString* message = [NSString stringWithFormat:@"Unexpected error: %s\r\n", errorString];
+                        [self verboseNotify:message];
                     }
                     [self eventNotify:FATAL_ERROR];
                 }
@@ -487,7 +502,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             {
                 if (verbose == YES)
                 {
-                    [self verboseNotify:@"Unexpected error loading the key file\r\n"];
+                    const char* errorString = ssh_get_error(session);
+                    NSString* message = [NSString stringWithFormat:@"Unexpected error loading the key file: %s\r\n", errorString];
+                    [self verboseNotify:message];
                 }
                 [self eventNotify:FATAL_ERROR];
             }
@@ -541,7 +558,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             {
                 if (verbose == YES)
                 {
-                    [self verboseNotify:@"Unexpected error\r\n"];
+                    const char* errorString = ssh_get_error(session);
+                    NSString* message = [NSString stringWithFormat:@"Unexpected error: %s\r\n", errorString];
+                    [self verboseNotify:message];
                 }
                 [self eventNotify:FATAL_ERROR];
             }
@@ -590,7 +609,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     {
         if (verbose == YES)
         {
-            [self verboseNotify:@"Unable to open channel\r\n"];
+            const char* errorString = ssh_get_error(session);
+            NSString* message = [NSString stringWithFormat:@"Unable to open channel: %s\r\n", errorString];
+            [self verboseNotify:message];
         }
         [self eventNotify:OUT_OF_MEMORY_ERROR];
         dispatch_async(queue, ^{ [self disconnect]; });
@@ -602,7 +623,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     {
         if (verbose == YES)
         {
-            [self verboseNotify:@"Unable to open session\r\n"];
+            const char* errorString = ssh_get_error(session);
+            NSString* message = [NSString stringWithFormat:@"Unable to open session: %s\r\n", errorString];
+            [self verboseNotify:message];
         }
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^{ [self closeAllChannels]; });
@@ -614,7 +637,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     {
         if (verbose == YES)
         {
-            [self verboseNotify:@"Unable to open pty\r\n"];
+            const char* errorString = ssh_get_error(session);
+            NSString* message = [NSString stringWithFormat:@"Unable to open pty: %s\r\n", errorString];
+            [self verboseNotify:message];
         }
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^{ [self closeAllChannels]; });
@@ -625,7 +650,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     {
         if (verbose == YES)
         {
-            [self verboseNotify:@"Setting pty size failed\r\n"];
+            const char* errorString = ssh_get_error(session);
+            NSString* message = [NSString stringWithFormat:@"Setting pty size failed: %s\r\n", errorString];
+            [self verboseNotify:message];
         }
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^{ [self closeAllChannels]; });
@@ -646,7 +673,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         {
             if (verbose == YES)
             {
-                [self verboseNotify:@"Unable to open X channel\r\n"];
+                const char* errorString = ssh_get_error(session);
+                NSString* message = [NSString stringWithFormat:@"Unable to open X channel: %s\r\n", errorString];
+                [self verboseNotify:message];
             }
             [self eventNotify:X11_ERROR];
         }
@@ -657,7 +686,9 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     {
         if (verbose == YES)
         {
-            [self verboseNotify:@"Unable to open shell\r\n"];
+            const char* errorString = ssh_get_error(session);
+            NSString* message = [NSString stringWithFormat:@"Unable to open shell: %s\r\n", errorString];
+            [self verboseNotify:message];
         }
         [self eventNotify:CHANNEL_ERROR];
         dispatch_async(queue, ^{ [self closeAllChannels]; });
