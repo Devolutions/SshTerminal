@@ -8,77 +8,25 @@
 
 #import <Cocoa/Cocoa.h>
 #import "VT100Connection.h"
-
-#define TERMINAL_BUFFER_SIZE 1024
-
-typedef union
-{
-    UInt32 all;
-    struct
-    {
-        UInt16 flags;
-        UInt8 backColor;
-        UInt8 textColor;
-    };
-} TerminalAttribute;
+#import "VT100Screen.h"
 
 
-@interface VT100TerminalView : NSTextView <VT100TerminalDataDelegate>
+@interface VT100TerminalView : NSTextView
 {
     id<VT100Connection> connection;
-    NSTextStorage* storage;
-    UInt8 inBuffer[TERMINAL_BUFFER_SIZE];
-    UInt32 inIndex;
+    VT100Screen* screen;
+
+    int columnCount;
+    int rowCount;
     
-    NSFont* normalFont;
-    NSFont* boldFont;
-    NSColor* backColors[9];
-    NSColor* textColors[9];
     BOOL isCursorVisible;
-    
-    NSMutableParagraphStyle* paragraphStyle;
-    NSDictionary* newLineAttributes;
-    NSAttributedString* blankLine;
-    NSAttributedString* blankChar;
-    NSAttributedString* lineFeed;
-    NSMutableAttributedString* insert;
-    NSMutableData* tabStops;
-    SInt32 charTop;
-    
-    SInt32 columnCount;
-    SInt32 rowCount;
-    SInt32 viewRowCount;
-    
-    SInt32 curX;
-    SInt32 curY;
-    SInt32 topMargin;
-    SInt32 bottomMargin;
-    TerminalAttribute currentAttribute;
-    BOOL originWithinMargins;
-    BOOL autoWrap;
-    BOOL autoBackWrap;
-    BOOL insertMode;
-    BOOL autoReturnLineFeed;
-    BOOL keypadNormal;
-    BOOL inverseVideo;
-    BOOL isVT100;
-    
-    SInt32 savedCurX;
-    SInt32 savedCurY;
-    TerminalAttribute savedAttribute;
-    BOOL savedOriginWithinMargins;
-    BOOL savedAutoWrap;
 }
 
--(void)setColumnCount:(int)newCount;
--(void)setRowCountForHeight:(int)height;
 -(void)initScreen;
 
 -(void)setConnection:(id<VT100Connection>)newConnection;
 -(void)setCursorVisible:(BOOL)visible;
-
--(void)newDataAvailableIn:(UInt8*)buffer length:(int)size;
--(void)newDataAvailable;
+-(void)setTerminalSize:(NSSize)newSize;
 
 
 @end

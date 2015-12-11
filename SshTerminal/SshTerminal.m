@@ -105,15 +105,13 @@
 
 -(void)connect
 {
-    if (connection != nil)
+    if (state != sshTerminalDisconnected)
     {
-        if (state != sshTerminalDisconnected)
-        {
-            return;
-        }
+        return;
     }
     state = sshTerminalConnected;
     
+    [connection release];
     connection = [[SshConnection alloc] init];
     [connection setEventDelegate:self];
     [terminalView setConnection:connection];
@@ -147,8 +145,6 @@
     [connection setX11Forwarding:x11Forwarding withDisplay:x11Display];
     [connection setVerbose:verbose];
     
-    [terminalView setColumnCount:columnCount];
-    [terminalView setRowCountForHeight:self.contentSize.height];
     [terminalView initScreen];
     
     [connection startConnection];
@@ -208,43 +204,6 @@
         const char* utf8String = [string UTF8String];
         [connection writeFrom:(const UInt8*)utf8String length:strlen(utf8String)];
     }
-}
-
-
--(void)viewDidEndLiveResize
-{
-    [terminalView setRowCountForHeight:self.contentSize.height];
-}
-
-
--(void)autoSetHorizontalScroller
-{
-    int width = self.contentSize.width;
-    int containerWidth = ((VT100TerminalView*)terminalView).textContainer.containerSize.width;
-    if (width < containerWidth)
-    {
-        [self setHasHorizontalScroller:YES];
-    }
-    else
-    {
-        [self setHasHorizontalScroller:NO];
-    }
-}
-
-
--(void)setFrame:(NSRect)frame
-{
-    [super setFrame:frame];
-    
-    [self autoSetHorizontalScroller];
-}
-
-
--(void)setFrameSize:(NSSize)newSize
-{
-    [super setFrameSize:newSize];
-    
-    [self autoSetHorizontalScroller];
 }
 
 
@@ -308,6 +267,30 @@
 }
 
 
+-(void)adjustTerminalSize
+{
+    NSSize size = [self contentSize];
+    NSRect terminalRect = [terminalView frame];
+    terminalRect.size.width = size.width;
+    [terminalView setFrameSize:terminalRect.size];
+    [terminalView setTerminalSize:size];
+}
+
+
+-(void)setFrame:(NSRect)frame
+{
+    [super setFrame:frame];
+    [self adjustTerminalSize];
+}
+
+
+-(void)setFrameSize:(NSSize)newSize
+{
+    [super setFrameSize:newSize];
+    [self adjustTerminalSize];
+}
+
+
 -(void)initSubclassMembers
 {
     state = sshTerminalDisconnected;
@@ -329,6 +312,7 @@
 
     terminalView = [[VT100TerminalView alloc] initWithFrame:rect];
     [terminalView setEditable:NO];
+    [self adjustTerminalSize];
     
     [self setDocumentView:terminalView];
 }

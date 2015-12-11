@@ -70,6 +70,7 @@ enum ConnectionEvent
     int outIndex;
     
     dispatch_queue_t queue;
+    dispatch_queue_t screenQueue;
     dispatch_queue_t mainQueue;
     dispatch_source_t readSource;
     NSMutableArray* forwardTunnels;

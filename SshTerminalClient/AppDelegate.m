@@ -77,7 +77,7 @@ SshConnection* sshConnection = NULL;
         terminal.internetProtocol = sshTerminalIpv6;
         [terminal setPassword:@"123456"];
 #endif
-        terminal.verbose = YES;
+        //terminal.verbose = YES;
         terminal.columnCount = 80;
         [terminal connect];
         [statusText setStringValue:@"Connecting"];

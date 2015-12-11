@@ -86,9 +86,21 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 }
 
 
--(void)setWidth:(int)newWidth
+-(void)setWidth:(int)newWidth height:(int)newHeight
 {
-    width = newWidth;
+    if (channel != NULL)
+    {
+        dispatch_async(queue, ^{
+            ssh_channel_change_pty_size(channel, newWidth, newHeight);
+            width = newWidth;
+            height = newHeight;
+        });
+    }
+    else
+    {
+        width = newWidth;
+        height = newHeight;
+    }
 }
 
 
@@ -240,7 +252,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)verboseNotify:(NSString*)verboseString
 {
-    dispatch_async(mainQueue, ^{
+    dispatch_async(screenQueue, ^{
         [verboseString retain];
         const char* stringBuffer = [verboseString UTF8String];
         [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
@@ -645,20 +657,6 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
     }
-    result = ssh_channel_change_pty_size(channel, width, height);
-    if (result != SSH_OK)
-    {
-        if (verbose == YES)
-        {
-            const char* errorString = ssh_get_error(session);
-            NSString* message = [NSString stringWithFormat:@"Setting pty size failed: %s\r\n", errorString];
-            [self verboseNotify:message];
-        }
-        [self eventNotify:CHANNEL_ERROR];
-        dispatch_async(queue, ^{ [self closeAllChannels]; });
-        return;
-    }
-    
     if (x11Forwarding == YES)
     {
         if (verbose == YES)
@@ -694,6 +692,20 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
     }
+    result = ssh_channel_change_pty_size(channel, width, height);
+    if (result != SSH_OK)
+    {
+        if (verbose == YES)
+        {
+            const char* errorString = ssh_get_error(session);
+            NSString* message = [NSString stringWithFormat:@"Setting pty size failed: %s\r\n", errorString];
+            [self verboseNotify:message];
+        }
+        [self eventNotify:CHANNEL_ERROR];
+        dispatch_async(queue, ^{ [self closeAllChannels]; });
+        return;
+    }
+    
     
     [self eventNotify:CONNECTED];
     dispatch_resume(readSource);
@@ -717,7 +729,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             return;
         }
         ssh_channel_read_nonblocking(channel, buffer, availableCount, 0);
-        dispatch_async(mainQueue, ^{
+        dispatch_async(screenQueue, ^{
             [dataDelegate newDataAvailableIn:buffer length:availableCount];
             free(buffer);
         });
@@ -821,7 +833,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         }
     }
     
-    dispatch_async(mainQueue, ^{
+    dispatch_async(screenQueue, ^{
         char stringBuffer[81];
         snprintf(stringBuffer, 80, "Logged in to: %s\r\n", [host UTF8String]);
         [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
@@ -886,7 +898,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             [tunnelConnections removeObjectAtIndex:i];
             i--;
             
-            dispatch_async(mainQueue, ^{ [self disconnectionMessage:tunnelConnection]; });
+            dispatch_async(screenQueue, ^{ [self disconnectionMessage:tunnelConnection]; });
         }
     }
     
@@ -909,7 +921,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
                     tunnelConnection.tunnel = tunnel;
                     [tunnelConnections addObject:tunnelConnection];
                     
-                    dispatch_async(mainQueue, ^{ [self remoteConnectionMessage:tunnelConnection]; });
+                    dispatch_async(screenQueue, ^{ [self remoteConnectionMessage:tunnelConnection]; });
                 }
                 else
                 {
@@ -974,7 +986,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     tunnelConnection.tunnel = tunnel;
     [tunnelConnections addObject:tunnelConnection];
 
-    dispatch_async(mainQueue, ^{ [self localConnectionMessage:tunnelConnection]; });
+    dispatch_async(screenQueue, ^{ [self localConnectionMessage:tunnelConnection]; });
 }
 
 
@@ -1030,7 +1042,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
             SshTunnelConnection* tunnelConnection = [tunnelConnections objectAtIndex:i];
             [tunnelConnection disconnect];
             
-            dispatch_async(mainQueue, ^{ [self brutalDisconnectMessage:tunnelConnection]; });
+            dispatch_async(screenQueue, ^{ [self brutalDisconnectMessage:tunnelConnection]; });
         }
         [tunnelConnections removeAllObjects];
     });
@@ -1046,7 +1058,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         ssh_disconnect(session);
     }
     
-    dispatch_async(mainQueue, ^{
+    dispatch_async(screenQueue, ^{
         [dataDelegate newDataAvailableIn:(UInt8*)"\r\nLogged out\r\n" length:14];
     });
     [self eventNotify:DISCONNECTED];
@@ -1065,6 +1077,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         }
 
         queue = dispatch_queue_create("com.Devolutions.SshConnectionQueue", DISPATCH_QUEUE_SERIAL);
+        screenQueue = dispatch_queue_create("com.Devolutions.VT100ParsingQueue", DISPATCH_QUEUE_SERIAL);
         mainQueue = dispatch_get_main_queue();
         forwardTunnels = [NSMutableArray new];
         reverseTunnels = [NSMutableArray new];
@@ -1082,6 +1095,8 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)dealloc
 {
+    dispatch_release(queue);
+    dispatch_release(screenQueue);
     if (session != NULL)
     {
         ssh_free(session);

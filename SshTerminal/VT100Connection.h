@@ -18,7 +18,7 @@
 @protocol VT100Connection <NSObject>
 
 -(void)setDataDelegate:(id<VT100TerminalDataDelegate>)newDataDelegate;
--(void)setWidth:(int)newWidth;
+-(void)setWidth:(int)newWidth height:(int)newHeight;
 -(int)writeFrom:(const UInt8*)buffer length:(int)count;
 
 @end

@@ -161,16 +161,14 @@ BOOL isMatch(NSString* host, NSString* excluded)
 
 -(void)connect
 {
-    if (connection != nil)
+    if (state != telnetTerminalDisconnected)
     {
-        if (state != telnetTerminalDisconnected)
-        {
-            return;
-        }
+        return;
     }
     state = telnetTerminalConnected;
     
     // Setup the main connection properties.
+    [connection release];
     connection = [[TelnetConnection alloc] init];
     [connection setEventDelegate:(id<TelnetConnectionEventDelegate>)self];
     [terminalView setConnection:connection];
@@ -235,8 +233,6 @@ BOOL isMatch(NSString* host, NSString* excluded)
     }
     
     // Setup the terminal.
-    [terminalView setColumnCount:columnCount];
-    [terminalView setRowCountForHeight:self.contentSize.height];
     [terminalView initScreen];
     
     [connection startConnection];
@@ -270,40 +266,27 @@ BOOL isMatch(NSString* host, NSString* excluded)
 }
 
 
--(void)viewDidEndLiveResize
+-(void)adjustTerminalSize
 {
-    [terminalView setRowCountForHeight:self.contentSize.height];
-}
-
-
--(void)autoSetHorizontalScroller
-{
-    int width = self.contentSize.width;
-    int containerWidth = ((VT100TerminalView*)terminalView).textContainer.containerSize.width;
-    if (width < containerWidth)
-    {
-        [self setHasHorizontalScroller:YES];
-    }
-    else
-    {
-        [self setHasHorizontalScroller:NO];
-    }
+    NSSize size = [self contentSize];
+    NSRect terminalRect = [terminalView frame];
+    terminalRect.size.width = size.width;
+    [terminalView setFrameSize:terminalRect.size];
+    [terminalView setTerminalSize:size];
 }
 
 
 -(void)setFrame:(NSRect)frame
 {
     [super setFrame:frame];
-    
-    [self autoSetHorizontalScroller];
+    [self adjustTerminalSize];
 }
 
 
 -(void)setFrameSize:(NSSize)newSize
 {
     [super setFrameSize:newSize];
-    
-    [self autoSetHorizontalScroller];
+    [self adjustTerminalSize];
 }
 
 
@@ -373,6 +356,7 @@ BOOL isMatch(NSString* host, NSString* excluded)
 
     terminalView = [[VT100TerminalView alloc] initWithFrame:rect];
     [terminalView setEditable:NO];
+    [self adjustTerminalSize];
     
     [self setDocumentView:terminalView];
 }

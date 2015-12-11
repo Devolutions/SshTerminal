@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		1412EC1D1BB1D24E00048A46 /* libssh.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = F4E9654E1B7BC8D10072D98D /* libssh.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		F477D64B1C1622A100FCB65A /* VT100Screen.h in Headers */ = {isa = PBXBuildFile; fileRef = F477D6491C1622A100FCB65A /* VT100Screen.h */; };
+		F477D64C1C1622A100FCB65A /* VT100Screen.m in Sources */ = {isa = PBXBuildFile; fileRef = F477D64A1C1622A100FCB65A /* VT100Screen.m */; };
+		F477D64E1C1B54B600FCB65A /* VT100TerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = F477D64D1C1B54B600FCB65A /* VT100TerminalView.m */; };
 		F4989F0E1B5FDC7900693A47 /* TelnetTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */; };
 		F4989F0F1B5FDC7900693A47 /* TelnetTerminal.m in Sources */ = {isa = PBXBuildFile; fileRef = F4989F0D1B5FDC7900693A47 /* TelnetTerminal.m */; };
 		F4989F121B5FE59300693A47 /* TelnetConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F4989F101B5FE59300693A47 /* TelnetConnection.h */; };
@@ -30,12 +33,9 @@
 		F4AA7B1A1BC6A695001EBD54 /* ProxyTelnet.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AA7B181BC6A695001EBD54 /* ProxyTelnet.m */; };
 		F4AE90391B41733E007AC63E /* SshTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE90381B41733E007AC63E /* SshTerminal.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F4AE90661B418EBF007AC63E /* SshConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE905F1B418EBF007AC63E /* SshConnection.h */; };
-		F4AE90671B418EBF007AC63E /* VT100Storage.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE90601B418EBF007AC63E /* VT100Storage.h */; };
 		F4AE90681B418EBF007AC63E /* VT100TerminalView.h in Headers */ = {isa = PBXBuildFile; fileRef = F4AE90611B418EBF007AC63E /* VT100TerminalView.h */; };
 		F4AE90691B418EBF007AC63E /* SshConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90621B418EBF007AC63E /* SshConnection.m */; };
-		F4AE906A1B418EBF007AC63E /* VT100Storage.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90631B418EBF007AC63E /* VT100Storage.m */; };
 		F4AE906B1B418EBF007AC63E /* SshTerminal.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90641B418EBF007AC63E /* SshTerminal.m */; };
-		F4AE906C1B418EBF007AC63E /* VT100TerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90651B418EBF007AC63E /* VT100TerminalView.m */; };
 		F4AE90791B4198E2007AC63E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE90781B4198E2007AC63E /* AppDelegate.m */; };
 		F4AE907B1B4198E2007AC63E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F4AE907A1B4198E2007AC63E /* main.m */; };
 		F4AE907D1B4198E2007AC63E /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4AE907C1B4198E2007AC63E /* Images.xcassets */; };
@@ -76,6 +76,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F477D6491C1622A100FCB65A /* VT100Screen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Screen.h; sourceTree = "<group>"; };
+		F477D64A1C1622A100FCB65A /* VT100Screen.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Screen.m; sourceTree = "<group>"; };
+		F477D64D1C1B54B600FCB65A /* VT100TerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TerminalView.m; sourceTree = "<group>"; };
 		F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TelnetTerminal.h; sourceTree = "<group>"; };
 		F4989F0D1B5FDC7900693A47 /* TelnetTerminal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TelnetTerminal.m; sourceTree = "<group>"; };
 		F4989F101B5FE59300693A47 /* TelnetConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TelnetConnection.h; sourceTree = "<group>"; };
@@ -101,12 +104,9 @@
 		F4AE90371B41733E007AC63E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F4AE90381B41733E007AC63E /* SshTerminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SshTerminal.h; sourceTree = "<group>"; };
 		F4AE905F1B418EBF007AC63E /* SshConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshConnection.h; sourceTree = "<group>"; };
-		F4AE90601B418EBF007AC63E /* VT100Storage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Storage.h; sourceTree = "<group>"; };
 		F4AE90611B418EBF007AC63E /* VT100TerminalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100TerminalView.h; sourceTree = "<group>"; };
 		F4AE90621B418EBF007AC63E /* SshConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SshConnection.m; sourceTree = "<group>"; };
-		F4AE90631B418EBF007AC63E /* VT100Storage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Storage.m; sourceTree = "<group>"; };
 		F4AE90641B418EBF007AC63E /* SshTerminal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SshTerminal.m; sourceTree = "<group>"; };
-		F4AE90651B418EBF007AC63E /* VT100TerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TerminalView.m; sourceTree = "<group>"; };
 		F4AE90731B4198E2007AC63E /* SshTerminalClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SshTerminalClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4AE90761B4198E2007AC63E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F4AE90771B4198E2007AC63E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -218,10 +218,10 @@
 				F4AE90381B41733E007AC63E /* SshTerminal.h */,
 				F4AE90641B418EBF007AC63E /* SshTerminal.m */,
 				F4989F141B5FEED800693A47 /* VT100Connection.h */,
-				F4AE90601B418EBF007AC63E /* VT100Storage.h */,
-				F4AE90631B418EBF007AC63E /* VT100Storage.m */,
+				F477D6491C1622A100FCB65A /* VT100Screen.h */,
+				F477D64A1C1622A100FCB65A /* VT100Screen.m */,
 				F4AE90611B418EBF007AC63E /* VT100TerminalView.h */,
-				F4AE90651B418EBF007AC63E /* VT100TerminalView.m */,
+				F477D64D1C1B54B600FCB65A /* VT100TerminalView.m */,
 				F4A3E2F51B5693A30007D4C0 /* SshTunnel.h */,
 				F4A3E2F61B5693A30007D4C0 /* SshTunnel.m */,
 				F4A3E2F91B5694420007D4C0 /* SshTunnelConnection.h */,
@@ -292,13 +292,13 @@
 				F4989F1B1B6008D600693A47 /* NetworkHelpers.h in Headers */,
 				F4BA047E1BBAFDE50025F526 /* ProxySocks4.h in Headers */,
 				F4AE90391B41733E007AC63E /* SshTerminal.h in Headers */,
-				F4AE90671B418EBF007AC63E /* VT100Storage.h in Headers */,
 				F4BA04861BBC59CF0025F526 /* ProxyHttp.h in Headers */,
 				F4A3E2F71B5693A30007D4C0 /* SshTunnel.h in Headers */,
 				F4989F0E1B5FDC7900693A47 /* TelnetTerminal.h in Headers */,
 				F4BA047A1BBAD03B0025F526 /* ConnectionTcp.h in Headers */,
 				F4BA04821BBC0C620025F526 /* ProxySocks5.h in Headers */,
 				F4AE90661B418EBF007AC63E /* SshConnection.h in Headers */,
+				F477D64B1C1622A100FCB65A /* VT100Screen.h in Headers */,
 				F4989F161B5FEED800693A47 /* VT100Connection.h in Headers */,
 				F4989F121B5FE59300693A47 /* TelnetConnection.h in Headers */,
 			);
@@ -446,11 +446,11 @@
 				F4BA04871BBC59CF0025F526 /* ProxyHttp.m in Sources */,
 				F4BA047F1BBAFDE50025F526 /* ProxySocks4.m in Sources */,
 				F4989F191B6008A200693A47 /* NetworkHelpers.m in Sources */,
-				F4AE906A1B418EBF007AC63E /* VT100Storage.m in Sources */,
 				F4989F131B5FE59300693A47 /* TelnetConnection.m in Sources */,
 				F4BA047B1BBAD03B0025F526 /* ConnectionTcp.m in Sources */,
 				F4BA04831BBC0C620025F526 /* ProxySocks5.m in Sources */,
-				F4AE906C1B418EBF007AC63E /* VT100TerminalView.m in Sources */,
+				F477D64E1C1B54B600FCB65A /* VT100TerminalView.m in Sources */,
+				F477D64C1C1622A100FCB65A /* VT100Screen.m in Sources */,
 				F4AA7B1A1BC6A695001EBD54 /* ProxyTelnet.m in Sources */,
 				F4A3E2FC1B5694420007D4C0 /* SshTunnelConnection.m in Sources */,
 				F4AE90691B418EBF007AC63E /* SshConnection.m in Sources */,

@@ -57,6 +57,7 @@ typedef struct
     
     ConnectionTcp* connection;
     dispatch_queue_t queue;
+    dispatch_queue_t screenQueue;
     dispatch_queue_t mainQueue;
     dispatch_source_t readSource;
     
@@ -70,7 +71,6 @@ typedef struct
 -(void)setHost:(NSString*)newHost port:(UInt16)newPort protocol:(int)newProtocol;
 -(void)setUser:(NSString*)newUser;
 -(void)setPassword:(NSString*)newPassword;
--(void)setWidth:(int)newWidth;
 
 -(void)setEventDelegate:(id<TelnetConnectionEventDelegate>)newEventDelegate;
 -(void)setProxy:(ConnectionTcp*)newProxy;

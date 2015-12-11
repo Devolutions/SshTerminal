@@ -126,9 +126,21 @@
 }
 
 
--(void)setWidth:(int)newWidth
+-(void)setWidth:(int)newWidth height:(int)newHeight
 {
-    width = newWidth;
+    if (connection.fd != -1)
+    {
+        dispatch_async(queue, ^{
+            [self writeWindowSizeAndAck:NO];
+            width = newWidth;
+            height = newHeight;
+        });
+    }
+    else
+    {
+        width = newWidth;
+        height = newHeight;
+    }
 }
 
 
@@ -226,8 +238,8 @@
     buffer[i++] = optionNegotiateAboutWindowSize;
     buffer[i++] = HI_BYTE(width);
     buffer[i++] = LO_BYTE(width);
-    buffer[i++] = 0;
-    buffer[i++] = 24;
+    buffer[i++] = HI_BYTE(height);
+    buffer[i++] = LO_BYTE(height);
     buffer[i++] = IAC;
     buffer[i++] = SE;
     
@@ -591,7 +603,7 @@
 
     if (terminalIndex > 0)
     {
-        dispatch_async(mainQueue, ^{
+        dispatch_async(screenQueue, ^{
             [dataDelegate newDataAvailableIn:terminalBuffer length:terminalIndex];
             free(terminalBuffer);
         });
@@ -625,7 +637,7 @@
     }
     [connection disconnect];
     
-    dispatch_async(mainQueue, ^{
+    dispatch_async(screenQueue, ^{
         [dataDelegate newDataAvailableIn:(UInt8*)"\r\nLogged out\r\n" length:14];
     });
     [self eventNotify:tceDisconnected];
@@ -639,6 +651,7 @@
     {
         connection = [ConnectionTcp new];
         queue = dispatch_queue_create("com.Devolutions.SshConnectionQueue", DISPATCH_QUEUE_SERIAL);
+        screenQueue = dispatch_queue_create("com.Devolutions.VT100ParsingQueue", DISPATCH_QUEUE_SERIAL);
         mainQueue = dispatch_get_main_queue();
     }
     
