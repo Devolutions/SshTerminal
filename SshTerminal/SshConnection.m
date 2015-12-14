@@ -40,7 +40,8 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 {
     [host release];
     host = [newHost copy];
-    ssh_options_set(session, SSH_OPTIONS_PORT, &newPort);
+	int portParameter = newPort; //ssh_options_set utilize a int for the port number. We need the send the config with an int otherwise it sometimes doesn't work Benoit S. 2015-12-14
+    ssh_options_set(session, SSH_OPTIONS_PORT, &portParameter);
     internetProtocol = newProtocol;
 }
 
@@ -348,8 +349,7 @@ void logCallback (int priority,
 -(void)connect
 {
 	[self setLoggingCallback];
-	ssh_logging_callback lo_fn = ssh_get_log_callback();
-	void *userdata = ssh_get_log_userdata();
+	
     if (verbose == YES)
     {
         [self verboseNotify:@"Initiating connection\r\n"];
@@ -379,10 +379,11 @@ void logCallback (int priority,
     getnameinfo(&addresses[selectedAddress].ip, addresses[selectedAddress].len, addressString, sizeof(addressString), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
     if (verbose == YES)
     {
-        NSString* message = [NSString stringWithFormat:@"Connecting to %s\r\n", addressString];
+		uint port;
+		ssh_options_get_port(session, &port);
+        NSString* message = [NSString stringWithFormat:@"Connecting to %s : %u\r\n", addressString, port];
         [self verboseNotify:message];
     }
-	int level = 4;
     ssh_options_set(session, SSH_OPTIONS_HOST, addressString);
     int result;
     while (1)

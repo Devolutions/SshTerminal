@@ -147,7 +147,7 @@
     [connection setVerbose:verbose withLevel:verbosityLevel];
     
     [terminalView initScreen];
-    
+	
     [connection startConnection];
 }
 
