@@ -8,13 +8,13 @@
 
 #import <Cocoa/Cocoa.h>
 #import "VT100Connection.h"
-#import "VT100Screen.h"
+#import "VT100ScreenBuffer.h"
 
 
 @interface VT100TerminalView : NSTextView
 {
     id<VT100Connection> connection;
-    VT100Screen* screen;
+    VT100ScreenBuffer* screen;
 
     int columnCount;
     int rowCount;

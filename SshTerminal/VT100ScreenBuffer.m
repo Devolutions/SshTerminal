@@ -6,7 +6,7 @@
 //  Copyright (c) 2015 Denis Vincent. All rights reserved.
 //
 
-#import "VT100Screen.h"
+#import "VT100ScreenBuffer.h"
 
 
 #ifdef DEBUG
@@ -22,7 +22,7 @@
 NSString* TAName = @"TerminalAttributeName";
 
 
-@implementation VT100Screen
+@implementation VT100ScreenBuffer
 
 @synthesize keypadNormal;
 @synthesize autoReturnLineFeed;

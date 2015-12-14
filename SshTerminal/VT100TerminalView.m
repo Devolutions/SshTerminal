@@ -307,7 +307,7 @@
         [self.textContainer setLineFragmentPadding:2];
         isCursorVisible = NO;
 
-        screen = [[VT100Screen alloc] init:self];
+        screen = [[VT100ScreenBuffer alloc] init:self];
 
         self.backgroundColor = screen.backgroundColor;
     }

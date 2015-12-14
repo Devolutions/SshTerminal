@@ -30,7 +30,7 @@ typedef union
 } TerminalAttribute;
 
 
-@interface VT100Screen : NSObject <VT100TerminalDataDelegate>
+@interface VT100ScreenBuffer : NSObject <VT100TerminalDataDelegate>
 {
     id<VT100Connection> connection;
     NSMutableAttributedString* screen;
