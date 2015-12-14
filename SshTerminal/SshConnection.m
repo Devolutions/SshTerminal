@@ -79,10 +79,23 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     [password retain];
 }
 
+void logCallback (int priority,
+							  const char *function,
+							  const char *buffer,
+							  void *userdata)
+{
+	SshConnection *connection = (__bridge SshConnection *)(userdata);
+	NSMutableString * message = [NSMutableString stringWithUTF8String:buffer];
+	[message appendString:@"\r\n"];
+	[connection verboseNotify:message];
+}
 
--(void)setVerbose:(BOOL)newVerbose
+
+-(void)setVerbose:(BOOL)newVerbose withLevel:(int)level
 {
     verbose = newVerbose;
+	if(verbose)
+		verbosityLevel = level;
 }
 
 
@@ -188,12 +201,23 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     x11Forwarding = enable;
 }
 
+-(void)setLoggingCallback
+{
+	if(!verbose)
+		return;
+	
+	ssh_set_log_level(verbosityLevel);
+	ssh_set_log_callback(&logCallback);
+	ssh_set_log_userdata(self);
+}
+
 
 -(int)writeFrom:(const UInt8 *)buffer length:(int)count
 {
     UInt8* writeBuffer = malloc(count);
     memcpy(writeBuffer, buffer, count);
     dispatch_async(queue, ^{
+		[self setLoggingCallback];
         ssh_channel_write(channel, writeBuffer, count);
         free(writeBuffer);
     });
@@ -321,12 +345,15 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     return fd;
 }
 
-
 -(void)connect
 {
+	[self setLoggingCallback];
+	ssh_logging_callback lo_fn = ssh_get_log_callback();
+	void *userdata = ssh_get_log_userdata();
     if (verbose == YES)
     {
         [self verboseNotify:@"Initiating connection\r\n"];
+		
     }
     NetworkAddress addresses[2];
     int addressCount = resolveHost(addresses, [host UTF8String]);
@@ -355,6 +382,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
         NSString* message = [NSString stringWithFormat:@"Connecting to %s\r\n", addressString];
         [self verboseNotify:message];
     }
+	int level = 4;
     ssh_options_set(session, SSH_OPTIONS_HOST, addressString);
     int result;
     while (1)
@@ -385,6 +413,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)authenticateServer
 {
+	[self setLoggingCallback];
     if (verbose == YES)
     {
         [self verboseNotify:@"Authenticating server\r\n"];
@@ -448,6 +477,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)authenticateUser
 {
+	[self setLoggingCallback];
     if (verbose == YES)
     {
         [self verboseNotify:@"Authenticating user\r\n"];
@@ -602,6 +632,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)openTerminalChannel
 {
+	[self setLoggingCallback];
     if (verbose == YES)
     {
         [self verboseNotify:@"Opening terminal\r\n"];
@@ -714,6 +745,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)newTerminalDataAvailable
 {
+	[self setLoggingCallback];
     BOOL dataHasBeenRead = NO;
     
     // This method is called by the dispatch source associated with the socket of the SSH session.
@@ -885,6 +917,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)newSshDataAvailable
 {
+	[self setLoggingCallback];
     // This method is called by the dispatch source associated with the socket of the SSH session.
     BOOL dataHasBeenRead = NO;
     
@@ -1008,6 +1041,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)closeAllChannels
 {
+	[self setLoggingCallback];
     if (readSource != NULL)
     {
         dispatch_source_cancel(readSource);
@@ -1053,6 +1087,7 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 
 -(void)disconnect
 {
+	[self setLoggingCallback];
     if (ssh_is_connected(session))
     {
         ssh_disconnect(session);

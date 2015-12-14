@@ -62,6 +62,7 @@ enum
     int internetProtocol;
     int columnCount;
     int state;
+	int verbosityLevel;
     id<SshTerminalEvent> eventDelegate;
     NSMutableArray* tunnels;
 }
@@ -82,7 +83,7 @@ enum
 @property(copy,nonatomic)NSString* x11AuthorityFile;
 @property(assign)int internetProtocol;
 @property(assign)BOOL verbose;
-
+@property(assign)int verbosityLevel;
 @property(readonly)int state;
 
 -(void)setEventDelegate:(id<SshTerminalEvent>) delegate;

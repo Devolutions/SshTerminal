@@ -63,6 +63,7 @@ enum ConnectionEvent
     int height;
     int internetProtocol;
     BOOL verbose;
+	int verbosityLevel;
     
     UInt8 inBuffer[INPUT_BUFFER_SIZE];
     UInt8 outBuffer[OUTPUT_BUFFER_SIZE];
@@ -86,7 +87,7 @@ enum ConnectionEvent
 -(void)setUser:(NSString*)newUser;
 -(void)setKeyFilePath:(NSString*)newKeyFilePath withPassword:(NSString*)newPassword;
 -(void)setPassword:(NSString*)newPassword;
--(void)setVerbose:(BOOL)newVerbose;
+-(void)setVerbose:(BOOL)newVerbose withLevel:(int)level;
 
 -(void)addForwardTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 -(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;

@@ -57,6 +57,7 @@
 @synthesize x11AuthorityFile;
 @synthesize internetProtocol;
 @synthesize verbose;
+@synthesize verbosityLevel;
 
 
 -(void)setPassword:(NSString *)string
@@ -143,7 +144,7 @@
         }
     }
     [connection setX11Forwarding:x11Forwarding withDisplay:x11Display];
-    [connection setVerbose:verbose];
+    [connection setVerbose:verbose withLevel:verbosityLevel];
     
     [terminalView initScreen];
     

@@ -11,6 +11,7 @@
 
 #define LIBSSH_LEGACY_0_4 1
 #include "libssh/libssh.h"
+#include "libssh/callbacks.h"
 #import "NetworkHelpers.h"
 
 #endif
