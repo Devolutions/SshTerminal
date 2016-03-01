@@ -45,37 +45,40 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 1
+#define TEST_SERVER 0
         
+        [terminal clearAllTunnels];
 #if (TEST_SERVER == 0)
         terminal.userName = @"david";
         terminal.hostName = @"192.168.7.60";
+        //terminal.hostName = @"macmini2";
         [terminal setPassword:@"123456"];
+        terminal.port = 2220;
         //terminal.x11Forwarding = YES;
         //terminal.internetProtocol = sshTerminalIpv6;
 #elif (TEST_SERVER == 1)
         terminal.userName = @"dvincent";
         terminal.hostName = @"192.168.4.1";
         [terminal setPassword:@"Price2011"];
-        [terminal clearAllTunnels];
 #elif (TEST_SERVER == 2)
         terminal.userName = @"dvincent";
         terminal.hostName = @"192.168.4.1";
         terminal.keyFilePath = @"~/dvincentkey";
         [terminal setKeyFilePassword:@"123456"];
 #elif (TEST_SERVER == 3)
-        terminal.userName = @"dvincent";
-        terminal.hostName = @"192.168.4.1";
+        terminal.userName = @"parallels";
+        terminal.hostName = @"192.168.4.4";
         [terminal setPassword:@"Price2011"];
-        [terminal clearAllTunnels];
-        [terminal addForwardTunnelWithPort:15500 onHost:@"::1" andRemotePort:15500 onRemoteHost:@"localhost"];
+        [terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"192.168.2.106"];
         //terminal.internetProtocol = sshTerminalIpv6;
         //[terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
 #elif (TEST_SERVER == 4)
         terminal.userName = @"david";
-        terminal.hostName = @"macmini2";
-        terminal.internetProtocol = sshTerminalIpv6;
+        terminal.hostName = @"192.168.7.63";
+        //terminal.internetProtocol = sshTerminalIpv6;
         [terminal setPassword:@"123456"];
+        //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
+        [terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
 #endif
         //terminal.verbose = YES;
         terminal.columnCount = 80;

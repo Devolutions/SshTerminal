@@ -63,6 +63,11 @@
         terminal.hostName = @"VDEVOSRV-TST.devolutions.loc";
         //terminal.hostName = @"192.168.1.118";
         [terminal setPassword:@"Price2011"];
+#elif (TEST_SERVER == 2)
+        terminal.userName = @"devolutions\\test";
+        terminal.hostName = @"localhost";
+        terminal.port = 1080;
+        [terminal setPassword:@"Price2011"];
 #endif
         terminal.columnCount = 80;
         [terminal connect];

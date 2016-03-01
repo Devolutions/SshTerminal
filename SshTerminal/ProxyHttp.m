@@ -126,19 +126,24 @@
     return CONNECTION_RESULT_FAILED;
     
 FIND_END_OF_REPLY:
-    while (searchIndex < sizeof(buffer))
+    while (searchIndex < sizeof(buffer))   // This loop condition is probably never met.
     {
+        // Search for 2 line end.
         while (searchIndex < receiveIndex - 3)
         {
             if (memcmp("\r\n\r\n", buffer + searchIndex, 4) == 0)
             {
+                // Found 2 line end: this is the end of the reply.
                 [self receiveIn:(UInt8*)buffer size:searchIndex + 3];
                 return CONNECTION_RESULT_SUCCEEDED;
             }
             searchIndex++;
         }
+        
+        // End of reply not found: get more data.
         if (receiveIndex < sizeof(buffer))
         {
+            // The buffer is not full yet: try to fill it, without removing the data from the socket buffer.
             int result = [self peekIn:(UInt8*)buffer size:sizeof(buffer)];
             if (result < 0)
             {
@@ -152,15 +157,19 @@ FIND_END_OF_REPLY:
         }
         else
         {
+            // The buffer is full, but the same data is in the buffer of the socket: remove the data from the buffer of the socket by reading up to the search index.
             int result = [self receiveIn:(UInt8*)buffer size:sizeof(buffer) - searchIndex];
             if (result < 0)
             {
                 return result;
             }
             
+            // Keep the data after the search index.
             memmove(buffer, buffer + searchIndex, receiveIndex - searchIndex);
             receiveIndex -= searchIndex;
             searchIndex = 0;
+            
+            // Get new data from the socket, but without removing it from the buffer of the socket.
             result = [self peekIn:(UInt8*)buffer size:sizeof(buffer)];
             if (result < 0)
             {

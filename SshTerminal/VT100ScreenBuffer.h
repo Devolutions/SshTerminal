@@ -79,6 +79,7 @@ typedef union
     BOOL autoBackWrap;
     BOOL autoReturnLineFeed;
     BOOL autoWrap;
+    BOOL cursorKeyAnsi;
     BOOL insertMode;
     BOOL inverseVideo;
     BOOL isVT100;
@@ -88,6 +89,7 @@ typedef union
     BOOL savedOriginWithinMargins;
 }
 
+@property(readonly)BOOL cursorKeyAnsi;
 @property(readonly)BOOL keypadNormal;
 @property(readonly)BOOL autoReturnLineFeed;
 @property(readonly)NSColor* backgroundColor;

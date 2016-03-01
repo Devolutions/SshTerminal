@@ -10,7 +10,7 @@
 
 
 #ifdef DEBUG
-//#define PRINT_INPUT 1
+#define PRINT_INPUT 1
 #endif
 
 #define TA_BOLD 0x01
@@ -24,6 +24,7 @@ NSString* TAName = @"TerminalAttributeName";
 
 @implementation VT100ScreenBuffer
 
+@synthesize cursorKeyAnsi;
 @synthesize keypadNormal;
 @synthesize autoReturnLineFeed;
 @synthesize fontHeight;
@@ -1243,6 +1244,12 @@ NSString* TAName = @"TerminalAttributeName";
                     {
                         switch (args[i])
                         {
+                            case 1:
+                            {
+                                cursorKeyAnsi = NO;
+                                break;
+                            }
+                                
                             case 2:
                             {
                                 isVT100 = YES;
@@ -1336,6 +1343,12 @@ NSString* TAName = @"TerminalAttributeName";
                     }
                     switch (args[i])
                     {
+                        case 1:
+                        {
+                            cursorKeyAnsi = YES;
+                            break;
+                        }
+                            
                         case 2:
                         {
                             isVT100 = NO;
@@ -1879,6 +1892,7 @@ NSString* TAName = @"TerminalAttributeName";
     autoWrap = YES;
     autoBackWrap = NO;
     autoReturnLineFeed = NO;
+    cursorKeyAnsi = YES;
     keypadNormal = YES;
     isVT100 = YES;
     [self setContent];

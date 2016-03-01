@@ -43,7 +43,7 @@ int resolveHost(NetworkAddress* addresses, const char* host)
     hint.ai_family = PF_UNSPEC;
     hint.ai_socktype = SOCK_STREAM;
     hint.ai_protocol = IPPROTO_TCP;
-    int result = getaddrinfo(host, NULL, NULL, &info);
+    int result = getaddrinfo(host, NULL, &hint, &info);
     if (result != 0)
     {
         return 0;

@@ -196,7 +196,7 @@
     dispatch_source_set_event_handler(readSource, ^{ [self newTerminalDataAvailable]; });
     dispatch_resume(readSource);
     
-    // The connection process will continue when the server iniate options negotiation, which will result in a call to newTerminalDataAvailable.
+    // The connection process will continue when the server initiate options negotiation, which will result in a call to newTerminalDataAvailable.
 }
 
 

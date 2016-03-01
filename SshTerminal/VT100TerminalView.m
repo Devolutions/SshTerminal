@@ -138,24 +138,40 @@
             case NSUpArrowFunctionKey:
             {
                 sprintf(specialSequence, "\x1B[A");
+                if (screen.cursorKeyAnsi == NO)
+                {
+                    specialSequence[1] = 'O';
+                }
                 break;
             }
                 
             case NSDownArrowFunctionKey:
             {
                 sprintf(specialSequence, "\x1B[B");
+                if (screen.cursorKeyAnsi == NO)
+                {
+                    specialSequence[1] = 'O';
+                }
                 break;
             }
                 
             case NSRightArrowFunctionKey:
             {
                 sprintf(specialSequence, "\x1B[C");
+                if (screen.cursorKeyAnsi == NO)
+                {
+                    specialSequence[1] = 'O';
+                }
                 break;
             }
                 
             case NSLeftArrowFunctionKey:
             {
                 sprintf(specialSequence, "\x1B[D");
+                if (screen.cursorKeyAnsi == NO)
+                {
+                    specialSequence[1] = 'O';
+                }
                 break;
             }
                 
