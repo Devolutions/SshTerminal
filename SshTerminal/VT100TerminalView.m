@@ -25,7 +25,6 @@
     connection = newConnection;
     [connection retain];
     [screen setConnection:newConnection];
-    //[connection setDataDelegate:self];
 }
 
 
@@ -61,6 +60,46 @@
 }
 
 
+-(BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)anItem
+{
+    SEL theAction = [anItem action];
+    
+    if (theAction == @selector(copy:))
+    {
+        return [super validateUserInterfaceItem:anItem];
+    }
+    else if (theAction == @selector(paste:))
+    {
+        if (isCursorVisible == YES)
+        {
+            return YES;
+        }
+        return NO;
+    }
+    
+    return NO;
+}
+
+
+-(void)paste:(id)sender
+{
+    NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
+    NSArray* classes = [[NSArray alloc] initWithObjects:[NSString class], nil];
+    NSDictionary* options = [NSDictionary dictionary];
+    NSArray* copiedItems = [pasteboard readObjectsForClasses:classes options:options];
+    [classes release];
+    if (copiedItems != nil)
+    {
+        for (int i = 0; i < copiedItems.count; i++)
+        {
+            NSString* string = [copiedItems objectAtIndex:i];
+            const char* chars = [string UTF8String];
+            [connection writeFrom:(const UInt8 *)chars length:(int)strlen(chars)];
+        }
+    }
+}
+
+
 -(void)keyDown:(NSEvent *)theEvent
 {
     if (isCursorVisible == NO)
@@ -79,20 +118,7 @@
     {
         if ([theKey characterAtIndex:0] == 'v')
         {
-            NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
-            NSArray* classes = [[NSArray alloc] initWithObjects:[NSString class], nil];
-            NSDictionary* options = [NSDictionary dictionary];
-            NSArray* copiedItems = [pasteboard readObjectsForClasses:classes options:options];
-            [classes release];
-            if (copiedItems != nil)
-            {
-                for (int i = 0; i < copiedItems.count; i++)
-                {
-                    NSString* string = [copiedItems objectAtIndex:i];
-                    const char* chars = [string UTF8String];
-                    [connection writeFrom:(const UInt8 *)chars length:(int)strlen(chars)];
-                }
-            }
+            [self paste:self];
         }
         else if ([theKey characterAtIndex:0] == 'c')
         {
