@@ -49,6 +49,8 @@ enum ConnectionEvent
 {
     ssh_session session;
     ssh_channel channel;
+    ssh_channel agentChannel;
+    struct ssh_callbacks_struct callbacks;
     BOOL useKeyAuthentication;
     BOOL x11Forwarding;
     NSString* host;
@@ -63,6 +65,7 @@ enum ConnectionEvent
     int height;
     int internetProtocol;
     BOOL verbose;
+    BOOL agentForwarding;
 	int verbosityLevel;
     
     UInt8 inBuffer[INPUT_BUFFER_SIZE];
@@ -77,6 +80,7 @@ enum ConnectionEvent
     NSMutableArray* forwardTunnels;
     NSMutableArray* reverseTunnels;
     NSMutableArray* tunnelConnections;
+    NSMutableData* agentBuffer;
     
     id<VT100TerminalDataDelegate> dataDelegate;
     id<SshConnectionEventDelegate> eventDelegate;
@@ -88,6 +92,7 @@ enum ConnectionEvent
 -(void)setKeyFilePath:(NSString*)newKeyFilePath withPassword:(NSString*)newPassword;
 -(void)setPassword:(NSString*)newPassword;
 -(void)setVerbose:(BOOL)newVerbose withLevel:(int)level;
+-(void)setAgentForwarding:(BOOL)newAgentForwarding;
 
 -(void)addForwardTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 -(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
@@ -112,5 +117,7 @@ enum ConnectionEvent
 -(void)closeAllChannels;
 -(void)disconnect;
 
+-(void)verboseNotify:(NSString*)verboseString;
+-(ssh_channel)agentChannel;
 
 @end

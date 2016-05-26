@@ -52,8 +52,13 @@ SshConnection* sshConnection = NULL;
         terminal.userName = @"david";
         terminal.hostName = @"192.168.7.60";
         //terminal.hostName = @"macmini2";
-        [terminal setPassword:@"123456"];
+        //[terminal setPassword:@"123456"];
         terminal.port = 2220;
+        //terminal.agentForwarding = YES;
+        terminal.keyFilePath = @"~/.ssh/dev_test";
+        [terminal setKeyFilePassword:@"123456"];
+        //terminal.verbose = YES;
+        //terminal.verbosityLevel = 4;
         //terminal.x11Forwarding = YES;
         //terminal.internetProtocol = sshTerminalIpv6;
 #elif (TEST_SERVER == 1)

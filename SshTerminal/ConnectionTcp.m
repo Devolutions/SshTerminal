@@ -86,7 +86,7 @@
         return CONNECTION_RESULT_CLOSED;
     }
     
-    int result = recv(fd, buffer, bufferSize, 0);
+    int result = (int)recv(fd, buffer, bufferSize, 0);
     if (result == 0)
     {
         return CONNECTION_RESULT_CLOSED;
@@ -111,7 +111,7 @@
         return CONNECTION_RESULT_CLOSED;
     }
     
-    int result = recv(fd, buffer, bufferSize, MSG_PEEK);
+    int result = (int)recv(fd, buffer, bufferSize, MSG_PEEK);
     if (result == 0)
     {
         return CONNECTION_RESULT_CLOSED;

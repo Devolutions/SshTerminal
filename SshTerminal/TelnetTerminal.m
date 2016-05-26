@@ -261,7 +261,7 @@ BOOL isMatch(NSString* host, NSString* excluded)
             return;
         }
         const char* utf8String = [string UTF8String];
-        [connection writeFrom:(const UInt8*)utf8String length:strlen(utf8String)];
+        [connection writeFrom:(const UInt8*)utf8String length:(int)strlen(utf8String)];
     }
 }
 

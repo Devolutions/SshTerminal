@@ -59,6 +59,7 @@ enum
     UInt16 port;
     BOOL x11Forwarding;
     BOOL verbose;
+    BOOL agentForwarding;
     int internetProtocol;
     int columnCount;
     int state;
@@ -83,6 +84,7 @@ enum
 @property(copy,nonatomic)NSString* x11AuthorityFile;
 @property(assign)int internetProtocol;
 @property(assign)BOOL verbose;
+@property(assign)BOOL agentForwarding;
 @property(assign)int verbosityLevel;
 @property(readonly)int state;
 

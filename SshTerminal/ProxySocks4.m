@@ -59,7 +59,7 @@
     memcpy(commandString + 4, &(addresses[selectedAddress].ipv4.sin_addr), 4);
     const char* proxyUserString = [proxyUser UTF8String];
     strcpy(commandString + 8, proxyUserString);   // TODO : check for the possibility of using the IDENT protocol (RFC 1413).
-    int result = send(fd, commandString, 9 + strlen(proxyUserString), 0);
+    int result = (int)send(fd, commandString, 9 + strlen(proxyUserString), 0);
     if (result <= 0)
     {
         [self disconnect];
@@ -67,7 +67,7 @@
     }
     
     // Wait for the connection reply.
-    result = recv(fd, commandString, 8, 0);
+    result = (int)recv(fd, commandString, 8, 0);
     if (result != 8)
     {
         [self disconnect];

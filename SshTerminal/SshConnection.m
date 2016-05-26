@@ -20,6 +20,22 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
 }
 
 
+void logCallback(int priority, const char *function, const char *buffer, void *userdata)
+{
+    SshConnection *connection = (__bridge SshConnection *)(userdata);
+    NSMutableString * message = [NSMutableString stringWithUTF8String:buffer];
+    [message appendString:@"\r\n"];
+    [connection verboseNotify:message];
+}
+
+
+ssh_channel authAgentCallback(ssh_session session, void* userdata)
+{
+    SshConnection *connection = (__bridge SshConnection *)(userdata);
+    return connection.agentChannel;
+}
+
+
 @implementation SshConnection
 
 -(void)setDataDelegate:(id<VT100TerminalDataDelegate>)newDataDelegate
@@ -80,23 +96,19 @@ int PrivateKeyAuthCallback(const char *prompt, char *buf, size_t len, int echo, 
     [password retain];
 }
 
-void logCallback (int priority,
-							  const char *function,
-							  const char *buffer,
-							  void *userdata)
-{
-	SshConnection *connection = (__bridge SshConnection *)(userdata);
-	NSMutableString * message = [NSMutableString stringWithUTF8String:buffer];
-	[message appendString:@"\r\n"];
-	[connection verboseNotify:message];
-}
-
-
 -(void)setVerbose:(BOOL)newVerbose withLevel:(int)level
 {
     verbose = newVerbose;
-	if(verbose)
+	if (verbose)
+    {
 		verbosityLevel = level;
+    }
+}
+
+
+-(void)setAgentForwarding:(BOOL)newAgentForwarding
+{
+    agentForwarding = newAgentForwarding;
 }
 
 
@@ -251,7 +263,7 @@ void logCallback (int priority,
 -(NSString*)fingerPrint
 {
     ssh_key key = ssh_key_new();
-    ssh_get_publickey(session, &key);
+    ssh_get_server_publickey(session, &key);
     unsigned char* hash;
     size_t len;
     ssh_get_publickey_hash(key, SSH_PUBLICKEY_HASH_MD5, &hash, &len);
@@ -504,7 +516,14 @@ void logCallback (int priority,
             {
                 [self verboseNotify:@"Key file successfully loaded, sending to server\r\n"];
             }
-            result = ssh_userauth_publickey(session, NULL, key);
+            while (1)
+            {
+                result = ssh_userauth_publickey(session, NULL, key);
+                if (result != SSH_AUTH_AGAIN)
+                {
+                    break;
+                }
+            }
             ssh_key_free(key);
             
             if (result != SSH_AUTH_SUCCESS)
@@ -710,6 +729,40 @@ void logCallback (int priority,
             [self eventNotify:X11_ERROR];
         }
     }
+    if (agentForwarding == YES)
+    {
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Opening agent forwarding channel\r\n"];
+        }
+        
+        agentChannel = ssh_channel_new(session);
+        agentBuffer = [NSMutableData new];
+        if (agentBuffer == nil || agentChannel == NULL)
+        {
+            if (verbose == YES)
+            {
+                [self verboseNotify:@"Out of memory"];
+            }
+            [self eventNotify:OUT_OF_MEMORY_ERROR];
+            dispatch_async(queue, ^{ [self closeAllChannels]; });
+            return;
+        }
+        result = ssh_channel_request_auth_agent(channel);
+        if (result != SSH_OK)
+        {
+            if (verbose == YES)
+            {
+                const char* errorString = ssh_get_error(session);
+                NSString* message = [NSString stringWithFormat:@"Unable to open agent forwarding channel: %s\r\n", errorString];
+                [self verboseNotify:message];
+            }
+            [self eventNotify:CHANNEL_ERROR];
+            dispatch_async(queue, ^{ [self closeAllChannels]; });
+            return;
+        }
+        [self verboseNotify:@"Opening agent forwarding channel: end\r\n"];
+    }
     
     result = ssh_channel_request_shell(channel);
     if (result != SSH_OK)
@@ -796,6 +849,32 @@ void logCallback (int priority,
             else
             {
                 [self eventNotify:TUNNEL_ERROR];
+            }
+        }
+    }
+    if (agentForwarding == YES)
+    {
+        if (ssh_channel_is_open(agentChannel))
+        {
+            int length = (int)agentBuffer.length;
+            if (length == 0)
+            {
+                int availableCount = ssh_channel_poll(agentChannel, 0);
+                if (availableCount >= 4)
+                {
+                    UInt32 messageHeader;
+                    ssh_channel_read_nonblocking(agentChannel, &messageHeader, 4, 0);
+                    agentBuffer.length = ntohl(messageHeader);
+                }
+            }
+            else
+            {
+                int availableCount = ssh_channel_poll(agentChannel, 0);
+                if (availableCount >= length)
+                {
+                    char* buffer = agentBuffer.mutableBytes;
+                    ssh_channel_read_nonblocking(agentChannel, buffer, length, 0);
+                }
             }
         }
     }
@@ -1106,11 +1185,16 @@ void logCallback (int priority,
     self = [super init];
     if (self != nil)
     {
+        ssh_callbacks_init(&callbacks);
+        callbacks.userdata = self;
+        callbacks.log_function = logCallback;
+        callbacks.channel_open_request_auth_agent_function = authAgentCallback;
         session = ssh_new();
         if (session != NULL)
         {
             gInstanceCount++;
         }
+        ssh_set_callbacks(session, &callbacks);
 
         queue = dispatch_queue_create("com.Devolutions.SshConnectionQueue", DISPATCH_QUEUE_SERIAL);
         screenQueue = dispatch_queue_create("com.Devolutions.VT100ParsingQueue", DISPATCH_QUEUE_SERIAL);

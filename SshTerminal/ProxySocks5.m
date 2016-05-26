@@ -31,14 +31,14 @@
         buffer[1] = 2;
         buffer[3] = SOCKS5_METHOD_USERNAME_PASSWORD;
     }
-    int result = send(fd, buffer, commandLength, 0);
+    int result = (int)send(fd, buffer, commandLength, 0);
     if (result <= 0)
     {
         return SOCKS5_METHOD_NONE;
     }
     
     // Wait for the authentication method selection.
-    result = recv(fd, buffer, 2, 0);
+    result = (int)recv(fd, buffer, 2, 0);
     if (result != 2)
     {
         return SOCKS5_METHOD_NONE;
@@ -58,9 +58,9 @@
 
     // Validate username and password length against buffer length.
     const char* userString = [proxyUser UTF8String];
-    int userStringLength = strlen(userString);
+    int userStringLength = (int)strlen(userString);
     const char* passwordString = [proxyPassword UTF8String];
-    int passwordStringLength = strlen(passwordString);
+    int passwordStringLength = (int)strlen(passwordString);
     int commandLength = 3 + userStringLength + passwordStringLength;
     if (commandLength > sizeof(buffer))
     {
@@ -74,14 +74,14 @@
     int passwordIndex = 2 + userStringLength;
     buffer[passwordIndex] = passwordStringLength;
     memcpy(buffer + passwordIndex + 1, passwordString, passwordStringLength);
-    int result = send(fd, buffer, commandLength, 0);
+    int result = (int)send(fd, buffer, commandLength, 0);
     if (result <= 0)
     {
         return CONNECTION_RESULT_FAILED;
     }
     
     // Wait for the username/password authentication reply.
-    result = recv(fd, buffer, 2, 0);
+    result = (int)recv(fd, buffer, 2, 0);
     if (result != 2)
     {
         return CONNECTION_RESULT_FAILED;
@@ -101,7 +101,7 @@
     
     // Resolve the host name if required.
     const char* hostString = [host UTF8String];
-    int hostStringLength = strlen(hostString);
+    int hostStringLength = (int)strlen(hostString);
     int addressType = SOCKS5_ADDRESS_TYPE_STRING;
     NetworkAddress addresses[2];
     if (proxyResolveHostAddress == YES)
@@ -160,14 +160,14 @@
     int portIndex = hostStringIndex + hostStringLength;
     buffer[portIndex] = HI_BYTE(port);
     buffer[portIndex + 1] = LO_BYTE(port);
-    int result = send(fd, buffer, commandLength, 0);
+    int result = (int)send(fd, buffer, commandLength, 0);
     if (result <= 0)
     {
         return CONNECTION_RESULT_FAILED;
     }
     
     // Wait for the connection reply (partial read).
-    result = recv(fd, buffer, 5, 0);
+    result = (int)recv(fd, buffer, 5, 0);
     if (result != 5)
     {
         return CONNECTION_RESULT_FAILED;
@@ -195,7 +195,7 @@
         // Unknown address type:
         return CONNECTION_RESULT_FAILED;
     }
-    result = recv(fd, buffer, remaininglength, 0);
+    result = (int)recv(fd, buffer, remaininglength, 0);
     if (result != remaininglength)
     {
         return CONNECTION_RESULT_FAILED;

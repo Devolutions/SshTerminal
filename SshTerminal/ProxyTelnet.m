@@ -181,8 +181,8 @@ BOOL isStringAtLocation(NSString* command, NSUInteger location, NSString* patter
     [self formatCommand:command];
     
     const char* commandString = [command UTF8String];
-    int bufferLength = strlen(commandString);
-    int result = send(fd, commandString, bufferLength, 0);
+    int bufferLength = (int)strlen(commandString);
+    int result = (int)send(fd, commandString, bufferLength, 0);
     [command release];
     if (result != bufferLength)
     {

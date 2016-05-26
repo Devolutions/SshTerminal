@@ -235,8 +235,8 @@ FIND_END_OF_REPLY:
     }
     [command appendString:@"\r\n"];
     const char* commandString = [command UTF8String];
-    int commandLength = strlen(commandString);
-    int result = send(fd, commandString, commandLength, 0);
+    int commandLength = (int)strlen(commandString);
+    int result = (int)send(fd, commandString, commandLength, 0);
     [command release];
     if (result <= 0)
     {

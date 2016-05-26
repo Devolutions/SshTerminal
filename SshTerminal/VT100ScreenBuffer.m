@@ -565,6 +565,17 @@ NSString* TAName = @"TerminalAttributeName";
             int argStart = -1;
             int argIndex = 0;
             
+#ifdef PRINT_INPUT
+            char temp = inBuffer[i + 1];
+            inBuffer[i + 1] = 0;
+            printf("(CSI %s)", inBuffer + j);
+            inBuffer[i + 1] = temp;
+#endif
+            modifier = inBuffer[j];
+            if ((modifier >= '0' && modifier <= '9') || modifier == ';' || (modifier >= '@' && modifier <= '~'))
+            {
+                modifier = 0;
+            }
             while (j <= i)
             {
                 if (inBuffer[j] == ';' || j == i)
@@ -584,10 +595,6 @@ NSString* TAName = @"TerminalAttributeName";
                     {
                         argStart = j;
                     }
-                }
-                else if (j < i)
-                {
-                    modifier = inBuffer[j];
                 }
                 
                 j++;
@@ -958,7 +965,7 @@ NSString* TAName = @"TerminalAttributeName";
     }
     
 #ifdef PRINT_INPUT
-    printf(" %02X ", c);
+    printf("(%02X)", c);
     if (c == '\n')
     {
         printf("\r\n");
@@ -970,12 +977,19 @@ NSString* TAName = @"TerminalAttributeName";
 -(void)executeCsiCommand:(char)command withModifier:(char)modifier argValues:(int*)args argCount:(int)argCount
 {
 #ifdef PRINT_INPUT
-    printf("([%c", command);
-    for (int i = 0; i < argCount; i++)
+    /*printf("(CSI ");
+    if (modifier > 0)
     {
-        printf(", %d", args[i]);
+        printf("%c ", modifier);
     }
-    printf(")");
+    if (argCount > 0 && args[0] != -1)
+    {
+        for (int i = 0; i < argCount; i++)
+        {
+            printf("%d; ", args[i]);
+        }
+    }
+    printf("%c)", command);*/
 #endif
     
     switch (command)
@@ -1083,14 +1097,11 @@ NSString* TAName = @"TerminalAttributeName";
             
         case 'L':
         {
-            // Insert blank lines in screen after the current line (lines after the insterted lines are moved down).
-            SInt32 insertCount = (args[0] < 0 ? 0 : args[0]);
+            // Insert blank lines in screen at the current line (lines after the insterted lines are moved down).
+            SInt32 insertCount = (args[0] < 0 ? 1 : args[0]);
             if (curY >= topMargin && curY < bottomMargin && insertCount > 0)
             {
-                SInt32 savedMargin = topMargin;
-                topMargin = curY + 1;
-                [self scrollFeed:insertCount];
-                topMargin = savedMargin;
+                [self scrollBack:insertCount];
             }
             
             break;
@@ -1593,20 +1604,20 @@ NSString* TAName = @"TerminalAttributeName";
         // Count the number of lines, find the first line that needs updating and the line corresponding to the top of the screen.
         int lineCount = 0;
         int screenTopGlyph = 0;
-        int glyphCount = [layout numberOfGlyphs];
+        int glyphCount = (int)[layout numberOfGlyphs];
         int glyphIndex = 0;
         while (glyphIndex < glyphCount)
         {
             NSRange glyphRange;
             [layout lineFragmentRectForGlyphAtIndex:glyphIndex effectiveRange:&glyphRange];
-            glyphIndex = glyphRange.location + glyphRange.length;
+            glyphIndex = (int)glyphRange.location + (int)glyphRange.length;
             if (lineCount == screenOffset)
             {
-                screenTopGlyph = glyphRange.location;
+                screenTopGlyph = (int)glyphRange.location;
             }
             if (lineCount == updateLine)
             {
-                updateLineStart = [layout characterIndexForGlyphAtIndex:glyphRange.location];
+                updateLineStart = (int)[layout characterIndexForGlyphAtIndex:glyphRange.location];
             }
             lineCount++;
         }
@@ -1665,17 +1676,17 @@ NSString* TAName = @"TerminalAttributeName";
         
         // Find the cursor position in the text view.
         glyphIndex = screenTopGlyph;
-        glyphCount = [layout numberOfGlyphs];
+        glyphCount = (int)[layout numberOfGlyphs];
         int line = 0;
         while (glyphIndex < glyphCount)
         {
             NSRange glyphRange;
             [layout lineFragmentRectForGlyphAtIndex:glyphIndex effectiveRange:&glyphRange];
-            glyphIndex = glyphRange.location + glyphRange.length;
+            glyphIndex = (int)glyphRange.location + (int)glyphRange.length;
             if (line == curY)
             {
-                int lineStart = [layout characterIndexForGlyphAtIndex:glyphRange.location];
-                int lineEnd = [layout characterIndexForGlyphAtIndex:glyphRange.location + glyphRange.length];
+                int lineStart = (int)[layout characterIndexForGlyphAtIndex:glyphRange.location];
+                int lineEnd = (int)[layout characterIndexForGlyphAtIndex:glyphRange.location + glyphRange.length];
                 int lineLength = lineEnd - lineStart;
                 if (curX >= lineLength)
                 {
@@ -1695,7 +1706,7 @@ NSString* TAName = @"TerminalAttributeName";
         }
         if (curY > line)
         {
-            savedCursorChar = storage.length;
+            savedCursorChar = (int)storage.length;
             savedCursorDeltaY = screenOffset + curY - lineCount;
             savedCursorDeltaX = curX;
         }
@@ -1995,13 +2006,13 @@ NSString* TAName = @"TerminalAttributeName";
     
     // Count the number of lines in the view.
     int lineCount = 0;
-    int glyphCount = [layout numberOfGlyphs];
+    int glyphCount = (int)[layout numberOfGlyphs];
     int glyphIndex = 0;
     while (glyphIndex < glyphCount)
     {
         NSRange glyphRange;
         [layout lineFragmentRectForGlyphAtIndex:glyphIndex effectiveRange:&glyphRange];
-        glyphIndex = glyphRange.location + glyphRange.length;
+        glyphIndex = (int)glyphRange.location + (int)glyphRange.length;
         lineCount++;
     }
     
@@ -2019,9 +2030,9 @@ NSString* TAName = @"TerminalAttributeName";
         for (int i = 0; i < rowCount; i++)
         {
             [layout lineFragmentRectForGlyphAtIndex:glyphIndex effectiveRange:&glyphRange];
-            glyphIndex = glyphRange.location - 1;
+            glyphIndex = (int)glyphRange.location - 1;
         }
-        glyphIndex = glyphRange.location;
+        glyphIndex = (int)glyphRange.location;
     }
     
     // Transfer lines from the view to the screen, and restore the cursor position.
@@ -2046,7 +2057,7 @@ NSString* TAName = @"TerminalAttributeName";
                     curY = rowCount - 1;
                 }
                 
-                curX = savedCursorChar - range.location + savedCursorDeltaX;
+                curX = savedCursorChar - (int)range.location + savedCursorDeltaX;
                 if (curX < 0)
                 {
                     curX = 0;
@@ -2079,7 +2090,7 @@ NSString* TAName = @"TerminalAttributeName";
                 NSAttributedString* blankString = [blankLine attributedSubstringFromRange:NSMakeRange(0, columnCount - range.length)];
                 [screen appendAttributedString:blankString];
             }
-            glyphIndex = glyphRange.location + glyphRange.length;
+            glyphIndex = (int)glyphRange.location + (int)glyphRange.length;
         }
         else
         {
