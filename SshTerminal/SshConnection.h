@@ -11,6 +11,7 @@
 #import "SshFoundation.h"
 #import "SshTunnel.h"
 #import "SshTunnelConnection.h"
+#import "SshAgent.h"
 
 
 #define INPUT_BUFFER_SIZE 1024
@@ -50,6 +51,7 @@ enum ConnectionEvent
     ssh_session session;
     ssh_channel channel;
     ssh_channel agentChannel;
+    SshAgentContext* sshAgent;
     struct ssh_callbacks_struct callbacks;
     BOOL useKeyAuthentication;
     BOOL x11Forwarding;

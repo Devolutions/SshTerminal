@@ -24,9 +24,9 @@ typedef struct
     {
         struct
         {
-            UInt8 len;
-            UInt8 family;
-            UInt16 port;
+            uint8_t len;
+            uint8_t family;
+            uint16_t port;
         };
         struct sockaddr ip;
         struct sockaddr_in ipv4;

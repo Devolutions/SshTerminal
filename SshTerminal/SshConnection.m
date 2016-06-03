@@ -8,6 +8,7 @@
 
 #import "SshConnection.h"
 #import "VT100TerminalView.h"
+#import "SshAgent.h"
 
 
 int gInstanceCount = 0;
@@ -193,11 +194,9 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
                 displayNumberRange.length = dotRange.location - displayNumberRange.location;
                 NSString* screenNumberString = [x11DisplayName substringWithRange:screenNumberRange];
                 x11ScreenNumber = [screenNumberString intValue];
-                [screenNumberString release];
             }
             NSString* displayNumberString = [x11DisplayName substringWithRange:displayNumberRange];
             x11DisplayNumber = [displayNumberString intValue];
-            [displayNumberString release];
             
             NSRange hostRange = NSMakeRange(0, colonRange.location);
             [x11Host release];
@@ -280,6 +279,28 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 
 
 // The following methods are executed on the private queue.
+
+-(ssh_channel)agentChannel
+{
+    if (agentChannel == NULL)
+    {
+        agentChannel = ssh_channel_new(session);
+        agentBuffer = [NSMutableData new];
+        if (agentBuffer == nil || agentChannel == NULL)
+        {
+            if (verbose == YES)
+            {
+                [self verboseNotify:@"Out of memory"];
+            }
+            [self eventNotify:OUT_OF_MEMORY_ERROR];
+            dispatch_async(queue, ^{ [self closeAllChannels]; });
+            return NULL;
+        }
+    }
+    
+    return agentChannel;
+}
+
 
 -(void)eventNotify:(int)code
 {
@@ -502,13 +523,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         {
             [self verboseNotify:@"Authentication by key\r\n"];
         }
-        ssh_key key = ssh_key_new();
-        if (key == NULL)
-        {
-            [self eventNotify:OUT_OF_MEMORY_ERROR];
-            dispatch_async(queue, ^{ [self disconnect]; });
-            return;
-        }
+        ssh_key key = NULL;
         int result = ssh_pki_import_privkey_file([keyFilePath UTF8String], [keyFilePassword UTF8String], PrivateKeyAuthCallback, NULL, &key);
         if (result == SSH_OK)
         {
@@ -524,7 +539,38 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
                     break;
                 }
             }
-            ssh_key_free(key);
+            
+            if (agentForwarding == YES && result == SSH_AUTH_SUCCESS)
+            {
+                sshAgent = SshAgentNew(session);
+                if (sshAgent == NULL)
+                {
+                    if (verbose == YES)
+                    {
+                        [self verboseNotify:@"Not enough memory\r\n"];
+                    }
+                    [self eventNotify:OUT_OF_MEMORY_ERROR];
+                    dispatch_async(queue, ^{ [self closeAllChannels]; });
+                    return;
+                }
+                
+                int result = SshAgentAddKey(sshAgent, key);
+                if (result < 0)
+                {
+                    ssh_key_free(key);
+                    if (verbose == YES)
+                    {
+                        [self verboseNotify:@"Not enough memory\r\n"];
+                    }
+                    [self eventNotify:OUT_OF_MEMORY_ERROR];
+                    dispatch_async(queue, ^{ [self closeAllChannels]; });
+                    return;
+                }
+            }
+            else
+            {
+                ssh_key_free(key);
+            }
             
             if (result != SSH_AUTH_SUCCESS)
             {
@@ -552,6 +598,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         }
         else
         {
+            ssh_key_free(key);
             if (result == SSH_EOF)
             {
                 if (verbose == YES)
@@ -603,11 +650,11 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
                 int promptCount = ssh_userauth_kbdint_getnprompts(session);
                 if (promptCount >= 1)
                 {
-                    result = ssh_userauth_kbdint_setanswer(session, 0, [password UTF8String]);
+                    ssh_userauth_kbdint_setanswer(session, 0, [password UTF8String]);
                     result = ssh_userauth_kbdint(session, NULL, NULL);
                     if (result == SSH_AUTH_INFO)
                     {
-                        promptCount = ssh_userauth_kbdint_getnprompts(session);
+                        ssh_userauth_kbdint_getnprompts(session);
                         result = ssh_userauth_kbdint(session, NULL, NULL);
                     }
                 }
@@ -736,18 +783,6 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
             [self verboseNotify:@"Opening agent forwarding channel\r\n"];
         }
         
-        agentChannel = ssh_channel_new(session);
-        agentBuffer = [NSMutableData new];
-        if (agentBuffer == nil || agentChannel == NULL)
-        {
-            if (verbose == YES)
-            {
-                [self verboseNotify:@"Out of memory"];
-            }
-            [self eventNotify:OUT_OF_MEMORY_ERROR];
-            dispatch_async(queue, ^{ [self closeAllChannels]; });
-            return;
-        }
         result = ssh_channel_request_auth_agent(channel);
         if (result != SSH_OK)
         {
@@ -761,7 +796,6 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
             dispatch_async(queue, ^{ [self closeAllChannels]; });
             return;
         }
-        [self verboseNotify:@"Opening agent forwarding channel: end\r\n"];
     }
     
     result = ssh_channel_request_shell(channel);
@@ -854,7 +888,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     }
     if (agentForwarding == YES)
     {
-        if (ssh_channel_is_open(agentChannel))
+        if (agentChannel != NULL && ssh_channel_is_open(agentChannel))
         {
             int length = (int)agentBuffer.length;
             if (length == 0)
@@ -864,16 +898,30 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
                 {
                     UInt32 messageHeader;
                     ssh_channel_read_nonblocking(agentChannel, &messageHeader, 4, 0);
-                    agentBuffer.length = ntohl(messageHeader);
+                    length = ntohl(messageHeader);
+                    agentBuffer.length = length;
                 }
             }
-            else
+            if (length != 0)
             {
                 int availableCount = ssh_channel_poll(agentChannel, 0);
                 if (availableCount >= length)
                 {
-                    char* buffer = agentBuffer.mutableBytes;
+                    uint8_t* buffer = agentBuffer.mutableBytes;
                     ssh_channel_read_nonblocking(agentChannel, buffer, length, 0);
+                    uint8_t* reply = SshAgentReplyFromRequest(sshAgent, buffer, length);
+                    if (reply == NULL)
+                    {
+                        [self eventNotify:OUT_OF_MEMORY_ERROR];
+                        dispatch_async(queue, ^{ [self closeAllChannels]; });
+                        return;
+                    }
+                    uint32_t messageSize;
+                    memcpy(&messageSize, reply, 4);
+                    messageSize = 4 + ntohl(messageSize);
+                    ssh_channel_write(agentChannel, reply, messageSize);
+                    free(reply);
+                    agentBuffer.length = 0;
                 }
             }
         }
@@ -1185,15 +1233,14 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     self = [super init];
     if (self != nil)
     {
-        ssh_callbacks_init(&callbacks);
-        callbacks.userdata = self;
-        callbacks.log_function = logCallback;
-        callbacks.channel_open_request_auth_agent_function = authAgentCallback;
         session = ssh_new();
         if (session != NULL)
         {
             gInstanceCount++;
         }
+        ssh_callbacks_init(&callbacks);
+        callbacks.userdata = self;
+        callbacks.channel_open_request_auth_agent_function = authAgentCallback;
         ssh_set_callbacks(session, &callbacks);
 
         queue = dispatch_queue_create("com.Devolutions.SshConnectionQueue", DISPATCH_QUEUE_SERIAL);

@@ -54,9 +54,9 @@ SshConnection* sshConnection = NULL;
         //terminal.hostName = @"macmini2";
         //[terminal setPassword:@"123456"];
         terminal.port = 2220;
-        //terminal.agentForwarding = YES;
-        terminal.keyFilePath = @"~/.ssh/dev_test";
-        [terminal setKeyFilePassword:@"123456"];
+        terminal.agentForwarding = YES;
+        terminal.keyFilePath = @"~/.ssh/dvincent-rsa";
+        [terminal setKeyFilePassword:@"qwerty"];
         //terminal.verbose = YES;
         //terminal.verbosityLevel = 4;
         //terminal.x11Forwarding = YES;
@@ -84,6 +84,10 @@ SshConnection* sshConnection = NULL;
         [terminal setPassword:@"123456"];
         //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
         [terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
+#elif (TEST_SERVER == 5)
+        terminal.userName = @"mmorrissette";
+        terminal.hostName = @"192.168.2.240";
+        terminal.keyFilePath = @"/Users/dvincent/Mac_Math_Open_ssh_key";
 #endif
         //terminal.verbose = YES;
         terminal.columnCount = 80;

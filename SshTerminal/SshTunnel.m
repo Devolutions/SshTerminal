@@ -58,6 +58,7 @@
         }
     }
     
+    [counterPartTunnel autorelease];
     return counterPartTunnel;
 }
 

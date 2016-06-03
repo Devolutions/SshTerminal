@@ -2026,7 +2026,7 @@ NSString* TAName = @"TerminalAttributeName";
     {
         screenOffset = lineCount - rowCount;
         glyphIndex = glyphCount - 1;
-        NSRange glyphRange;
+        NSRange glyphRange = NSMakeRange(0, 0);
         for (int i = 0; i < rowCount; i++)
         {
             [layout lineFragmentRectForGlyphAtIndex:glyphIndex effectiveRange:&glyphRange];

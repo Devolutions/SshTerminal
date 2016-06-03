@@ -49,7 +49,6 @@ BOOL isStringAtLocation(NSString* command, NSUInteger location, NSString* patter
         NSString* portText = [NSString stringWithFormat:@"%d", port];
         [command replaceCharactersInRange:NSMakeRange(location, 5) withString:portText];
         location += portText.length;
-        [portText release];
     }
     else if (isStringAtLocation(command, location, @"%user") == YES)
     {
@@ -71,7 +70,6 @@ BOOL isStringAtLocation(NSString* command, NSUInteger location, NSString* patter
         NSString* portText = [NSString stringWithFormat:@"%d", proxyPort];
         [command replaceCharactersInRange:NSMakeRange(location, 10) withString:portText];
         location += portText.length;
-        [portText release];
     }
     else if (isStringAtLocation(command, location, @"%%") == YES)
     {
@@ -117,10 +115,6 @@ BOOL isStringAtLocation(NSString* command, NSUInteger location, NSString* patter
             }
             NSString* character = [NSString stringWithFormat:@"%c", (unsigned char)value];
             [command replaceCharactersInRange:NSMakeRange(location, 4) withString:character];
-            
-            [scanner release];
-            [character release];
-            [digits release];
         }
         location++;
     }
