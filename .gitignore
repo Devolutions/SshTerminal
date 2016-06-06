@@ -3,3 +3,4 @@ xcschememanagement.plist
 *.xcsettings
 build
 *.xcscmblueprint
+build32

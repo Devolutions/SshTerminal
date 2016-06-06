@@ -55,7 +55,7 @@ SshConnection* sshConnection = NULL;
         //[terminal setPassword:@"123456"];
         terminal.port = 2220;
         terminal.agentForwarding = YES;
-        terminal.keyFilePath = @"~/.ssh/dvincent-rsa";
+        terminal.keyFilePath = @"~/.ssh/dvincent-dsa";
         [terminal setKeyFilePassword:@"qwerty"];
         //terminal.verbose = YES;
         //terminal.verbosityLevel = 4;
