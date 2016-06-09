@@ -9,6 +9,7 @@
 #import "SshConnection.h"
 #import "VT100TerminalView.h"
 #import "SshAgent.h"
+#import "PuttyKey.h"
 
 
 int gInstanceCount = 0;
@@ -523,91 +524,62 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         {
             [self verboseNotify:@"Authentication by key\r\n"];
         }
-        ssh_key key = NULL;
-        int result = ssh_pki_import_privkey_file([keyFilePath UTF8String], [keyFilePassword UTF8String], PrivateKeyAuthCallback, NULL, &key);
-        if (result == SSH_OK)
+
+        const char* path = [keyFilePath UTF8String];
+        int keyType = PuttyKeyDetectType(path);
+        if (keyType < 0)
         {
-            if (verbose == YES)
+            int code = FATAL_ERROR;
+            if (keyType == KEY_TYPE_FILE_NOT_FOUND)
             {
-                [self verboseNotify:@"Key file successfully loaded, sending to server\r\n"];
-            }
-            while (1)
-            {
-                result = ssh_userauth_publickey(session, NULL, key);
-                if (result != SSH_AUTH_AGAIN)
+                if (verbose == YES)
                 {
-                    break;
+                    [self verboseNotify:@"Key file not found\r\n"];
                 }
+                code = KEY_FILE_NOT_FOUND_OR_DENIED;
             }
-            
-            if (agentForwarding == YES && result == SSH_AUTH_SUCCESS)
+            else if (keyType == KEY_TYPE_ACCESS_DENIED)
             {
-                sshAgent = SshAgentNew(session);
-                if (sshAgent == NULL)
+                if (verbose == YES)
                 {
-                    if (verbose == YES)
-                    {
-                        [self verboseNotify:@"Not enough memory\r\n"];
-                    }
-                    [self eventNotify:OUT_OF_MEMORY_ERROR];
-                    dispatch_async(queue, ^{ [self closeAllChannels]; });
-                    return;
+                    [self verboseNotify:@"Key file acces denied\r\n"];
                 }
-                
-                int result = SshAgentAddKey(sshAgent, key);
-                if (result < 0)
+                code = KEY_FILE_NOT_FOUND_OR_DENIED;
+            }
+            else if (keyType == KEY_TYPE_UNKNOWN)
+            {
+                if (verbose == YES)
                 {
-                    ssh_key_free(key);
-                    if (verbose == YES)
-                    {
-                        [self verboseNotify:@"Not enough memory\r\n"];
-                    }
-                    [self eventNotify:OUT_OF_MEMORY_ERROR];
-                    dispatch_async(queue, ^{ [self closeAllChannels]; });
-                    return;
+                    [self verboseNotify:@"Key file format unknown\r\n"];
                 }
             }
             else
             {
-                ssh_key_free(key);
-            }
-            
-            if (result != SSH_AUTH_SUCCESS)
-            {
-                if (result == SSH_AUTH_ERROR)
+                if (verbose == YES)
                 {
-                    if (verbose == YES)
-                    {
-                        const char* errorString = ssh_get_error(session);
-                        NSString* message = [NSString stringWithFormat:@"Unexpected error: %s\r\n", errorString];
-                        [self verboseNotify:message];
-                    }
-                    [self eventNotify:FATAL_ERROR];
+                    [self verboseNotify:@"Fatal error opening key file\r\n"];
                 }
-                else
-                {
-                    if (verbose == YES)
-                    {
-                        [self verboseNotify:@"Server refused the key\r\n"];
-                    }
-                    [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
-                }
-                dispatch_async(queue, ^{ [self disconnect]; });
-                return;
             }
+            [self eventNotify:code];
+            dispatch_async(queue, ^{ [self closeAllChannels]; });
+            return;
         }
-        else
+        const char* password = [keyFilePassword UTF8String];
+        
+        ssh_key key = NULL;
+        if (keyType == KEY_TYPE_OPEN_SSH)
         {
-            ssh_key_free(key);
+            int result = ssh_pki_import_privkey_file(path, password, PrivateKeyAuthCallback, NULL, &key);
             if (result == SSH_EOF)
             {
                 if (verbose == YES)
                 {
-                    [self verboseNotify:@"Key file not found or access denied\r\n"];
+                    [self verboseNotify:@"Wrong password for key file\r\n"];
                 }
                 [self eventNotify:KEY_FILE_NOT_FOUND_OR_DENIED];
+                key = NULL;
             }
-            else
+            else if (result != SSH_OK)
             {
                 if (verbose == YES)
                 {
@@ -616,6 +588,113 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
                     [self verboseNotify:message];
                 }
                 [self eventNotify:FATAL_ERROR];
+                key = NULL;
+            }
+        }
+        else
+        {
+            int result = PuttyKeyLoadPrivate(path, password, &key);
+            if (result < 0)
+            {
+                if (result == FAIL_OUT_OF_MEMORY)
+                {
+                    if (verbose == YES)
+                    {
+                        [self verboseNotify:@"Out of memory\r\n"];
+                    }
+                    [self eventNotify:OUT_OF_MEMORY_ERROR];
+                }
+                else if (result == FAIL_WRONG_PASSWORD)
+                {
+                    if (verbose == YES)
+                    {
+                        NSString* message = [NSString stringWithFormat:@"Invalid password for key file: %s\r\n", path];
+                        [self verboseNotify:message];
+                    }
+                    [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
+                }
+                else
+                {
+                    if (verbose == YES)
+                    {
+                        [self verboseNotify:@"Unexpected error, file may be corrupted\r\n"];
+                    }
+                    [self eventNotify:FATAL_ERROR];
+                }
+            }
+        }
+        
+        if (key == NULL)
+        {
+            dispatch_async(queue, ^{ [self closeAllChannels]; });
+            return;
+        }
+        
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Key file successfully loaded, sending to server\r\n"];
+        }
+        int result;
+        while (1)
+        {
+            result = ssh_userauth_publickey(session, NULL, key);
+            if (result != SSH_AUTH_AGAIN)
+            {
+                break;
+            }
+        }
+        
+        if (agentForwarding == YES && result == SSH_AUTH_SUCCESS)
+        {
+            sshAgent = SshAgentNew(session);
+            if (sshAgent == NULL)
+            {
+                if (verbose == YES)
+                {
+                    [self verboseNotify:@"Not enough memory\r\n"];
+                }
+                [self eventNotify:OUT_OF_MEMORY_ERROR];
+                dispatch_async(queue, ^{ [self closeAllChannels]; });
+                return;
+            }
+            
+            int result = SshAgentAddKey(sshAgent, key);
+            if (result < 0)
+            {
+                ssh_key_free(key);
+                if (verbose == YES)
+                {
+                    [self verboseNotify:@"Not enough memory\r\n"];
+                }
+                [self eventNotify:OUT_OF_MEMORY_ERROR];
+                dispatch_async(queue, ^{ [self closeAllChannels]; });
+                return;
+            }
+        }
+        else
+        {
+            ssh_key_free(key);
+        }
+        
+        if (result != SSH_AUTH_SUCCESS)
+        {
+            if (result == SSH_AUTH_ERROR)
+            {
+                if (verbose == YES)
+                {
+                    const char* errorString = ssh_get_error(session);
+                    NSString* message = [NSString stringWithFormat:@"Unexpected error: %s\r\n", errorString];
+                    [self verboseNotify:message];
+                }
+                [self eventNotify:FATAL_ERROR];
+            }
+            else
+            {
+                if (verbose == YES)
+                {
+                    [self verboseNotify:@"Server refused the key\r\n"];
+                }
+                [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
             }
             dispatch_async(queue, ^{ [self disconnect]; });
             return;
