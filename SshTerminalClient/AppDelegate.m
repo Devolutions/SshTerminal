@@ -55,11 +55,11 @@ SshConnection* sshConnection = NULL;
         //[terminal setPassword:@"123456"];
         terminal.port = 2220;
         //terminal.agentForwarding = YES;
-        terminal.keyFilePath = @"~/Encrypted.ppk";
-        //terminal.keyFilePath = @"~/.ssh/dvincent-rsa";
+        //terminal.keyFilePath = @"~/Encrypted.ppk";
+        terminal.keyFilePath = @"~/.ssh/dvincent-ecdsa";
         [terminal setKeyFilePassword:@"qwerty"];
-        //terminal.verbose = YES;
-        //terminal.verbosityLevel = 4;
+        terminal.verbose = YES;
+        terminal.verbosityLevel = 4;
         //terminal.x11Forwarding = YES;
         //terminal.internetProtocol = sshTerminalIpv6;
 #elif (TEST_SERVER == 1)

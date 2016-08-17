@@ -145,7 +145,7 @@ int PuttyKeyLoadBignum(uint8_t* blob, int* index, int blobSize, BIGNUM** bignum,
 }
 
 
-void PuttyKeyBinaryToString(uint8_t* input, inputLength, char* output)
+void PuttyKeyBinaryToString(uint8_t* input, int inputLength, char* output)
 {
     for (int i = 0; i < inputLength; i++)
     {

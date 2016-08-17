@@ -47,8 +47,8 @@
 #define TEST_SERVER 0
         
 #if (TEST_SERVER == 0)
-        terminal.userName = @"devolutions\\test";
-        terminal.hostName = @"VDEVOSRV-TST.devolutions.loc";
+        terminal.userName = @"devolutions\\devotest";
+        terminal.hostName = @"192.168.1.181";
         [terminal setPassword:@"Price2011"];
 #elif (TEST_SERVER == 1)
         terminal.proxyExclusion = @"VDEV*.dev*.loc";
@@ -68,6 +68,8 @@
         terminal.hostName = @"localhost";
         terminal.port = 1080;
         [terminal setPassword:@"Price2011"];
+#elif (TEST_SERVER == 3)
+        terminal.hostName = @"192.168.1.181";
 #endif
         terminal.columnCount = 80;
         [terminal connect];

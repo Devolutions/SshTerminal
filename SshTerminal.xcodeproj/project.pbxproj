@@ -811,7 +811,7 @@
 				OTHER_LDFLAGS = (
 					"/Proto/openssl-1_0_2h-osx64/libcrypto.a",
 					"/Proto/openssl-1_0_2h-osx64/libssl.a",
-					/Proto/libssh/osx64/libssh.a,
+					/Proto/libssh/build/src/Release/libssh.a,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -842,7 +842,7 @@
 				OTHER_LDFLAGS = (
 					"/Proto/openssl-1_0_2h-osx64/libcrypto.a",
 					"/Proto/openssl-1_0_2h-osx64/libssl.a",
-					/Proto/libssh/osx64/libssh.a,
+					/Proto/libssh/build/src/Release/libssh.a,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

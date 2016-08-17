@@ -49,7 +49,7 @@ typedef struct _SshAgentContext
 int SshAgentAddKey(SshAgentContext* context, ssh_key key);
 uint8_t* SshAgentReplyFromRequest(SshAgentContext* context, uint8_t* request, int requestSize);
 
-SshAgentContext* SshAgentNew(ssh_session session);
+SshAgentContext* SshAgentNew();
 void SshAgentRelease(SshAgentContext* context);
 
 #endif

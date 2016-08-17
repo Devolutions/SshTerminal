@@ -49,6 +49,7 @@ typedef struct
     
     BOOL userNameSent;
     BOOL needsSendingPassword;
+    BOOL isConnectedSent;
     
     UInt8 inBuffer[INPUT_BUFFER_SIZE];
     UInt8 outBuffer[OUTPUT_BUFFER_SIZE];

@@ -250,6 +250,10 @@
 -(void)writePassword
 {
     const char* passwordString = [password UTF8String];
+    if (passwordString == NULL || strlen(passwordString) == 0)
+    {
+        return;
+    }
     int passwordSize = (int)strlen(passwordString);
     char* buffer = malloc(passwordSize + 1);
     if (buffer == NULL)
@@ -269,6 +273,10 @@
 -(void)writeNewEnvironment
 {
     const char* userString = [user UTF8String];
+    if (userString == NULL || strlen(userString) == 0)
+    {
+        userNameSent = YES;
+    }
     int bufferSize = (userNameSent == NO ? 12 + (int)strlen(userString) : 6);
     UInt8* buffer = malloc(bufferSize);
     if (buffer == NULL)
@@ -613,6 +621,16 @@
         free(terminalBuffer);
     }
     
+    if (isConnectedSent == NO)
+    {
+        const char* userString = [user UTF8String];
+        const char* passwordString = [password UTF8String];
+        if ((userString == NULL || strlen(userString) == 0) && (passwordString == NULL || strlen(passwordString) == 0))
+        {
+            isConnectedSent = YES;
+            [self eventNotify:tceConnected];
+        }
+    }
     if (needsSendingPassword == YES)
     {
         // This is the first data received after the user name has been sent, most probably the "password:" prompt: schedule to write the password.

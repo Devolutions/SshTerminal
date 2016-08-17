@@ -646,7 +646,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         
         if (agentForwarding == YES && result == SSH_AUTH_SUCCESS)
         {
-            sshAgent = SshAgentNew(session);
+            sshAgent = SshAgentNew();
             if (sshAgent == NULL)
             {
                 if (verbose == YES)
@@ -973,6 +973,10 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
             if (length == 0)
             {
                 int availableCount = ssh_channel_poll(agentChannel, 0);
+                if (availableCount != 0)
+                {
+                    dataHasBeenRead = YES;
+                }
                 if (availableCount >= 4)
                 {
                     UInt32 messageHeader;
@@ -984,8 +988,13 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
             if (length != 0)
             {
                 int availableCount = ssh_channel_poll(agentChannel, 0);
+                if (availableCount != 0)
+                {
+                    dataHasBeenRead = YES;
+                }
                 if (availableCount >= length)
                 {
+                    dataHasBeenRead = YES;
                     uint8_t* buffer = agentBuffer.mutableBytes;
                     ssh_channel_read_nonblocking(agentChannel, buffer, length, 0);
                     uint8_t* reply = SshAgentReplyFromRequest(sshAgent, buffer, length);
