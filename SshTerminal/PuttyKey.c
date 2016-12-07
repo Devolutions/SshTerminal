@@ -154,12 +154,13 @@ void PuttyKeyBinaryToString(uint8_t* input, int inputLength, char* output)
 }
 
 
-int PuttyKeyParseData(char* data, int size, char* password, ssh_key* pkey)
+int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
 {
     uint8_t* publicBlob = NULL;
     uint8_t* privateBlob = NULL;
     uint8_t* decryptedBlob = NULL;
     int returnCode = 0;
+    ssh_key key = NULL;
     
     *pkey = NULL;
     
@@ -560,7 +561,7 @@ int PuttyKeyParseData(char* data, int size, char* password, ssh_key* pkey)
     }
 
     // Build the key.
-    ssh_key key = ssh_key_new();
+    key = ssh_key_new();
     if (key == NULL)
     {
         returnCode = FAIL_OUT_OF_MEMORY;
@@ -649,7 +650,7 @@ EXIT:
 }
 
 
-int PuttyKeyLoadPrivate(char* path, char* password, ssh_key* pkey)
+int PuttyKeyLoadPrivate(const char* path, const char* password, ssh_key* pkey)
 {
     // Get the file size.
     struct stat fileStat;
@@ -713,7 +714,7 @@ int PuttyKeyDetectType(const char* path)
     }
     
     char buffer[32];
-    int readCount = read(fd, buffer, sizeof(buffer));
+    int readCount = (int)read(fd, buffer, sizeof(buffer));
     close(fd);
     if (readCount < sizeof(buffer))
     {

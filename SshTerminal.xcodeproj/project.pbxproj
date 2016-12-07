@@ -10,6 +10,7 @@
 		F477D64B1C1622A100FCB65A /* VT100ScreenBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = F477D6491C1622A100FCB65A /* VT100ScreenBuffer.h */; };
 		F477D64C1C1622A100FCB65A /* VT100ScreenBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = F477D64A1C1622A100FCB65A /* VT100ScreenBuffer.m */; };
 		F477D64E1C1B54B600FCB65A /* VT100TerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = F477D64D1C1B54B600FCB65A /* VT100TerminalView.m */; };
+		F48511291DF89160004489B6 /* SshTerminal32.h in Headers */ = {isa = PBXBuildFile; fileRef = F48511281DF89160004489B6 /* SshTerminal32.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F490013E1CF8B18700EC1186 /* SshAgent.c in Sources */ = {isa = PBXBuildFile; fileRef = F490013C1CF8B18700EC1186 /* SshAgent.c */; };
 		F490013F1CF8B18700EC1186 /* SshAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = F490013D1CF8B18700EC1186 /* SshAgent.h */; };
 		F4989F0E1B5FDC7900693A47 /* TelnetTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */; };
@@ -128,6 +129,7 @@
 		F477D6491C1622A100FCB65A /* VT100ScreenBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenBuffer.h; sourceTree = "<group>"; };
 		F477D64A1C1622A100FCB65A /* VT100ScreenBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenBuffer.m; sourceTree = "<group>"; };
 		F477D64D1C1B54B600FCB65A /* VT100TerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TerminalView.m; sourceTree = "<group>"; };
+		F48511281DF89160004489B6 /* SshTerminal32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshTerminal32.h; sourceTree = "<group>"; };
 		F490013C1CF8B18700EC1186 /* SshAgent.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = SshAgent.c; sourceTree = "<group>"; };
 		F490013D1CF8B18700EC1186 /* SshAgent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SshAgent.h; sourceTree = "<group>"; };
 		F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TelnetTerminal.h; sourceTree = "<group>"; };
@@ -292,6 +294,7 @@
 				F4A3E2FD1B569B930007D4C0 /* SshFoundation.h */,
 				F4AE90381B41733E007AC63E /* SshTerminal.h */,
 				F4AE90641B418EBF007AC63E /* SshTerminal.m */,
+				F48511281DF89160004489B6 /* SshTerminal32.h */,
 				F4989F141B5FEED800693A47 /* VT100Connection.h */,
 				F477D6491C1622A100FCB65A /* VT100ScreenBuffer.h */,
 				F477D64A1C1622A100FCB65A /* VT100ScreenBuffer.m */,
@@ -371,6 +374,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4FB45BF1D0607B800BFDE72 /* SshTerminal.h in Headers */,
+				F48511291DF89160004489B6 /* SshTerminal32.h in Headers */,
 				F4FB45B81D0607B800BFDE72 /* VT100TerminalView.h in Headers */,
 				F4FB45B91D0607B800BFDE72 /* ProxyTelnet.h in Headers */,
 				F4FB45BA1D0607B800BFDE72 /* SshTunnelConnection.h in Headers */,
@@ -378,7 +383,6 @@
 				F4FB45BC1D0607B800BFDE72 /* NetworkHelpers.h in Headers */,
 				F4FB45BD1D0607B800BFDE72 /* PuttyKey.h in Headers */,
 				F4FB45BE1D0607B800BFDE72 /* ProxySocks4.h in Headers */,
-				F4FB45BF1D0607B800BFDE72 /* SshTerminal.h in Headers */,
 				F4FB45C01D0607B800BFDE72 /* ProxyHttp.h in Headers */,
 				F4FB45C11D0607B800BFDE72 /* SshTunnel.h in Headers */,
 				F4FB45C21D0607B800BFDE72 /* TelnetTerminal.h in Headers */,
@@ -702,6 +706,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -740,7 +745,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx10.11;
+				SDKROOT = macosx;
 				SYMROOT = "${PROJECT_DIR}/build";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -752,6 +757,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -783,7 +789,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx10.11;
+				SDKROOT = macosx;
 				SYMROOT = "${PROJECT_DIR}/build";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -794,6 +800,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
 				DEPLOYMENT_LOCATION = NO;
@@ -814,6 +821,7 @@
 					/Proto/libssh/build/src/Release/libssh.a,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SYMROOT = "${PROJECT_DIR}/build";
 				VALID_ARCHS = "i386 x86_64";
@@ -825,6 +833,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				DEFINES_MODULE = YES;
@@ -845,6 +854,7 @@
 					/Proto/libssh/build/src/Release/libssh.a,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SYMROOT = "${PROJECT_DIR}/build";
 				VALID_ARCHS = "i386 x86_64";

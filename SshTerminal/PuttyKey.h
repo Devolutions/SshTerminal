@@ -29,7 +29,7 @@ enum KeyLoadReturns
 };
 
 
-int PuttyKeyLoadPrivate(char* path, char* password, ssh_key* pkey);
+int PuttyKeyLoadPrivate(const char* path, const char* password, ssh_key* pkey);
 int PuttyKeyDetectType(const char* path);
 
 

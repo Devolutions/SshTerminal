@@ -100,6 +100,30 @@
 }
 
 
+-(void)mouseDown:(NSEvent *)event
+{
+    BOOL eventSent = [screen sendMouseEvent:event inView:self isUpEvent:NO];
+    if (eventSent)
+    {
+        return;
+    }
+    
+    [super mouseDown:event];
+}
+
+
+-(void)mouseUp:(NSEvent *)event
+{
+    BOOL eventSent = [screen sendMouseEvent:event inView:self isUpEvent:YES];
+    if (eventSent)
+    {
+        return;
+    }
+    
+    [super mouseUp:event];
+}
+
+
 -(void)keyDown:(NSEvent *)theEvent
 {
     if (isCursorVisible == NO)

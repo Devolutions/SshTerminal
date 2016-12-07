@@ -87,6 +87,8 @@ typedef union
     BOOL originWithinMargins;
     BOOL savedAutoWrap;
     BOOL savedOriginWithinMargins;
+    BOOL sgrMouseEnable;
+    BOOL urxvtMouseEnable;
 }
 
 @property(readonly)BOOL cursorKeyAnsi;
@@ -103,6 +105,8 @@ typedef union
 -(void)resetScreen;
 -(void)setConnection:(id<VT100Connection>)newConnection;
 -(void)setWidth:(int)newCount height:(int)height;
+
+-(BOOL)sendMouseEvent:(NSEvent*)theEvent inView:(NSView*)view isUpEvent:(BOOL)isUp;
 
 -(void)newDataAvailableIn:(UInt8*)buffer length:(int)size;
 -(void)newDataAvailable;

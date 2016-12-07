@@ -37,6 +37,44 @@ NSString* TAName = @"TerminalAttributeName";
 }
 
 
+-(BOOL)sendMouseEvent:(NSEvent*)theEvent inView:(NSView*)view isUpEvent:(BOOL)isUp
+{
+    if (theEvent.buttonNumber != 0)
+    {
+        return NO;
+    }
+    
+    char buffer[20];
+    int button = (isUp ? 3 : 0);
+    if (theEvent.modifierFlags & NSShiftKeyMask)
+    {
+        button &= 0x04;
+    }
+    if (theEvent.modifierFlags & NSControlKeyMask)
+    {
+        button &= 0x10;
+    }
+    if (sgrMouseEnable)
+    {
+        CursorPosition cur = [self cursorPositionFromEvent:theEvent inView:view];
+        sprintf(buffer, "\x1B[<%d;%d;%d%c", button, cur.x, cur.y, (isUp ? 'm' : 'M'));
+        [connection writeFrom:(UInt8*)buffer length:(int)strlen(buffer)];
+        
+        return YES;
+    }
+    else if (urxvtMouseEnable)
+    {
+        CursorPosition cur = [self cursorPositionFromEvent:theEvent inView:view];
+        sprintf(buffer, "\x1B[%d;%d;%dM", button, cur.x, cur.y);
+        [connection writeFrom:(UInt8*)buffer length:(int)strlen(buffer)];
+        
+        return YES;
+    }
+    
+    return NO;
+}
+
+
 -(void)actualizeAttributesIn:(NSMutableAttributedString*)string
 {
     void (^change)(id, NSRange, BOOL*) = ^(id value, NSRange range, BOOL* stop)
@@ -204,6 +242,18 @@ NSString* TAName = @"TerminalAttributeName";
     NSRect rect = NSMakeRect(cur.x * fontWidth + 2, cur.y * fontHeight, fontWidth, fontHeight);
     
     return rect;
+}
+
+
+-(CursorPosition)cursorPositionFromEvent:(NSEvent*)theEvent inView:(NSView*)view
+{
+    NSPoint point = theEvent.locationInWindow;
+    point = [view convertPoint:point fromView:nil];
+    CursorPosition cur;
+    cur.x = 1 + point.x / fontWidth;
+    cur.y = 1 + point.y / fontHeight;
+    
+    return cur;
 }
 
 
@@ -1308,6 +1358,18 @@ NSString* TAName = @"TerminalAttributeName";
                                 autoBackWrap = YES;
                                 break;
                             }
+                                
+                            case 1006:
+                            {
+                                sgrMouseEnable = YES;
+                                break;
+                            }
+                                
+                            case 1015:
+                            {
+                                urxvtMouseEnable = YES;
+                                break;
+                            }
                         }
                     }
                 }
@@ -1406,6 +1468,17 @@ NSString* TAName = @"TerminalAttributeName";
                         {
                             autoBackWrap = NO;
                             break;
+                        }
+                            
+                        case 1006:
+                        {
+                            sgrMouseEnable = NO;
+                            break;
+                        }
+                            
+                        case 1015:
+                        {
+                            urxvtMouseEnable = NO;
                         }
                     }
                 }
@@ -1819,7 +1892,7 @@ NSString* TAName = @"TerminalAttributeName";
 
 -(void)newDataAvailable
 {
-    char charBuffer[2] = {0, 0};
+    char charBuffer[5];
     int i;
     for (i = 0; i < inIndex; i++)
     {
@@ -1863,8 +1936,53 @@ NSString* TAName = @"TerminalAttributeName";
                 }
             }
             
-            charBuffer[0] = c;
-            [insert.mutableString setString:[NSString stringWithCString:charBuffer encoding:NSISOLatin1StringEncoding]];
+            if ((c & 0x80) == 0)
+            {
+                charBuffer[0] = c;
+                charBuffer[1] = 0;
+            }
+            else if ((c & 0xE0) == 0xC0)
+            {
+                if (i + 1 >= inIndex)
+                {
+                    memmove(inBuffer, inBuffer + i, inIndex - i);
+                    break;
+                }
+                charBuffer[0] = inBuffer[i++];
+                charBuffer[1] = inBuffer[i];
+                charBuffer[2] = 0;
+            }
+            else if ((c & 0xF0) == 0xE0)
+            {
+                if (i + 2 >= inIndex)
+                {
+                    memmove(inBuffer, inBuffer + i, inIndex - i);
+                    break;
+                }
+                charBuffer[0] = inBuffer[i++];
+                charBuffer[1] = inBuffer[i++];
+                charBuffer[2] = inBuffer[i];
+                charBuffer[3] = 0;
+            }
+            else if ((c & 0xF8) == 0xF0)
+            {
+                if (i + 3 >= inIndex)
+                {
+                    memmove(inBuffer, inBuffer + i, inIndex - i);
+                    break;
+                }
+                charBuffer[0] = inBuffer[i++];
+                charBuffer[1] = inBuffer[i++];
+                charBuffer[2] = inBuffer[i++];
+                charBuffer[3] = inBuffer[i];
+                charBuffer[4] = 0;
+            }
+            NSString* charString = [NSString stringWithUTF8String:charBuffer];
+            if (charString == NULL)
+            {
+                charString = @" ";
+            }
+            [insert.mutableString setString:charString];
             NSRange range;
             range.location = curY * columnCount + curX;
             range.length = [insert length];
@@ -1880,7 +1998,7 @@ NSString* TAName = @"TerminalAttributeName";
             curX += [insert length];
             
 #ifdef PRINT_INPUT
-            printf("%c", c);
+            printf("%s", charString.UTF8String);
 #endif
         }
     }

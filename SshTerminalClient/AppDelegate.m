@@ -45,7 +45,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 0
+#define TEST_SERVER 4
         
         [terminal clearAllTunnels];
 #if (TEST_SERVER == 0)
@@ -81,14 +81,11 @@ SshConnection* sshConnection = NULL;
 #elif (TEST_SERVER == 4)
         terminal.userName = @"david";
         terminal.hostName = @"192.168.7.63";
+        terminal.port = 2223;
         //terminal.internetProtocol = sshTerminalIpv6;
         [terminal setPassword:@"123456"];
         //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
-        [terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
-#elif (TEST_SERVER == 5)
-        terminal.userName = @"mmorrissette";
-        terminal.hostName = @"192.168.2.240";
-        terminal.keyFilePath = @"/Users/dvincent/Mac_Math_Open_ssh_key";
+        //[terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
 #endif
         //terminal.verbose = YES;
         terminal.columnCount = 80;

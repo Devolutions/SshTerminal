@@ -564,12 +564,12 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
             dispatch_async(queue, ^{ [self closeAllChannels]; });
             return;
         }
-        const char* password = [keyFilePassword UTF8String];
+        const char* kfpassword = [keyFilePassword UTF8String];
         
         ssh_key key = NULL;
         if (keyType == KEY_TYPE_OPEN_SSH)
         {
-            int result = ssh_pki_import_privkey_file(path, password, PrivateKeyAuthCallback, NULL, &key);
+            int result = ssh_pki_import_privkey_file(path, kfpassword, PrivateKeyAuthCallback, NULL, &key);
             if (result == SSH_EOF)
             {
                 if (verbose == YES)
@@ -593,7 +593,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         }
         else
         {
-            int result = PuttyKeyLoadPrivate(path, password, &key);
+            int result = PuttyKeyLoadPrivate(path, kfpassword, &key);
             if (result < 0)
             {
                 if (result == FAIL_OUT_OF_MEMORY)
