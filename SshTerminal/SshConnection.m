@@ -114,6 +114,12 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 }
 
 
+-(void)setUseAgent:(BOOL)newUseAgent
+{
+    useAgent = newUseAgent;
+}
+
+
 -(void)setWidth:(int)newWidth height:(int)newHeight
 {
     if (channel != NULL)
@@ -517,7 +523,49 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     {
         [self verboseNotify:@"Authenticating user\r\n"];
     }
-    if (useKeyAuthentication == YES)
+    if (useAgent == YES)
+    {
+        // User authentication by agent:
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"Authentication by agent\r\n"];
+        }
+        
+        int result;
+        while (1)
+        {
+            result = ssh_userauth_agent(session, NULL);
+            if (result != SSH_AUTH_AGAIN)
+            {
+                break;
+            }
+        }
+        
+        if (result != SSH_AUTH_SUCCESS)
+        {
+            if (result == SSH_AUTH_ERROR)
+            {
+                if (verbose == YES)
+                {
+                    const char* errorString = ssh_get_error(session);
+                    NSString* message = [NSString stringWithFormat:@"Unexpected error: %s\r\n", errorString];
+                    [self verboseNotify:message];
+                }
+                [self eventNotify:FATAL_ERROR];
+            }
+            else
+            {
+                if (verbose == YES)
+                {
+                    [self verboseNotify:@"Server refused the key\r\n"];
+                }
+                [self eventNotify:PASSWORD_AUTHENTICATION_DENIED];
+            }
+            dispatch_async(queue, ^{ [self disconnect]; });
+            return;
+        }
+    }
+    else if (useKeyAuthentication == YES)
     {
         // User authentication by key:
         if (verbose == YES)

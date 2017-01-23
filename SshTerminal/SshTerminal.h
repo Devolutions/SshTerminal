@@ -60,6 +60,7 @@ enum
     BOOL x11Forwarding;
     BOOL verbose;
     BOOL agentForwarding;
+    BOOL useAgent;
     int internetProtocol;
     int columnCount;
     int state;
@@ -72,6 +73,7 @@ enum
 @property(assign)UInt16 port;
 -(void)setPassword:(NSString *)string;
 @property(copy,nonatomic)NSString* userName;
+@property(assign)BOOL useAgent;
 @property(copy,nonatomic)NSString* keyFilePath;
 -(void)setKeyFilePassword:(NSString *)string;
 @property(assign)int columnCount;

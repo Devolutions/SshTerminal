@@ -68,6 +68,7 @@ enum ConnectionEvent
     int internetProtocol;
     BOOL verbose;
     BOOL agentForwarding;
+    BOOL useAgent;
 	int verbosityLevel;
     
     UInt8 inBuffer[INPUT_BUFFER_SIZE];
@@ -95,6 +96,7 @@ enum ConnectionEvent
 -(void)setPassword:(NSString*)newPassword;
 -(void)setVerbose:(BOOL)newVerbose withLevel:(int)level;
 -(void)setAgentForwarding:(BOOL)newAgentForwarding;
+-(void)setUseAgent:(BOOL)newUseAgent;
 
 -(void)addForwardTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 -(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;

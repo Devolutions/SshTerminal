@@ -231,6 +231,78 @@
                 break;
             }
                 
+            case NSF1FunctionKey:
+            {
+                sprintf(specialSequence, "\x1BOP");
+                break;
+            }
+                
+            case NSF2FunctionKey:
+            {
+                sprintf(specialSequence, "\x1BOQ");
+                break;
+            }
+                
+            case NSF3FunctionKey:
+            {
+                sprintf(specialSequence, "\x1BOR");
+                break;
+            }
+                
+            case NSF4FunctionKey:
+            {
+                sprintf(specialSequence, "\x1BOS");
+                break;
+            }
+                
+            case NSF5FunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[15~");
+                break;
+            }
+                
+            case NSF6FunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[17~");
+                break;
+            }
+                
+            case NSF7FunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[18~");
+                break;
+            }
+                
+            case NSF8FunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[19~");
+                break;
+            }
+                
+            case NSF9FunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[20~");
+                break;
+            }
+                
+            case NSF10FunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[21~");
+                break;
+            }
+                
+            case NSF11FunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[23~");
+                break;
+            }
+                
+            case NSF12FunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[24~");
+                break;
+            }
+                
             case '0':
             case '1':
             case '2':

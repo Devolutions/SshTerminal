@@ -45,21 +45,21 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 4
+#define TEST_SERVER 0
         
         [terminal clearAllTunnels];
 #if (TEST_SERVER == 0)
         terminal.userName = @"david";
         terminal.hostName = @"192.168.7.60";
         //terminal.hostName = @"macmini2";
-        //[terminal setPassword:@"123456"];
+        [terminal setPassword:@"123456"];
         terminal.port = 2220;
         //terminal.agentForwarding = YES;
         //terminal.keyFilePath = @"~/Encrypted.ppk";
-        terminal.keyFilePath = @"~/.ssh/dvincent-ecdsa";
-        [terminal setKeyFilePassword:@"qwerty"];
-        terminal.verbose = YES;
-        terminal.verbosityLevel = 4;
+        //terminal.keyFilePath = @"~/.ssh/dvincent-ecdsa";
+        //[terminal setKeyFilePassword:@"qwerty"];
+        //terminal.verbose = YES;
+        //terminal.verbosityLevel = 4;
         //terminal.x11Forwarding = YES;
         //terminal.internetProtocol = sshTerminalIpv6;
 #elif (TEST_SERVER == 1)
@@ -84,6 +84,16 @@ SshConnection* sshConnection = NULL;
         terminal.port = 2223;
         //terminal.internetProtocol = sshTerminalIpv6;
         [terminal setPassword:@"123456"];
+        //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
+        //[terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
+#elif (TEST_SERVER == 5)
+        terminal.userName = @"david";
+        terminal.hostName = @"192.168.7.63";
+        terminal.port = 2223;
+        //terminal.internetProtocol = sshTerminalIpv6;
+        terminal.useAgent = YES;
+        terminal.verbose = YES;
+        terminal.verbosityLevel = 1;
         //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
         //[terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
 #endif

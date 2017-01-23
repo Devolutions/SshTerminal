@@ -59,6 +59,7 @@
 @synthesize verbose;
 @synthesize verbosityLevel;
 @synthesize agentForwarding;
+@synthesize useAgent;
 
 
 -(void)setPassword:(NSString *)string
@@ -147,6 +148,7 @@
     [connection setX11Forwarding:x11Forwarding withDisplay:x11Display];
     [connection setVerbose:verbose withLevel:verbosityLevel];
     [connection setAgentForwarding:agentForwarding];
+    [connection setUseAgent:useAgent];
     
     [terminalView initScreen];
 	
