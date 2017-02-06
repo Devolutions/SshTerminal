@@ -233,13 +233,29 @@
                 
             case NSPageUpFunctionKey:
             {
-                sprintf(specialSequence, "\x1B[5~");
+                if (screen.keypadNormal == YES)
+                {
+                    [super keyDown:theEvent];
+                    return;
+                }
+                else
+                {
+                    sprintf(specialSequence, "\x1B[5~");
+                }
                 break;
             }
                 
             case NSPageDownFunctionKey:
             {
-                sprintf(specialSequence, "\x1B[6~");
+                if (screen.keypadNormal == YES)
+                {
+                    [super keyDown:theEvent];
+                    return;
+                }
+                else
+                {
+                    sprintf(specialSequence, "\x1B[6~");
+                }
                 break;
             }
                 
