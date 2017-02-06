@@ -231,6 +231,38 @@
                 break;
             }
                 
+            case NSPageUpFunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[5~");
+                break;
+            }
+                
+            case NSPageDownFunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[6~");
+                break;
+            }
+                
+            case NSHomeFunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[H");
+                if (screen.cursorKeyAnsi == NO)
+                {
+                    specialSequence[1] = 'O';
+                }
+                break;
+            }
+                
+            case NSEndFunctionKey:
+            {
+                sprintf(specialSequence, "\x1B[F");
+                if (screen.cursorKeyAnsi == NO)
+                {
+                    specialSequence[1] = 'O';
+                }
+                break;
+            }
+                
             case NSF1FunctionKey:
             {
                 sprintf(specialSequence, "\x1BOP");
