@@ -227,7 +227,7 @@
                 
             case NSDeleteFunctionKey:
             {
-                sprintf(specialSequence, "\x08");
+                sprintf(specialSequence, "\x1B[3~");
                 break;
             }
                 
