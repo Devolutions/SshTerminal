@@ -10,8 +10,8 @@
 #define SshTerminal_SshFoundation_h
 
 #define LIBSSH_LEGACY_0_4 1
-#include "libssh/libssh.h"
-#include "libssh/callbacks.h"
+#include <libssh/libssh.h>
+#include <libssh/callbacks.h>
 #include "NetworkHelpers.h"
 
 #endif

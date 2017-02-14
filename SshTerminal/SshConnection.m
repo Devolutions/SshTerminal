@@ -269,7 +269,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 -(NSString*)fingerPrint
 {
     ssh_key key = ssh_key_new();
-    ssh_get_server_publickey(session, &key);
+    ssh_get_publickey(session, &key);
     unsigned char* hash;
     size_t len;
     ssh_get_publickey_hash(key, SSH_PUBLICKEY_HASH_MD5, &hash, &len);

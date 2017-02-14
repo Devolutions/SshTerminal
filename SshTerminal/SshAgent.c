@@ -1,10 +1,10 @@
 
 
 #include <stdlib.h>
-#include "libssh/string.h"
-#include "libssh/pki.h"
+#include <libssh/string.h>
+#include <libssh/pki.h>
 #include "SshAgent.h"
-#include "openssl/rsa.h"
+#include <openssl/rsa.h>
 
 int ssh_pki_export_pubkey_blob(const ssh_key key, ssh_string* pblob);
 ssh_signature pki_do_sign(const ssh_key privkey, const unsigned char *hash, size_t hlen);
@@ -229,7 +229,7 @@ ssh_string SshAgentSignRsaSha256(uint8_t* data, int dataSize, ssh_key key, uint3
 {
     // Compute the hash.
     unsigned char hash[SHA256_DIGEST_LEN] = {0};
-    SHACTX ctx;
+    SHA256CTX ctx;
     
     ctx = sha256_init();
     if (ctx == NULL)
@@ -278,7 +278,7 @@ ssh_string SshAgentSignRsaSha512(uint8_t* data, int dataSize, ssh_key key, uint3
 {
     // Compute the hash.
     unsigned char hash[SHA512_DIGEST_LEN] = {0};
-    SHACTX ctx;
+    SHA512CTX ctx;
     
     ctx = sha512_init();
     if (ctx == NULL)
@@ -342,7 +342,7 @@ ssh_string SshAgentSignEcdsaSha256(uint8_t* data, int dataSize, ssh_key key, uin
 {
     // Compute the hash.
     unsigned char hash[SHA256_DIGEST_LEN] = {0};
-    SHACTX ctx;
+    SHA256CTX ctx;
     
     ctx = sha256_init();
     if (ctx == NULL)
@@ -395,7 +395,7 @@ ssh_string SshAgentSignEcdsaSha384(uint8_t* data, int dataSize, ssh_key key, uin
 {
     // Compute the hash.
     unsigned char hash[SHA384_DIGEST_LEN] = {0};
-    SHACTX ctx;
+    SHA384CTX ctx;
     
     ctx = sha384_init();
     if (ctx == NULL)
@@ -448,7 +448,7 @@ ssh_string SshAgentSignEcdsaSha512(uint8_t* data, int dataSize, ssh_key key, uin
 {
     // Compute the hash.
     unsigned char hash[SHA384_DIGEST_LEN] = {0};
-    SHACTX ctx;
+    SHA512CTX ctx;
     
     ctx = sha512_init();
     if (ctx == NULL)
