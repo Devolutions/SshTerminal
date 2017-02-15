@@ -1,6 +1,6 @@
 xcschememanagement.plist
 *.xcbkptlist
 *.xcsettings
-build
+/build/
 *.xcscmblueprint
 build32
