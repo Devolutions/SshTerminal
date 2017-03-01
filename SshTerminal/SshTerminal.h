@@ -65,6 +65,7 @@ enum
     int columnCount;
     int state;
 	int verbosityLevel;
+    int keepAliveTime;
     id<SshTerminalEvent> eventDelegate;
     NSMutableArray* tunnels;
 }
@@ -89,6 +90,7 @@ enum
 @property(assign)BOOL agentForwarding;
 @property(assign)int verbosityLevel;
 @property(readonly)int state;
+@property(assign)int keepAliveTime;   // Zero equals: keepalive off. Otherwise: time between keepalives in minutes.
 
 -(void)setEventDelegate:(id<SshTerminalEvent>) delegate;
 -(void)connect;

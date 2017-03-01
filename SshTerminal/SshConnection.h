@@ -70,6 +70,7 @@ enum ConnectionEvent
     BOOL agentForwarding;
     BOOL useAgent;
 	int verbosityLevel;
+    int keepAliveTime;
     
     UInt8 inBuffer[INPUT_BUFFER_SIZE];
     UInt8 outBuffer[OUTPUT_BUFFER_SIZE];
@@ -97,6 +98,7 @@ enum ConnectionEvent
 -(void)setVerbose:(BOOL)newVerbose withLevel:(int)level;
 -(void)setAgentForwarding:(BOOL)newAgentForwarding;
 -(void)setUseAgent:(BOOL)newUseAgent;
+-(void)setKeepAliveTime:(int)newTime;
 
 -(void)addForwardTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 -(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;

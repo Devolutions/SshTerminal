@@ -45,7 +45,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 5
+#define TEST_SERVER 0
         
         [terminal clearAllTunnels];
 #if (TEST_SERVER == 0)
@@ -91,6 +91,7 @@ SshConnection* sshConnection = NULL;
         terminal.hostName = @"192.168.7.62";
         terminal.port = 2222;
         [terminal setPassword:@"123456"];
+        terminal.keepAliveTime = 1;
         //terminal.internetProtocol = sshTerminalIpv6;
         //terminal.useAgent = YES;
         //terminal.verbose = YES;

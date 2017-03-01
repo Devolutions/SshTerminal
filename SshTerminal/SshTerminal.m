@@ -60,6 +60,7 @@
 @synthesize verbosityLevel;
 @synthesize agentForwarding;
 @synthesize useAgent;
+@synthesize keepAliveTime;
 
 
 -(void)setPassword:(NSString *)string
@@ -149,6 +150,7 @@
     [connection setVerbose:verbose withLevel:verbosityLevel];
     [connection setAgentForwarding:agentForwarding];
     [connection setUseAgent:useAgent];
+    [connection setKeepAliveTime:keepAliveTime];
     
     [terminalView initScreen];
 	

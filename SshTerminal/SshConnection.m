@@ -120,6 +120,12 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 }
 
 
+-(void)setKeepAliveTime:(int)newTime
+{
+    keepAliveTime = newTime;
+}
+
+
 -(void)setWidth:(int)newWidth height:(int)newHeight
 {
     if (channel != NULL)
@@ -306,6 +312,25 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     }
     
     return agentChannel;
+}
+
+
+-(void)setKeepAliveForSocket:(int)fd
+{
+    if (keepAliveTime > 0)
+    {
+        int keepAliveOn = 1;
+        if (verbose == YES)
+        {
+            [self verboseNotify:@"TCP keepalive enabled\r\n"];
+        }
+        setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &keepAliveOn, sizeof(keepAliveOn));
+    }
+    else
+    {
+        int keepAliveOff = 0;
+        setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &keepAliveOff, sizeof(keepAliveOff));
+    }
 }
 
 
@@ -832,6 +857,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         [self verboseNotify:@"Opening terminal\r\n"];
     }
     int fd = ssh_get_fd(session);
+    [self setKeepAliveForSocket:fd];
     readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
     if (readSource == nil)
     {
@@ -981,6 +1007,11 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
             free(buffer);
         });
     }
+    else if (availableCount < 0)
+    {
+        [self closeAllChannels];
+        return;
+    }
     
     if (x11Forwarding == YES)
     {
@@ -1079,6 +1110,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 -(void)openTunnelChannels
 {
     int fd = ssh_get_fd(session);
+    [self setKeepAliveForSocket:fd];
     readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
     if (readSource == nil)
     {
