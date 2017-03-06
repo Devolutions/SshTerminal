@@ -10,7 +10,7 @@
 
 
 #ifdef DEBUG
-//#define PRINT_INPUT 1
+#define PRINT_INPUT 1
 #endif
 
 #define TA_BOLD 0x01
@@ -429,7 +429,7 @@ NSString* TAName = @"TerminalAttributeName";
     if (moveCount > 0)
     {
         [screen deleteCharactersInRange:NSMakeRange(deleteOffset, deleteCount)];
-        NSAttributedString* blankString = [blankLine attributedSubstringFromRange:NSMakeRange(0, moveCount)];
+        NSAttributedString* blankString = [blankLine attributedSubstringFromRange:NSMakeRange(0, deleteCount)];
         [screen insertAttributedString:blankString atIndex:deleteOffset + moveCount];
     }
     else
