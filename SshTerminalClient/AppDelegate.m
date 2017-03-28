@@ -45,7 +45,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 0
+#define TEST_SERVER 5
         
         [terminal clearAllTunnels];
 #if (TEST_SERVER == 0)
@@ -91,12 +91,12 @@ SshConnection* sshConnection = NULL;
         terminal.hostName = @"192.168.7.62";
         terminal.port = 2222;
         [terminal setPassword:@"123456"];
-        terminal.keepAliveTime = 1;
+        //terminal.keepAliveTime = 1;
         //terminal.internetProtocol = sshTerminalIpv6;
         //terminal.useAgent = YES;
         //terminal.verbose = YES;
         //terminal.verbosityLevel = 1;
-        //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
+        [terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
         //[terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
 #endif
         //terminal.verbose = YES;

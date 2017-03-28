@@ -1107,6 +1107,22 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 }
 
 
+-(void)localListenErrorMessage:(SshTunnel*)tunnel
+{
+	char stringBuffer[240];
+	snprintf(stringBuffer, sizeof(stringBuffer), "Unable to listen on %s:%d\r\n", [tunnel.host UTF8String], tunnel.port);
+	[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+}
+
+
+-(void)remoteListenErrorMessage:(SshTunnel*)tunnel
+{
+	char stringBuffer[240];
+	snprintf(stringBuffer, sizeof(stringBuffer), "Unable to listen on remote %s:%d\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
+	[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+}
+
+
 -(void)openTunnelChannels
 {
     int fd = ssh_get_fd(session);
@@ -1121,13 +1137,20 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     dispatch_source_set_event_handler(readSource, ^{ [self newSshDataAvailable]; });
     dispatch_resume(readSource);
     
-    for (int i = 0; i < [forwardTunnels count]; i++)
+	dispatch_async(screenQueue, ^{
+		char stringBuffer[81];
+		snprintf(stringBuffer, 80, "Logged in to: %s\r\n", [host UTF8String]);
+		[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+	});
+
+	for (int i = 0; i < [forwardTunnels count]; i++)
     {
         SshTunnel* tunnel = [forwardTunnels objectAtIndex:i];
         SshTunnel* counterPartTunnel = [tunnel resolveHost];
         BOOL success = [tunnel startListeningAndDispatchTo:^{ [self newTunnelConnection:tunnel]; } onQueue:queue];
         if (success == NO)
         {
+			dispatch_async(screenQueue, ^{ [self localListenErrorMessage:tunnel]; });
             [self eventNotify:TUNNEL_ERROR];
             [forwardTunnels removeObjectAtIndex:i];
             i--;
@@ -1142,6 +1165,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
             }
             else
             {
+				dispatch_async(screenQueue, ^{ [self localListenErrorMessage:counterPartTunnel]; });
                 [self eventNotify:TUNNEL_ERROR];
             }
             [counterPartTunnel release];
@@ -1155,17 +1179,13 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         int result = ssh_channel_listen_forward(session, [tunnel.remoteHost UTF8String], tunnel.remotePort, &boundPort);
         if (result != SSH_OK)
         {
+			dispatch_async(screenQueue, ^{ [self remoteListenErrorMessage:tunnel]; });
             [self eventNotify:TUNNEL_ERROR];
             [reverseTunnels removeObjectAtIndex:i];
             i--;
         }
     }
     
-    dispatch_async(screenQueue, ^{
-        char stringBuffer[81];
-        snprintf(stringBuffer, 80, "Logged in to: %s\r\n", [host UTF8String]);
-        [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
-    });
     [self eventNotify:CONNECTED];
 }
 
@@ -1202,12 +1222,21 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 
 -(void)remoteConnectionMessage:(SshTunnelConnection*)tunnelConnection
 {
-    char stringBuffer[240];
-    SshTunnel* tunnel = tunnelConnection.tunnel;
-    int n = snprintf(stringBuffer, sizeof(stringBuffer), "Connected %s:%s\r\n", tunnelConnection.address, tunnelConnection.port);
-    n += snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    to local %s:%d\r\n", [tunnel.host UTF8String], tunnel.port);
-    snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    from remote %s:%d\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
-    [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+	char stringBuffer[240];
+	SshTunnel* tunnel = tunnelConnection.tunnel;
+	int n = snprintf(stringBuffer, sizeof(stringBuffer), "Connected %s:%s\r\n", tunnelConnection.address, tunnelConnection.port);
+	n += snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    to local %s:%d\r\n", [tunnel.host UTF8String], tunnel.port);
+	snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    from remote %s:%d\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
+	[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+}
+
+
+-(void)localReverseErrorMessage:(SshTunnel*)tunnel
+{
+	char stringBuffer[240];
+	int n = snprintf(stringBuffer, sizeof(stringBuffer), "Connected to connect to local %s:%d\r\n", [tunnel.host UTF8String], tunnel.port);
+	snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    from remote %s:%d\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
+	[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
 }
 
 
@@ -1254,6 +1283,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
                 }
                 else
                 {
+					dispatch_async(screenQueue, ^{ [self localReverseErrorMessage:tunnel]; });
                     [self eventNotify:TUNNEL_ERROR];
                 }
                 
@@ -1270,14 +1300,30 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 }
 
 
+-(void)localAcceptErrorMessage:(SshTunnel*)tunnel
+{
+	char stringBuffer[240];
+	snprintf(stringBuffer, sizeof(stringBuffer), "Connection error %s:%d\r\n", [tunnel.host UTF8String], tunnel.port);
+	[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+}
+
+
+-(void)remoteErrorMessage:(SshTunnel*)tunnel
+{
+	char stringBuffer[240];
+	snprintf(stringBuffer, sizeof(stringBuffer), "Server unable to connect to remote %s:%s\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
+	[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+}
+
+
 -(void)localConnectionMessage:(SshTunnelConnection*)tunnelConnection
 {
-    char stringBuffer[240];
-    SshTunnel* tunnel = tunnelConnection.tunnel;
-    int n = snprintf(stringBuffer, sizeof(stringBuffer), "Accepted connection from %s:%s\r\n", tunnelConnection.peerAddress, tunnelConnection.peerPort);
-    n += snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    on local %s:%d\r\n", [tunnel.host UTF8String], tunnel.port);
-    snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    to remote %s:%d\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
-    [dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+	char stringBuffer[240];
+	SshTunnel* tunnel = tunnelConnection.tunnel;
+	int n = snprintf(stringBuffer, sizeof(stringBuffer), "Accepted connection from %s:%s\r\n", tunnelConnection.peerAddress, tunnelConnection.peerPort);
+	n += snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    on local %s:%d\r\n", [tunnel.host UTF8String], tunnel.port);
+	snprintf(stringBuffer + n, sizeof(stringBuffer) - n, "    to remote %s:%d\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
+	[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
 }
 
 
@@ -1287,6 +1333,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     int tunnelFd = [tunnel acceptConnection];
     if (tunnelFd < 0)
     {
+		dispatch_async(screenQueue, ^{ [self localAcceptErrorMessage:tunnel]; });
         [self eventNotify:TUNNEL_ERROR];
         return;
     }
@@ -1300,6 +1347,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     int result = ssh_channel_open_forward(tunnelChannel, [tunnel.remoteHost UTF8String], tunnel.remotePort, [tunnel.host UTF8String], tunnel.port);
     if (result != SSH_OK)
     {
+		dispatch_async(screenQueue, ^{ [self remoteErrorMessage:tunnel]; });
         close(tunnelFd);
         [self eventNotify:TUNNEL_ERROR];
         return;
