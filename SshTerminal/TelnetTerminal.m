@@ -290,6 +290,14 @@ BOOL isMatch(NSString* host, NSString* excluded)
 }
 
 
+-(void)setFontWithName:(NSString *)fontName size:(CGFloat)fontSize
+{
+	[terminalView.screen setFontWithname:fontName size:fontSize];
+	NSSize size = [self contentSize];
+	[terminalView setTerminalSize:size];
+}
+
+
 -(void)setEventDelegate:(id)delegate
 {
     [eventDelegate release];

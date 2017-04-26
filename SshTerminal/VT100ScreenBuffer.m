@@ -10,7 +10,7 @@
 
 
 #ifdef DEBUG
-//#define PRINT_INPUT 1
+#define PRINT_INPUT 1
 #endif
 
 #define TA_BOLD 0x01
@@ -336,7 +336,7 @@ NSString* TAName = @"TerminalAttributeName";
 }
 
 
--(void)deleteInLine:(int)arg
+-(void)deleteInLine:(int)arg setAtrributes:(BOOL)isSetAttributes
 {
     NSRange range;
     if (arg == -1 || arg == 0)
@@ -362,6 +362,10 @@ NSString* TAName = @"TerminalAttributeName";
         range.length = columnCount;
         [screen replaceCharactersInRange:range withAttributedString:blankLine];
     }
+	if (isSetAttributes)
+	{
+		[screen addAttribute:TAName value:[NSNumber numberWithInt:currentAttribute.all] range:range];
+	}
     [self invalidateLine:curY];
 }
 
@@ -373,7 +377,7 @@ NSString* TAName = @"TerminalAttributeName";
     if (arg == -1 || arg == 0)
     {
         // Blank from cursor inclusive to end of screen.
-        [self deleteInLine:0];   // Delete from cursor to end of line.
+        [self deleteInLine:0 setAtrributes:NO];   // Delete from cursor to end of line.
         for (int i = curY + 1; i < rowCount; i++)
         {
             range.location = i * columnCount;
@@ -390,7 +394,7 @@ NSString* TAName = @"TerminalAttributeName";
             range.location = i * columnCount;
             [screen replaceCharactersInRange:range withAttributedString:blankLine];
         }
-        [self deleteInLine:0];   // Delete from beginning of line to cursor inclusive.
+        [self deleteInLine:0 setAtrributes:NO];   // Delete from beginning of line to cursor inclusive.
         [self invalidateLine:0];
         [self invalidateLine:curY];
     }
@@ -467,7 +471,7 @@ NSString* TAName = @"TerminalAttributeName";
                 }
                 else
                 {
-                    *escIndex = i - 1;
+                    *escIndex = i;
                 }
                 break;
             }
@@ -496,7 +500,7 @@ NSString* TAName = @"TerminalAttributeName";
                 }
                 else
                 {
-                    *escIndex = i - 1;
+                    *escIndex = i;
                 }
                 break;
             }
@@ -531,7 +535,7 @@ NSString* TAName = @"TerminalAttributeName";
                 }
                 else
                 {
-                    *escIndex =  - 1i;
+                    *escIndex =  i;
                 }
                 break;
             }
@@ -560,7 +564,7 @@ NSString* TAName = @"TerminalAttributeName";
                 }
                 else
                 {
-                    *escIndex = i - 1;
+                    *escIndex = i;
                 }
                 break;
             }
@@ -863,7 +867,7 @@ NSString* TAName = @"TerminalAttributeName";
                 case 'K':
                 {
                     // VT52 delete from cursor to end of line.
-                    [self deleteInLine:0];
+                    [self deleteInLine:0 setAtrributes:NO];
                     break;
                 }
                     
@@ -1064,6 +1068,14 @@ NSString* TAName = @"TerminalAttributeName";
         {
             // Move cursor right.
             int repeat = (args[0] > 1 ? args[0] : 1);
+			if (curX + repeat >= columnCount)
+			{
+				repeat = columnCount - curX;
+			}
+			//NSAttributedString* blankString = [blankLine attributedSubstringFromRange:NSMakeRange(0, repeat)];
+			int insertOffset = curX + curY * columnCount;
+			//[screen replaceCharactersInRange:NSMakeRange(insertOffset, repeat) withAttributedString:blankString];
+			[screen addAttribute:TAName value:[NSNumber numberWithInt:currentAttribute.all] range:NSMakeRange(insertOffset, repeat)];
             [self cursorRight:repeat];
             break;
         }
@@ -1141,7 +1153,7 @@ NSString* TAName = @"TerminalAttributeName";
         case 'K':
         {
             // Delete in line.
-            [self deleteInLine:args[0]];
+            [self deleteInLine:args[0] setAtrributes:YES];
             break;
         }
             
@@ -1159,14 +1171,12 @@ NSString* TAName = @"TerminalAttributeName";
             
         case 'M':
         {
-            // Delete lines in screen after the current line (lines after the deleted lines are moved up).
+            // Delete lines in screen from the current line (lines after the deleted lines are moved up).
             int deleteCount = (args[0] >= 0 ? args[0] : 1);
             if (curY >= topMargin && curY < bottomMargin && deleteCount > 0)
             {
                 SInt32 savedMargin = topMargin;
-                topMargin = curY + 1;
-                [self scrollBack:deleteCount];
-                topMargin = savedMargin;
+                [self scrollFeed:deleteCount];
             }
             
             break;
@@ -2262,6 +2272,38 @@ NSString* TAName = @"TerminalAttributeName";
 }
 
 
+-(void)setFontWithname:(NSString*)newFontName size:(CGFloat)newFontSize
+{
+	[normalFont release];
+	normalFont = [NSFont fontWithName:newFontName size:newFontSize];
+
+	NSFontManager* fontManager = [NSFontManager sharedFontManager];
+	[boldFont release];
+	boldFont = [fontManager convertFont:normalFont toHaveTrait:NSBoldFontMask];
+	[boldFont retain];
+	
+	NSSize fontSize = [normalFont advancementForGlyph:'M'];
+	fontWidth = fontSize.width;
+	fontHeight = [textView.layoutManager defaultLineHeightForFont:normalFont];
+
+	[newLineAttributes release];
+	newLineAttributes = [NSDictionary dictionaryWithObjectsAndKeys:normalFont, NSFontAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil];
+	[newLineAttributes retain];
+	[blankChar release];
+	blankChar = [[NSAttributedString alloc] initWithString:@" " attributes:newLineAttributes];
+	[lineFeed release];
+	lineFeed = [[NSAttributedString alloc] initWithString:@"\r\n" attributes:newLineAttributes];
+	
+	// Paste to text.
+	NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithDictionary:newLineAttributes];
+	NSAttributedString* terminalView = [textView.layoutManager textStorage];
+	[terminalView setAttributes:dictionary range:NSMakeRange(0, terminalView.length)];
+	[screen setAttributes:dictionary range:NSMakeRange(0, screen.length)];
+	[self actualizeAttributesIn:[textView.layoutManager textStorage]];
+	[self actualizeAttributesIn:screen];
+}
+
+
 -(instancetype)init:(NSTextView*)newTextView
 {
     self = [super init];
@@ -2313,8 +2355,8 @@ NSString* TAName = @"TerminalAttributeName";
 
         NSSize fontSize = [normalFont advancementForGlyph:'M'];
         fontWidth = fontSize.width;
-        fontHeight = [textView.layoutManager defaultLineHeightForFont:normalFont];;
-}
+        fontHeight = [textView.layoutManager defaultLineHeightForFont:normalFont];
+	}
     
     return self;
 }
@@ -2323,6 +2365,7 @@ NSString* TAName = @"TerminalAttributeName";
 -(void)dealloc
 {
     [connection release];
+	[normalFont release];
     [boldFont release];
     [paragraphStyle release];
     [newLineAttributes release];

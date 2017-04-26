@@ -105,6 +105,7 @@ typedef union
 -(void)resetScreen;
 -(void)setConnection:(id<VT100Connection>)newConnection;
 -(void)setWidth:(int)newCount height:(int)height;
+-(void)setFontWithname:(NSString*)newFontName size:(CGFloat)newFontSize;
 
 -(BOOL)sendMouseEvent:(NSEvent*)theEvent inView:(NSView*)view isUpEvent:(BOOL)isUp;
 

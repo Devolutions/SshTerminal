@@ -214,6 +214,15 @@
 }
 
 
+-(void)setFontWithName:(NSString *)fontName size:(CGFloat)fontSize
+{
+	[terminalView.screen setFontWithname:fontName size:fontSize];
+	NSSize size = [self contentSize];
+	[terminalView setTerminalSize:size];
+	[terminalView needsDisplay];
+}
+
+
 -(void)setEventDelegate:(id)delegate
 {
     eventDelegate = delegate;

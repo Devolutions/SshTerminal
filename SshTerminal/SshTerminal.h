@@ -92,6 +92,7 @@ enum
 @property(readonly)int state;
 @property(assign)int keepAliveTime;   // Zero equals: keepalive off. Otherwise: time between keepalives in seconds.
 
+-(void)setFontWithName:(NSString*)fontName size:(CGFloat)fontSize;
 -(void)setEventDelegate:(id<SshTerminalEvent>) delegate;
 -(void)connect;
 -(void)resume;

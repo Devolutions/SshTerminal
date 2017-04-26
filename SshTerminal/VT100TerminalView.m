@@ -19,6 +19,13 @@
 
 @implementation VT100TerminalView
 
+
+-(VT100ScreenBuffer*)screen
+{
+	return screen;
+}
+
+
 -(void)setConnection:(id<VT100Connection>)newConnection
 {
     [connection release];

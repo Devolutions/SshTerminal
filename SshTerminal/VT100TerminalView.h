@@ -22,6 +22,8 @@
     BOOL isCursorVisible;
 }
 
+-(VT100ScreenBuffer*)screen;
+
 -(void)initScreen;
 
 -(void)setConnection:(id<VT100Connection>)newConnection;

@@ -41,12 +41,27 @@ SshConnection* sshConnection = NULL;
 }
 
 
+- (void)changeFont:(id)sender
+{
+	NSFont *oldFont = [sender selectedFont];
+	NSFont *newFont = [sender convertFont:oldFont];
+	[terminal setFontWithName:[newFont fontName] size:[newFont pointSize]];
+	printf("New font: %s\r\n", [[newFont fontName] UTF8String]);
+}
+
+
 - (IBAction)connect:(id)sender
 {
     if (resume == NO)
     {
-#define TEST_SERVER 5
+#define TEST_SERVER 4
         
+		/*NSFont* font = [NSFont userFixedPitchFontOfSize:0];
+		NSFontManager* manager = [NSFontManager sharedFontManager];
+		[manager setSelectedFont:font isMultiple:NO];
+		[manager setTarget:self];
+		[manager orderFrontFontPanel:self];*/
+		
         [terminal clearAllTunnels];
 #if (TEST_SERVER == 0)
         terminal.userName = @"david";
@@ -80,8 +95,8 @@ SshConnection* sshConnection = NULL;
         //[terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
 #elif (TEST_SERVER == 4)
         terminal.userName = @"david";
-        terminal.hostName = @"192.168.7.63";
-        terminal.port = 2223;
+        terminal.hostName = @"macmini2";
+        terminal.port = 22;
         //terminal.internetProtocol = sshTerminalIpv6;
         [terminal setPassword:@"123456"];
         //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
@@ -96,7 +111,7 @@ SshConnection* sshConnection = NULL;
         //terminal.useAgent = YES;
         //terminal.verbose = YES;
         //terminal.verbosityLevel = 1;
-        [terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
+        //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
         //[terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
 #endif
         //terminal.verbose = YES;

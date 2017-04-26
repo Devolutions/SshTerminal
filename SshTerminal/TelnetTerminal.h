@@ -95,6 +95,7 @@ enum
 
 @property(readonly)int state;
 
+-(void)setFontWithName:(NSString *)fontName size:(CGFloat)fontSize;
 -(void)setEventDelegate:(id<TelnetTerminalEvent>) delegate;
 -(void)connect;
 -(void)disconnect;
