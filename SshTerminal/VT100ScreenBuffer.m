@@ -1494,6 +1494,7 @@ NSString* TAName = @"TerminalAttributeName";
 							bottomMargin = savedBottomMargin;
 							curX = 0;
 							curY = 0;
+							[self deleteInScreen:2];
 						}
                     }
                 }
@@ -1715,6 +1716,7 @@ NSString* TAName = @"TerminalAttributeName";
         }
         
         // Delete from the text view the part that needs updating.
+        [storage beginEditing];
         if (updateLine < lineCount)
         {
             NSRange range = NSMakeRange(updateLineStart, storage.length - updateLineStart);
@@ -1741,7 +1743,6 @@ NSString* TAName = @"TerminalAttributeName";
             lastInvalidLine = rowCount - 1;
         }
         
-        [storage beginEditing];
         for (int l = firstInvalidLine; l <= lastInvalidLine; l++)
         {
             int lineStart = l * columnCount;
