@@ -205,9 +205,9 @@
     if (fd != -1)
     {
         [self disconnect];
-        [host release];
     }
-    [super dealloc];
+	[host release];
+	[super dealloc];
 }
 
 

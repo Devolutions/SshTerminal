@@ -58,6 +58,10 @@ typedef union
     float fontHeight;
     float fontWidth;
 
+	SInt32 altCurX;
+	SInt32 altCurY;
+	SInt32 altSavedCurX;
+	SInt32 altSavedCurY;
     SInt32 bottomMargin;
     SInt32 columnCount;
     SInt32 curX;
@@ -70,6 +74,8 @@ typedef union
     SInt32 savedCursorDeltaX;
     SInt32 savedCursorDeltaY;
     SInt32 savedCursorChar;
+	SInt32 savedBottomMargin;
+	SInt32 savedTopMargin;
     SInt32 screenOffset;
     SInt32 topMargin;
     
@@ -89,6 +95,7 @@ typedef union
     BOOL savedOriginWithinMargins;
     BOOL sgrMouseEnable;
     BOOL urxvtMouseEnable;
+	BOOL isAlternate;
 }
 
 @property(readonly)BOOL cursorKeyAnsi;

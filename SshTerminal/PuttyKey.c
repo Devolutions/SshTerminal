@@ -61,7 +61,7 @@ int Base64ToData(const char* buffer, int bufferSize, uint8_t** decoded, int* dec
     }
     
     // Validate base64 data.
-    if (bufferSize % 4 != 0)
+    if (bufferSize % 4 != 0 || bufferSize <= 0)
     {
         return -1;
     }
@@ -159,6 +159,7 @@ int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
     uint8_t* publicBlob = NULL;
     uint8_t* privateBlob = NULL;
     uint8_t* decryptedBlob = NULL;
+	uint8_t* macData = NULL;
     int returnCode = 0;
     ssh_key key = NULL;
     
@@ -429,7 +430,6 @@ int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
     }
     
     // Verify the MAC or digest.
-    uint8_t* macData = NULL;
     int macDataLength = 0;
     if (isFormat2 == 0)
     {
@@ -482,7 +482,7 @@ int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
         pack32(macData + index, privateBlobLength);
         index += 4;
         memcpy(macData + index, privateBlob, privateBlobLength);
-        index += privateBlobLength;
+        //index += privateBlobLength;
     }
     
     uint8_t macBinary[20];

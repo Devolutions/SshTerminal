@@ -90,6 +90,8 @@
         ssh_channel_free(channel);
         channel = NULL;
     }
+	[tunnel release];
+	tunnel = nil;
 }
 
 

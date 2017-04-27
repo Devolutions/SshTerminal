@@ -182,6 +182,8 @@
 -(void)dealloc
 {
     [self releaseResources];
+	[host release];
+	[remoteHost release];
     [super dealloc];
 }
 

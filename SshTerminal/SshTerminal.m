@@ -33,6 +33,15 @@
 @synthesize remoteHostName;
 @synthesize remotePort;
 @synthesize reverse;
+
+- (void)dealloc
+{
+	[hostName release];
+	[remoteHostName release];
+	[hostName release];
+	[super dealloc];
+}
+
 @end
 
 
@@ -363,5 +372,16 @@
     return [self initWithFrame:NSMakeRect(0, 0, 0, 0)];
 }
 
+
+- (void)dealloc
+{
+	[x11AuthorityFile release];
+	[x11Authentication release];
+	[keyFilePath release];
+	[hostName release];
+	[userName release];
+	[x11Display release];
+	[super dealloc];
+}
 
 @end

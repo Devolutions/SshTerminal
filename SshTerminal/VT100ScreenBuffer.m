@@ -10,7 +10,7 @@
 
 
 #ifdef DEBUG
-#define PRINT_INPUT 1
+//#define PRINT_INPUT 1
 #endif
 
 #define TA_BOLD 0x01
@@ -133,13 +133,13 @@ NSString* TAName = @"TerminalAttributeName";
     lastInvalidLine = rowCount - 1;
     if (firstInvalidLine < rowCount)
     {
-        firstInvalidLine--;
+        firstInvalidLine -= repeat;
     }
     else
     {
-        firstInvalidLine = lastInvalidLine;
+        firstInvalidLine = lastInvalidLine - repeat + 1;
     }
-    screenOffset++;
+    screenOffset += repeat;
     [screen deleteCharactersInRange:NSMakeRange(0, columnCount * repeat)];
     for (int i = 0; i < repeat; i++)
     {
@@ -338,7 +338,7 @@ NSString* TAName = @"TerminalAttributeName";
 
 -(void)deleteInLine:(int)arg setAtrributes:(BOOL)isSetAttributes
 {
-    NSRange range;
+	NSRange range = {0, 0};
     if (arg == -1 || arg == 0)
     {
         // Blank from cursor inclusive to end of line.
@@ -849,15 +849,8 @@ NSString* TAName = @"TerminalAttributeName";
                     }
                     break;
                 }
-                    /*
-                     case 'I':
-                     {
-                     // VT52 reverse line feed.
-                     [self scrollBack:1];
-                     break;
-                     }
-                     */
-                case 'J':
+
+				case 'J':
                 {
                     // VT52 delete from cursor to end of screen.
                     [self deleteInScreen:0];
@@ -937,7 +930,14 @@ NSString* TAName = @"TerminalAttributeName";
         }
         
 #ifdef PRINT_INPUT
-        printf("(ESC %c)\r\n", c);
+		if (*escIndex == i)
+		{
+			printf("(ESC %c)\r\n", c);
+		}
+		else
+		{
+			printf("(ESC %c%c)\r\n", c, inBuffer[i + 1]);
+		}
 #endif
     }
     
@@ -1030,22 +1030,6 @@ NSString* TAName = @"TerminalAttributeName";
 
 -(void)executeCsiCommand:(char)command withModifier:(char)modifier argValues:(int*)args argCount:(int)argCount
 {
-#ifdef PRINT_INPUT
-    /*printf("(CSI ");
-    if (modifier > 0)
-    {
-        printf("%c ", modifier);
-    }
-    if (argCount > 0 && args[0] != -1)
-    {
-        for (int i = 0; i < argCount; i++)
-        {
-            printf("%d; ", args[i]);
-        }
-    }
-    printf("%c)", command);*/
-#endif
-    
     switch (command)
     {
         case 'A':
@@ -1072,9 +1056,7 @@ NSString* TAName = @"TerminalAttributeName";
 			{
 				repeat = columnCount - curX;
 			}
-			//NSAttributedString* blankString = [blankLine attributedSubstringFromRange:NSMakeRange(0, repeat)];
 			int insertOffset = curX + curY * columnCount;
-			//[screen replaceCharactersInRange:NSMakeRange(insertOffset, repeat) withAttributedString:blankString];
 			[screen addAttribute:TAName value:[NSNumber numberWithInt:currentAttribute.all] range:NSMakeRange(insertOffset, repeat)];
             [self cursorRight:repeat];
             break;
@@ -1175,7 +1157,6 @@ NSString* TAName = @"TerminalAttributeName";
             int deleteCount = (args[0] >= 0 ? args[0] : 1);
             if (curY >= topMargin && curY < bottomMargin && deleteCount > 0)
             {
-                SInt32 savedMargin = topMargin;
                 [self scrollFeed:deleteCount];
             }
             
@@ -1380,6 +1361,21 @@ NSString* TAName = @"TerminalAttributeName";
                                 urxvtMouseEnable = YES;
                                 break;
                             }
+								
+							case 1049:
+							{
+								[self scrollFeed:curY];
+								[self scrollFeed:1];   // Scroll one more line to get rid of the top incomplete line (done this way because scrollFeed clips the repeat count).
+								isAlternate = YES;
+								savedBottomMargin = bottomMargin;
+								savedTopMargin = topMargin;
+								altCurX = curX;
+								altCurY = curY;
+								altSavedCurX = savedCurX;
+								altSavedCurY = savedCurY;
+								curX = 0;
+								curY = 0;
+							}
                         }
                     }
                 }
@@ -1490,6 +1486,15 @@ NSString* TAName = @"TerminalAttributeName";
                         {
                             urxvtMouseEnable = NO;
                         }
+							
+						case 1049:
+						{
+							isAlternate = NO;
+							topMargin = savedTopMargin;
+							bottomMargin = savedBottomMargin;
+							curX = 0;
+							curY = 0;
+						}
                     }
                 }
             }
@@ -2035,11 +2040,6 @@ NSString* TAName = @"TerminalAttributeName";
     keypadNormal = YES;
     isVT100 = YES;
     [self setContent];
-    /*[screen deleteCharactersInRange:NSMakeRange(0, screen.length)];
-    for (int i = 0; i < rowCount; i++)
-    {
-        [screen appendAttributedString:blankLine];
-    }*/
     
     savedCurX = 0;
     savedCurY = 0;
@@ -2072,12 +2072,15 @@ NSString* TAName = @"TerminalAttributeName";
     {
         [screen insertAttributedString:blankLine atIndex:insertIndex];
     }
+
+	[self invalidateLine:topMargin];
+	[self invalidateLine:bottomMargin];
 }
 
 
 -(void)scrollFeed:(int)repeat
 {
-    if (topMargin == 0 && bottomMargin == rowCount - 1)
+    if (topMargin == 0 && bottomMargin == rowCount - 1 && isAlternate == NO)
     {
         // Normal scroll mode: simply add a line, the upper lines move into the back-scroll.
         if (repeat > rowCount)
@@ -2296,7 +2299,7 @@ NSString* TAName = @"TerminalAttributeName";
 	
 	// Paste to text.
 	NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithDictionary:newLineAttributes];
-	NSAttributedString* terminalView = [textView.layoutManager textStorage];
+	NSMutableAttributedString* terminalView = [textView.layoutManager textStorage];
 	[terminalView setAttributes:dictionary range:NSMakeRange(0, terminalView.length)];
 	[screen setAttributes:dictionary range:NSMakeRange(0, screen.length)];
 	[self actualizeAttributesIn:[textView.layoutManager textStorage]];
