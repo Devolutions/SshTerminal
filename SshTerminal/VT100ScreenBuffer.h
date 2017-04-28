@@ -80,7 +80,11 @@ typedef union
     SInt32 topMargin;
     
     UInt32 inIndex;
+	
+	int gSet;
+	char gSets[4];
     
+	BOOL isSingleCharShift;
     BOOL attributesNeedActualize;
     BOOL autoBackWrap;
     BOOL autoReturnLineFeed;

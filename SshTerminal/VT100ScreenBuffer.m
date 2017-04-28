@@ -10,7 +10,7 @@
 
 
 #ifdef DEBUG
-//#define PRINT_INPUT 1
+#define PRINT_INPUT 1
 #endif
 
 #define TA_BOLD 0x01
@@ -20,6 +20,19 @@
 #define TA_INVISIBLE 0x10
 
 NSString* TAName = @"TerminalAttributeName";
+
+
+unichar gGraphicSet[] =
+{
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0, 0x2518,	0x2500,	0x250C,	0x2514, 0x253C,		0,
+	0, 0x2500,		0,		0, 0x251C, 0x2524, 0x2534, 0x252C, 0x2502,		0,		0,		0,		0,		0,		0,		0,
+};
 
 
 @implementation VT100ScreenBuffer
@@ -694,6 +707,7 @@ NSString* TAName = @"TerminalAttributeName";
             if (i + 1 < inIndex)
             {
                 complete = YES;
+				gSets[0] = inBuffer[i + 1];
                 *escIndex = i + 1;
             }
         }
@@ -702,6 +716,7 @@ NSString* TAName = @"TerminalAttributeName";
             if (i + 1 < inIndex)
             {
                 complete = YES;
+				gSets[1] = inBuffer[i + 1];
                 *escIndex = i + 1;
             }
         }
@@ -710,6 +725,7 @@ NSString* TAName = @"TerminalAttributeName";
             if (i + 1 < inIndex)
             {
                 complete = YES;
+				gSets[2] = inBuffer[i + 1];
                 *escIndex = i + 1;
             }
         }
@@ -718,6 +734,7 @@ NSString* TAName = @"TerminalAttributeName";
             if (i + 1 < inIndex)
             {
                 complete = YES;
+				gSets[3] = inBuffer[i + 1];
                 *escIndex = i + 1;
             }
         }
@@ -879,7 +896,21 @@ NSString* TAName = @"TerminalAttributeName";
                     }
                     break;
                 }
-                    
+					
+				case 'N':
+				{
+					isSingleCharShift = YES;
+					gSet = 2;
+					break;
+				}
+					
+				case 'O':
+				{
+					isSingleCharShift = YES;
+					gSet = 3;
+					break;
+				}
+					
                 case 'Y':
                 {
                     // VT52 move cursor.
@@ -900,7 +931,19 @@ NSString* TAName = @"TerminalAttributeName";
                     [connection writeFrom:(const UInt8 *)"\x1B/Z" length:3];
                     break;
                 }
-                    
+					
+				case 'n':
+				{
+					gSet = 2;
+					break;
+				}
+					
+				case 'o':
+				{
+					gSet = 2;
+					break;
+				}
+					
                 case '=':
                 {
                     keypadNormal = NO;
@@ -1016,6 +1059,18 @@ NSString* TAName = @"TerminalAttributeName";
             }
             break;
         }
+			
+		case 0x0E:
+		{
+			gSet = 1;
+			break;
+		}
+			
+		case 0x0F:
+		{
+			gSet = 0;
+			break;
+		}
     }
     
 #ifdef PRINT_INPUT
@@ -1056,8 +1111,9 @@ NSString* TAName = @"TerminalAttributeName";
 			{
 				repeat = columnCount - curX;
 			}
-			int insertOffset = curX + curY * columnCount;
-			[screen addAttribute:TAName value:[NSNumber numberWithInt:currentAttribute.all] range:NSMakeRange(insertOffset, repeat)];
+			// Commented out code because it cause some vertical alignment problems. Not deleted yet because I am not sure if it is OK in all situations.
+			//int insertOffset = curX + curY * columnCount;
+			//[screen addAttribute:TAName value:[NSNumber numberWithInt:currentAttribute.all] range:NSMakeRange(insertOffset, repeat)];
             [self cursorRight:repeat];
             break;
         }
@@ -1135,7 +1191,7 @@ NSString* TAName = @"TerminalAttributeName";
         case 'K':
         {
             // Delete in line.
-            [self deleteInLine:args[0] setAtrributes:YES];
+			[self deleteInLine:args[0] setAtrributes:YES];
             break;
         }
             
@@ -1304,6 +1360,12 @@ NSString* TAName = @"TerminalAttributeName";
                                 
                             case 2:
                             {
+								gSets[0] = 'B';
+								gSets[1] = 'B';
+								gSets[2] = 'B';
+								gSets[3] = 'B';
+								gSet = 0;
+								isSingleCharShift = NO;
                                 isVT100 = YES;
                                 break;
                             }
@@ -1739,7 +1801,8 @@ NSString* TAName = @"TerminalAttributeName";
                 lastInvalidLine = lineCount - 1;
             }
         }
-        else {
+        else
+		{
             lastInvalidLine = rowCount - 1;
         }
         
@@ -1994,6 +2057,15 @@ NSString* TAName = @"TerminalAttributeName";
                 charBuffer[4] = 0;
             }
             NSString* charString = [NSString stringWithUTF8String:charBuffer];
+			if (gSets[gSet] == '0' && (c & 0x80) == 0 && gGraphicSet[c] != 0)
+			{
+				charString = [NSString stringWithCharacters:gGraphicSet + c length:1];
+			}
+			if (isSingleCharShift)
+			{
+				gSet = 0;
+				isSingleCharShift = NO;
+			}
             if (charString == NULL)
             {
                 charString = @" ";
@@ -2041,6 +2113,11 @@ NSString* TAName = @"TerminalAttributeName";
     keypadNormal = YES;
     isVT100 = YES;
     [self setContent];
+	
+	gSets[0] = 'B';
+	gSets[1] = 'B';
+	gSets[2] = 'B';
+	gSets[3] = 'B';
     
     savedCurX = 0;
     savedCurY = 0;
