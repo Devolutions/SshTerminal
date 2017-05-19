@@ -1168,7 +1168,6 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 				dispatch_async(screenQueue, ^{ [self localListenErrorMessage:counterPartTunnel]; });
                 [self eventNotify:TUNNEL_ERROR];
             }
-            [counterPartTunnel release];
         }
     }
     

@@ -54,7 +54,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 4
+#define TEST_SERVER 5
         
 		/*NSFont* font = [NSFont userFixedPitchFontOfSize:0];
 		NSFontManager* manager = [NSFontManager sharedFontManager];
@@ -90,7 +90,6 @@ SshConnection* sshConnection = NULL;
         terminal.userName = @"parallels";
         terminal.hostName = @"192.168.4.4";
         [terminal setPassword:@"Price2011"];
-        [terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"192.168.2.106"];
         //terminal.internetProtocol = sshTerminalIpv6;
         //[terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
 #elif (TEST_SERVER == 4)
@@ -106,6 +105,7 @@ SshConnection* sshConnection = NULL;
         terminal.hostName = @"192.168.7.62";
         terminal.port = 2222;
         [terminal setPassword:@"123456"];
+        [terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:2220 onRemoteHost:@"192.168.7.60"];
         //terminal.keepAliveTime = 1;
         //terminal.internetProtocol = sshTerminalIpv6;
         //terminal.useAgent = YES;

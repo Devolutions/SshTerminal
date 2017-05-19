@@ -23,6 +23,7 @@
     if (listenSource != nil)
     {
         dispatch_source_cancel(listenSource);
+		dispatch_release(listenSource);
         listenSource = nil;
     }
     if (listenFd >= 0)
