@@ -43,6 +43,9 @@ unichar gGraphicSet[] =
 @synthesize fontHeight;
 @synthesize fontWidth;
 
+// SyntaxColoring specific.
+@synthesize syntaxColoringItems;
+@synthesize syntaxColoringChangeMade;
 
 -(NSColor*)backgroundColor
 {
@@ -176,6 +179,121 @@ unichar gGraphicSet[] =
 
     firstInvalidLine = 0;
     lastInvalidLine = rowCount - 1;
+}
+
+
+// SyntaxColoring specific.
+-(void)applyChanges
+{
+	if (*syntaxColoringChangeMade)
+	{
+		[self actualizeAttributesIn:[textView.layoutManager textStorage]];
+		[self applySyntaxColoringIn:[textView.layoutManager textStorage]];
+		*syntaxColoringChangeMade = false;
+	}
+}
+
+
+-(void)applySyntaxColoringIn:(NSMutableAttributedString*)string
+{
+	if ([syntaxColoringItems count] == 0)
+	{
+		return;
+	}
+	void (^applySyntaxColoring)(id, NSRange, BOOL*) = ^(id value, NSRange range, BOOL* stop)
+	{
+		NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+		SyntaxColoringItem* item;
+		
+		int lastIndex = (int)[string length] - 1;
+		NSString* str = [string string];
+		while ((item = [i nextObject]) && item.isEnabled)
+		{
+			NSRange keywordRange;
+			if (item.isCaseSensitive)
+			{
+				keywordRange = [str rangeOfString:item.keyword];
+			}
+			else
+			{
+				keywordRange = [str rangeOfString:item.keyword options:NSCaseInsensitiveSearch];
+			}
+			while (keywordRange.location != NSNotFound)
+			{
+				int previousIndex = (int)keywordRange.location - 1;
+				int nextIndex = (int)keywordRange.location + item.keywordLen;
+				unichar previousChar;
+				unichar nextChar;
+				if (previousIndex == -1)
+				{
+					previousChar = 1;
+				}
+				else {
+					previousChar = [str characterAtIndex:previousIndex];
+				}
+				if (nextIndex > lastIndex)
+				{
+					nextChar = 1;
+				}
+				 else {
+					nextChar = [str characterAtIndex:nextIndex];
+				}
+				if (
+					item.isCompleteWord && (
+					(previousChar >= 48 && previousChar <= 57) ||
+					(previousChar >= 65 && previousChar <= 90) ||
+					(previousChar >= 97 && previousChar <= 122) ||
+					(previousChar >= 192 && previousChar <= 696) ||
+					(nextChar >= 48 && nextChar <= 57) ||
+					(nextChar >= 65 && nextChar <= 90) ||
+					(nextChar >= 97 && nextChar <= 122) ||
+					(nextChar >= 192 && nextChar <= 696) )
+					)
+				{
+				}
+				else
+				{
+					NSNumber* number = value;
+					if (number == nil)
+					{
+						number = [NSNumber numberWithInt:0];
+					}
+					TerminalAttribute attribute;
+					attribute.all = [number intValue];
+					NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithDictionary:newLineAttributes];
+					[dictionary setObject:number forKey:TAName];
+					
+					// Setup the colors.
+					NSColor* backColor = backColors[item.backColor];
+					NSColor* textColor = textColors[item.textColor];
+					[dictionary setObject:backColor forKey:NSBackgroundColorAttributeName];
+					[dictionary setObject:textColor forKey:NSForegroundColorAttributeName];
+					
+					// Setup the underline attribute.
+					if (item.isUnderlined)
+					{
+						[dictionary setObject:[NSNumber numberWithInt:NSUnderlineStyleSingle] forKey:NSUnderlineStyleAttributeName];
+					}
+					
+					// Paste to text.
+					[string setAttributes:dictionary range:keywordRange];
+				}
+				unsigned long offset = keywordRange.location + item.keywordLen;
+				NSRange newRange = NSMakeRange(offset, lastIndex - offset);
+				
+				if (item.isCaseSensitive)
+				{
+					keywordRange = [str rangeOfString:item.keyword options:0 range:newRange];
+				}
+				else
+				{
+					keywordRange = [str rangeOfString:item.keyword options:NSCaseInsensitiveSearch range:newRange];
+				}
+			}
+		}
+	};
+	
+	[string enumerateAttribute:TAName inRange:NSMakeRange(0, string.length) options:0 usingBlock:applySyntaxColoring];
 }
 
 
@@ -1739,8 +1857,11 @@ unichar gGraphicSet[] =
     {
         return;
     }
-    
-    [self actualizeAttributesIn:screen];
+	
+	[self actualizeAttributesIn:screen];
+	
+	// SyntaxColoring specfic.
+	[self applySyntaxColoringIn:screen];
     
     flushScreenBlock = ^{
         NSLayoutManager* layout = textView.layoutManager;

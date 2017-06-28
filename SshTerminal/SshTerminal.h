@@ -68,6 +68,11 @@ enum
     int keepAliveTime;
     id<SshTerminalEvent> eventDelegate;
     NSMutableArray* tunnels;
+	
+	// SyntaxColoring specific.
+	NSMutableArray* syntaxColoringItems;
+	BOOL syntaxColoringChangeMade;
+	BOOL syntaxColoringScreenInitiated;
 }
 
 @property(copy,nonatomic)NSString* hostName;   // Host name or IP address.
@@ -92,6 +97,9 @@ enum
 @property(readonly)int state;
 @property(assign)int keepAliveTime;   // Zero equals: keepalive off. Otherwise: time between keepalives in seconds.
 
+// SyntaxColoring specific.
+@property(assign)BOOL syntaxColoringScreenInitiated;
+
 -(void)setFontWithName:(NSString*)fontName size:(CGFloat)fontSize;
 -(void)setEventDelegate:(id<SshTerminalEvent>) delegate;
 -(void)connect;
@@ -99,6 +107,17 @@ enum
 -(void)resumeAndRememberServer;
 -(void)disconnect;
 -(void)send:(NSString*)string;
+
+
+// SyntaxColoring specific.
+-(void)syntaxColoringAddOrUpdateItem:(NSString*)keyword itemBackColor:(int)backColor itemTextColor:(int)textColor itemIsCompleteWord:(BOOL)isCompleteWord itemIsCaseSensitive:(BOOL)isCaseSensitive itemIsUnderlined:(BOOL)isUnderlined;
+-(void)syntaxColoringDeleteItem:(NSString*)keyword;
+-(void)syntaxColoringEnableItem:(NSString*)keyword;
+-(void)syntaxColoringDisableItem:(NSString*)keyword;
+-(void)syntaxColoringDeleteAllItems;
+-(void)syntaxColoringEnableAllItems;
+-(void)syntaxColoringDisableAllItems;
+-(void)syntaxColoringApplyChanges;
 
 
 @end

@@ -54,7 +54,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 5
+#define TEST_SERVER 0
         
 		/*NSFont* font = [NSFont userFixedPitchFontOfSize:0];
 		NSFontManager* manager = [NSFontManager sharedFontManager];
@@ -115,6 +115,11 @@ SshConnection* sshConnection = NULL;
         //[terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
 #endif
         //terminal.verbose = YES;
+		
+		// SyntaxColoring specific.
+		[terminal syntaxColoringAddOrUpdateItem:@"test" itemBackColor:0 itemTextColor:6 itemIsCompleteWord:false itemIsCaseSensitive:false itemIsUnderlined:false];
+		[terminal syntaxColoringAddOrUpdateItem:@"welcome" itemBackColor:0 itemTextColor:7 itemIsCompleteWord:true itemIsCaseSensitive:false itemIsUnderlined:true];
+		
         terminal.columnCount = 80;
         [terminal connect];
         [statusText setStringValue:@"Connecting"];

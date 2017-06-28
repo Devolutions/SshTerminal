@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "VT100Connection.h"
+#import "SyntaxColoringItem.h"
 
 #define TERMINAL_BUFFER_SIZE 1024
 
@@ -100,6 +101,10 @@ typedef union
     BOOL sgrMouseEnable;
     BOOL urxvtMouseEnable;
 	BOOL isAlternate;
+	
+	// SyntaxColoring specific.
+	NSMutableArray* syntaxColoringItems;
+	BOOL* syntaxColoringChangeMade;
 }
 
 @property(readonly)BOOL cursorKeyAnsi;
@@ -109,6 +114,9 @@ typedef union
 @property(readonly)float fontHeight;
 @property(readonly)float fontWidth;
 
+// SyntaxColoring specific.
+@property(assign)NSMutableArray* syntaxColoringItems;
+@property(assign)BOOL* syntaxColoringChangeMade;
 
 -(instancetype)init:(NSTextView*)newTextView;
 -(NSRect)cursorRect;
@@ -123,5 +131,7 @@ typedef union
 -(void)newDataAvailableIn:(UInt8*)buffer length:(int)size;
 -(void)newDataAvailable;
 
+// SyntaxColoring specific.
+-(void)applyChanges;
 
 @end

@@ -71,6 +71,8 @@
 @synthesize useAgent;
 @synthesize keepAliveTime;
 
+// SyntaxColoring specific.
+@synthesize syntaxColoringScreenInitiated;
 
 -(void)setPassword:(NSString *)string
 {
@@ -163,7 +165,16 @@
     
     [terminalView initScreen];
 	
-    [connection startConnection];
+	// SyntaxColoring specific.
+	if (self.syntaxColoringScreenInitiated == false)
+	{
+		terminalView.screen.syntaxColoringItems = syntaxColoringItems;
+		terminalView.screen.syntaxColoringChangeMade = &syntaxColoringChangeMade;
+		self.syntaxColoringScreenInitiated = true;
+		[self syntaxColoringApplyChanges];
+	}
+	
+	[connection startConnection];
 }
 
 
@@ -340,6 +351,8 @@
     [self adjustTerminalSize];
     
     [self setDocumentView:terminalView];
+	
+	syntaxColoringItems = [NSMutableArray new];
 }
 
 
@@ -375,6 +388,7 @@
 
 - (void)dealloc
 {
+	[syntaxColoringItems release];
 	[x11AuthorityFile release];
 	[x11Authentication release];
 	[keyFilePath release];
@@ -382,6 +396,137 @@
 	[userName release];
 	[x11Display release];
 	[super dealloc];
+}
+
+
+// SyntaxColoring specific.
+-(void)syntaxColoringAddOrUpdateItem:(NSString*)keyword itemBackColor:(int)backColor itemTextColor:(int)textColor itemIsCompleteWord:(BOOL)isCompleteWord itemIsCaseSensitive:(BOOL)isCaseSensitive itemIsUnderlined:(BOOL)isUnderlined
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	BOOL itemDoesntExist = true;
+	while ((item = [i nextObject]))
+	{
+		if ([item.keyword compare:keyword] == NSOrderedSame)
+		{
+			item.keyword = keyword;
+			item.keywordLen = (int)[keyword length];
+			item.backColor = backColor;
+			item.textColor = textColor;
+			item.isCompleteWord = isCompleteWord;
+			item.isCaseSensitive = isCaseSensitive;
+			item.isUnderlined = isUnderlined;
+			item.isEnabled = true;
+			itemDoesntExist = false;
+			break;
+		}
+	}
+	
+	if (itemDoesntExist)
+	{
+		SyntaxColoringItem* it = [[SyntaxColoringItem alloc] init];
+		it.keyword = keyword;
+		it.keywordLen = (int)[keyword length];
+		it.backColor = backColor;
+		it.textColor = textColor;
+		it.isCompleteWord = isCompleteWord;
+		it.isCaseSensitive = isCaseSensitive;
+		it.isUnderlined = isUnderlined;
+		it.isEnabled = true;
+		[syntaxColoringItems addObject:it];
+	}
+	
+	syntaxColoringChangeMade = true;
+}
+
+
+-(void)syntaxColoringDeleteItem:(NSString*)keyword
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	while ((item = [i nextObject]))
+	{
+		if ([item.keyword compare:keyword] == NSOrderedSame)
+		{
+			[syntaxColoringItems removeObject:item];
+			syntaxColoringChangeMade = true;
+			break;
+		}
+	}
+}
+
+
+-(void)syntaxColoringEnableItem:(NSString*)keyword
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	while ((item = [i nextObject]))
+	{
+		if ([item.keyword compare:keyword] == NSOrderedSame)
+		{
+			item.isEnabled = true;
+			syntaxColoringChangeMade = true;
+			break;
+		}
+	}
+}
+
+
+-(void)syntaxColoringDisableItem:(NSString*)keyword
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	while ((item = [i nextObject]))
+	{
+		if ([item.keyword compare:keyword] == NSOrderedSame)
+		{
+			item.isEnabled = false;
+			syntaxColoringChangeMade = true;
+			break;
+		}
+	}
+}
+
+
+-(void)syntaxColoringDeleteAllItems
+{
+	[syntaxColoringItems removeAllObjects];
+	syntaxColoringChangeMade = true;
+}
+
+
+-(void)syntaxColoringEnableAllItems
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	while ((item = [i nextObject]))
+	{
+		item.isEnabled = true;
+	}
+	
+	syntaxColoringChangeMade = true;
+}
+
+
+-(void)syntaxColoringDisableAllItems
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	while ((item = [i nextObject]))
+	{
+		item.isEnabled = false;
+	}
+	
+	syntaxColoringChangeMade = true;
+}
+
+
+-(void)syntaxColoringApplyChanges
+{
+	if (self.syntaxColoringScreenInitiated)
+	{
+		[terminalView.screen applyChanges];
+	}
 }
 
 @end
