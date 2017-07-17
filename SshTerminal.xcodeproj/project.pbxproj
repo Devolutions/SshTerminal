@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6582BB491F1D161D00F71650 /* SyntaxColoringItem.m in Sources */ = {isa = PBXBuildFile; fileRef = E7D13EFF1EFDB1DD00E62159 /* SyntaxColoringItem.m */; };
+		6582BB4A1F1D161F00F71650 /* SyntaxColoringItem.h in Headers */ = {isa = PBXBuildFile; fileRef = E7D13F011EFDB21300E62159 /* SyntaxColoringItem.h */; };
 		E7D13F001EFDB1DD00E62159 /* SyntaxColoringItem.m in Sources */ = {isa = PBXBuildFile; fileRef = E7D13EFF1EFDB1DD00E62159 /* SyntaxColoringItem.m */; };
 		E7D13F021EFDB21300E62159 /* SyntaxColoringItem.h in Headers */ = {isa = PBXBuildFile; fileRef = E7D13F011EFDB21300E62159 /* SyntaxColoringItem.h */; };
 		F477D64B1C1622A100FCB65A /* VT100ScreenBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = F477D6491C1622A100FCB65A /* VT100ScreenBuffer.h */; };
@@ -386,6 +388,7 @@
 				F4FB45B81D0607B800BFDE72 /* VT100TerminalView.h in Headers */,
 				F4FB45B91D0607B800BFDE72 /* ProxyTelnet.h in Headers */,
 				F4FB45BA1D0607B800BFDE72 /* SshTunnelConnection.h in Headers */,
+				6582BB4A1F1D161F00F71650 /* SyntaxColoringItem.h in Headers */,
 				F4FB45BB1D0607B800BFDE72 /* SshFoundation.h in Headers */,
 				F4FB45BC1D0607B800BFDE72 /* NetworkHelpers.h in Headers */,
 				F4FB45BD1D0607B800BFDE72 /* PuttyKey.h in Headers */,
@@ -635,6 +638,7 @@
 				F4FB45A81D0607B800BFDE72 /* TelnetConnection.m in Sources */,
 				F4FB45A91D0607B800BFDE72 /* SshAgent.c in Sources */,
 				F4FB45AA1D0607B800BFDE72 /* ConnectionTcp.m in Sources */,
+				6582BB491F1D161D00F71650 /* SyntaxColoringItem.m in Sources */,
 				F4FB45AB1D0607B800BFDE72 /* ProxySocks5.m in Sources */,
 				F4FB45AC1D0607B800BFDE72 /* VT100TerminalView.m in Sources */,
 				F4FB45AD1D0607B800BFDE72 /* VT100ScreenBuffer.m in Sources */,
