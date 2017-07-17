@@ -548,7 +548,23 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     {
         [self verboseNotify:@"Authenticating user\r\n"];
     }
-    if (useAgent == YES)
+	
+	if (agentForwarding == YES)
+	{
+		sshAgent = SshAgentNew();
+		if (sshAgent == NULL)
+		{
+			if (verbose == YES)
+			{
+				[self verboseNotify:@"Not enough memory\r\n"];
+			}
+			[self eventNotify:OUT_OF_MEMORY_ERROR];
+			dispatch_async(queue, ^{ [self closeAllChannels]; });
+			return;
+		}
+	}
+
+	if (useAgent == YES)
     {
         // User authentication by agent:
         if (verbose == YES)
@@ -719,18 +735,6 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         
         if (agentForwarding == YES && result == SSH_AUTH_SUCCESS)
         {
-            sshAgent = SshAgentNew();
-            if (sshAgent == NULL)
-            {
-                if (verbose == YES)
-                {
-                    [self verboseNotify:@"Not enough memory\r\n"];
-                }
-                [self eventNotify:OUT_OF_MEMORY_ERROR];
-                dispatch_async(queue, ^{ [self closeAllChannels]; });
-                return;
-            }
-            
             int result = SshAgentAddKey(sshAgent, key);
             if (result < 0)
             {

@@ -54,7 +54,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 0
+#define TEST_SERVER 1
         
 		/*NSFont* font = [NSFont userFixedPitchFontOfSize:0];
 		NSFontManager* manager = [NSFontManager sharedFontManager];
@@ -63,24 +63,29 @@ SshConnection* sshConnection = NULL;
 		[manager orderFrontFontPanel:self];*/
 		
         [terminal clearAllTunnels];
+		terminal.verbose = YES;
+		terminal.verbosityLevel = 1;
 #if (TEST_SERVER == 0)
         terminal.userName = @"david";
-        terminal.hostName = @"192.168.7.60";
-        //terminal.hostName = @"macmini2";
-        [terminal setPassword:@"123456"];
-        terminal.port = 2220;
+        //terminal.hostName = @"192.168.7.60";
+        terminal.hostName = @"macmini2";
+        //[terminal setPassword:@"123456"];
+        terminal.port = 22;
         //terminal.agentForwarding = YES;
         //terminal.keyFilePath = @"~/Encrypted.ppk";
-        //terminal.keyFilePath = @"~/.ssh/dvincent-ecdsa";
-        //[terminal setKeyFilePassword:@"qwerty"];
-        //terminal.verbose = YES;
-        //terminal.verbosityLevel = 4;
+        terminal.keyFilePath = @"~/.ssh/dvincent-dsa";
+        [terminal setKeyFilePassword:@"qwerty"];
+		terminal.agentForwarding = YES;
         //terminal.x11Forwarding = YES;
         //terminal.internetProtocol = sshTerminalIpv6;
 #elif (TEST_SERVER == 1)
-        terminal.userName = @"dvincent";
-        terminal.hostName = @"192.168.4.1";
-        [terminal setPassword:@"Price2011"];
+        terminal.userName = @"test";
+        terminal.hostName = @"192.168.7.62";
+		terminal.port = 2222;
+        [terminal setPassword:@"123456"];
+		//terminal.keyFilePath = @"~/.ssh/dvincent-rsa";
+		//[terminal setKeyFilePassword:@"qwerty"];
+		terminal.agentForwarding = YES;
 #elif (TEST_SERVER == 2)
         terminal.userName = @"dvincent";
         terminal.hostName = @"192.168.4.1";
@@ -117,8 +122,8 @@ SshConnection* sshConnection = NULL;
         //terminal.verbose = YES;
 		
 		// SyntaxColoring specific.
-		[terminal syntaxColoringAddOrUpdateItem:@"test" itemBackColor:0 itemTextColor:6 itemIsCompleteWord:false itemIsCaseSensitive:false itemIsUnderlined:false];
-		[terminal syntaxColoringAddOrUpdateItem:@"welcome" itemBackColor:0 itemTextColor:7 itemIsCompleteWord:true itemIsCaseSensitive:false itemIsUnderlined:true];
+		//[terminal syntaxColoringAddOrUpdateItem:@"test" itemBackColor:0 itemTextColor:6 itemIsCompleteWord:false itemIsCaseSensitive:false itemIsUnderlined:false];
+		//[terminal syntaxColoringAddOrUpdateItem:@"welcome" itemBackColor:0 itemTextColor:7 itemIsCompleteWord:true itemIsCaseSensitive:false itemIsUnderlined:true];
 		
         terminal.columnCount = 80;
         [terminal connect];
