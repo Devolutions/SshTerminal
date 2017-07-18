@@ -347,7 +347,7 @@
     rect.size = self.contentSize;
 
     terminalView = [[VT100TerminalView alloc] initWithFrame:rect];
-    [terminalView setEditable:NO];
+    [terminalView setEditable:YES];
     [self adjustTerminalSize];
     
     [self setDocumentView:terminalView];

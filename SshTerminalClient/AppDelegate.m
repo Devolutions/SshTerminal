@@ -80,9 +80,9 @@ SshConnection* sshConnection = NULL;
         //terminal.x11Forwarding = YES;
         //terminal.internetProtocol = sshTerminalIpv6;
 #elif (TEST_SERVER == 1)
-        terminal.userName = @"test";
         terminal.hostName = @"192.168.7.62";
 		terminal.port = 2222;
+        terminal.userName = @"test";
         [terminal setPassword:@"123456"];
 		//terminal.keyFilePath = @"~/.ssh/dvincent-rsa";
 		//[terminal setKeyFilePassword:@"qwerty"];

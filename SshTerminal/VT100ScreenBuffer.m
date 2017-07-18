@@ -10,7 +10,7 @@
 
 
 #ifdef DEBUG
-//#define PRINT_INPUT 1
+#define PRINT_INPUT 1
 #endif
 
 #define TA_BOLD 0x01

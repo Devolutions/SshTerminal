@@ -131,6 +131,38 @@
 }
 
 
+-(void)insertText:(id)string replacementRange:(NSRange)replacementRange
+{
+	printf("insert %s\r\n", [string UTF8String]);
+	const char* chars = [string UTF8String];
+	int cLength = (int)strlen(chars);
+	if (markRange > 0)
+	{
+		for (int i = 0; i < markRange; i++)
+		{
+			[connection writeFrom:(const UInt8*)"\x1B[3~" length:4];
+		}
+		markRange = 0;
+	}
+	
+	[connection writeFrom:(const UInt8*)chars length:cLength];
+}
+
+
+-(void)setMarkedText:(id)string selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange
+{
+	printf("mark %s\r\n", [string UTF8String]);
+	markRange = [string length];
+	const char* chars = [string UTF8String];
+	int cLength = (int)strlen(chars);
+	[connection writeFrom:(const UInt8*)chars length:cLength];
+	for (int i = 0; i < markRange; i++)
+	{
+		[connection writeFrom:(const UInt8*)"\x1B[D" length:3];
+	}
+}
+
+
 -(void)keyDown:(NSEvent *)theEvent
 {
     if (isCursorVisible == NO)
@@ -140,18 +172,19 @@
     
     NSString* theKey = [theEvent charactersIgnoringModifiers];
     int length = (int)[theKey length];
-    if (length == 0)
+	unichar keyCode = 0;
+    if (length != 0)
     {
-        return;
+        keyCode = [theKey characterAtIndex:0];
     }
     
     if (theEvent.modifierFlags & NSCommandKeyMask)
     {
-        if ([theKey characterAtIndex:0] == 'v')
+        if (keyCode == 'v')
         {
             [self paste:self];
         }
-        else if ([theKey characterAtIndex:0] == 'c')
+        else if (keyCode == 'c')
         {
             [super keyDown:theEvent];
         }
@@ -163,9 +196,14 @@
     
     if (length == 1)
     {
-        unichar keyCode = [theKey characterAtIndex:0];
         switch (keyCode)
         {
+			case NSDeleteCharacter:
+			{
+				sprintf(specialSequence, "\b");
+				break;
+			}
+				
             case KEYPAD_ENTER:
             {
                 if (screen.keypadNormal == NO)
@@ -237,7 +275,7 @@
                 sprintf(specialSequence, "\x1B[3~");
                 break;
             }
-                
+				
             case NSPageUpFunctionKey:
             {
                 if (screen.keypadNormal == YES)
@@ -426,19 +464,47 @@
         }
     }
 
-    
-    const char* chars = (specialSequence[0] != 0 ? specialSequence : theEvent.characters.UTF8String );
-    if (chars[0] != 0)
-    {
-        // Normal characters.
-        int cLength = (int)strlen(chars);
-        [connection writeFrom:(const UInt8*)chars length:cLength];
-    }
+    if (specialSequence[0] != 0)
+	{
+		int cLength = (int)strlen(specialSequence);
+		[connection writeFrom:(const UInt8*)specialSequence length:cLength];
+		isKeyIntercepted = YES;
+		return;
+	}
+	else if (theEvent.modifierFlags & NSControlKeyMask)
+	{
+		const char* chars = theEvent.characters.UTF8String;
+		int cLength = (int)strlen(chars);
+		[connection writeFrom:(const UInt8*)chars length:cLength];
+		isKeyIntercepted = YES;
+		return;
+	}
+	else if (theEvent.isARepeat)
+	{
+		const char* chars = theEvent.characters.UTF8String;
+		int cLength = (int)strlen(chars);
+		[connection writeFrom:(const UInt8*)chars length:cLength];
+		return;
+	}
+	
+	[super keyDown:theEvent];
 }
+
 
 -(void)keyUp:(NSEvent *)theEvent
 {
-    
+	if (isCursorVisible == NO)
+	{
+		return;
+	}
+	
+	if (isKeyIntercepted == YES)
+	{
+		isKeyIntercepted = NO;
+		return;
+	}
+	
+	[super keyUp:theEvent];
 }
 
 

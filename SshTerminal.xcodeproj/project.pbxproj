@@ -301,6 +301,8 @@
 				F4AE90381B41733E007AC63E /* SshTerminal.h */,
 				F4AE90641B418EBF007AC63E /* SshTerminal.m */,
 				F48511281DF89160004489B6 /* SshTerminal32.h */,
+				E7D13EFF1EFDB1DD00E62159 /* SyntaxColoringItem.m */,
+				E7D13F011EFDB21300E62159 /* SyntaxColoringItem.h */,
 				F4989F141B5FEED800693A47 /* VT100Connection.h */,
 				F477D6491C1622A100FCB65A /* VT100ScreenBuffer.h */,
 				F477D64A1C1622A100FCB65A /* VT100ScreenBuffer.m */,
@@ -315,8 +317,6 @@
 				F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */,
 				F4989F0D1B5FDC7900693A47 /* TelnetTerminal.m */,
 				F4AE90361B41733E007AC63E /* Supporting Files */,
-				E7D13EFF1EFDB1DD00E62159 /* SyntaxColoringItem.m */,
-				E7D13F011EFDB21300E62159 /* SyntaxColoringItem.h */,
 			);
 			path = SshTerminal;
 			sourceTree = "<group>";

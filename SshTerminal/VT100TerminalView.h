@@ -18,8 +18,10 @@
 
     int columnCount;
     int rowCount;
+	int markRange;
     
     BOOL isCursorVisible;
+	BOOL isKeyIntercepted;
 }
 
 -(VT100ScreenBuffer*)screen;
