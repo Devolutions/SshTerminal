@@ -54,7 +54,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 0
+#define TEST_SERVER 1
         
 		/*NSFont* font = [NSFont userFixedPitchFontOfSize:0];
 		NSFontManager* manager = [NSFontManager sharedFontManager];
@@ -107,11 +107,11 @@ SshConnection* sshConnection = NULL;
         //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
         //[terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
 #elif (TEST_SERVER == 5)
-        terminal.userName = @"test";
-        terminal.hostName = @"192.168.7.62";
+        terminal.hostName = @"192.168.1.217";
         terminal.port = 2222;
+        terminal.userName = @"test";
         [terminal setPassword:@"123456"];
-        [terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:2220 onRemoteHost:@"192.168.7.60"];
+        //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:2220 onRemoteHost:@"192.168.7.60"];
         //terminal.keepAliveTime = 1;
         //terminal.internetProtocol = sshTerminalIpv6;
         //terminal.useAgent = YES;

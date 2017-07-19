@@ -133,7 +133,6 @@
 
 -(void)insertText:(id)string replacementRange:(NSRange)replacementRange
 {
-	printf("insert %s\r\n", [string UTF8String]);
 	const char* chars = [string UTF8String];
 	int cLength = (int)strlen(chars);
 	if (markRange > 0)
@@ -151,7 +150,6 @@
 
 -(void)setMarkedText:(id)string selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange
 {
-	printf("mark %s\r\n", [string UTF8String]);
 	markRange = [string length];
 	const char* chars = [string UTF8String];
 	int cLength = (int)strlen(chars);
@@ -221,12 +219,16 @@
                 break;
             }
                 
-            case '\r':
+			case NSCarriageReturnCharacter:
             {
                 if (screen.autoReturnLineFeed == YES)
                 {
                     sprintf(specialSequence, "\r\n");
                 }
+				else
+				{
+					sprintf(specialSequence, "\r");
+				}
                 break;
             }
                 

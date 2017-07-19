@@ -853,6 +853,47 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 }
 
 
+void setLangEnv(ssh_channel channel, const char* var)
+{
+	char buffer[64];
+	
+	char* value = getenv(var);
+	if (value == NULL)
+	{
+		value = "en_US.UTF-8";
+	}
+	else
+	{
+		char* codeset = strchr(value, '.');
+		if (codeset != NULL)
+		{
+			if (memcmp(".UTF-8", codeset, 6) != 0)
+			{
+				int languageLength = (int)(codeset - value);
+				if (languageLength > sizeof(buffer) - 1 - 6)
+				{
+					return;
+				}
+				memcpy(buffer, value, languageLength);
+				strcpy(buffer + languageLength, ".UTF-8");
+				value = buffer;
+			}
+		}
+		else
+		{
+			if ((int)strlen(value) > sizeof(buffer) - 1 - 6)
+			{
+				return;
+			}
+			strcpy(buffer, value);
+			strcat(buffer, ".UTF-8");
+			value = buffer;
+		}
+	}
+	ssh_channel_request_env(channel, var, value);
+}
+
+
 -(void)openTerminalChannel
 {
 	[self setLoggingCallback];
@@ -899,6 +940,14 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         return;
     }
     
+	//setLangEnv(channel, "LANG");
+	//setLangEnv(channel, "LC_COLLATE");
+	setLangEnv(channel, "LC_CTYPE");
+	//setLangEnv(channel, "LC_MESSAGES");
+	//setLangEnv(channel, "LC_MONETARY");
+	//setLangEnv(channel, "LC_NUMERIC");
+	//setLangEnv(channel, "LC_TIME");
+	
     result = ssh_channel_request_pty(channel);
     if (result != SSH_OK)
     {
@@ -981,8 +1030,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         dispatch_async(queue, ^{ [self closeAllChannels]; });
         return;
     }
-    
-    
+	
     [self eventNotify:CONNECTED];
     dispatch_resume(readSource);
 }
