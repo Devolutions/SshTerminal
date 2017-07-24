@@ -69,7 +69,12 @@ enum
     id<SshTerminalEvent> eventDelegate;
     NSMutableArray* tunnels;
 	
-	// SyntaxColoring specific.
+	NSColor* defaultBackground;
+	NSColor* defaultForeground;
+	NSColor* cursorBackground;
+	NSColor* cursorForeground;
+	NSColor* colors[16];
+	
 	NSMutableArray* syntaxColoringItems;
 	BOOL syntaxColoringChangeMade;
 	BOOL syntaxColoringScreenInitiated;
@@ -97,8 +102,11 @@ enum
 @property(readonly)int state;
 @property(assign)int keepAliveTime;   // Zero equals: keepalive off. Otherwise: time between keepalives in seconds.
 
-// SyntaxColoring specific.
-@property(assign)BOOL syntaxColoringScreenInitiated;
+-(void)setDefaultBackgroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b;
+-(void)setDefaultForegroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b;
+-(void)setCursorBackgroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b;
+-(void)setCursorForegroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b;
+-(void)setColor:(int)index red:(UInt8)r green:(UInt8)g blue:(UInt8)b;
 
 -(void)setFontWithName:(NSString*)fontName size:(CGFloat)fontSize;
 -(void)setEventDelegate:(id<SshTerminalEvent>) delegate;
@@ -108,8 +116,6 @@ enum
 -(void)disconnect;
 -(void)send:(NSString*)string;
 
-
-// SyntaxColoring specific.
 -(void)syntaxColoringAddOrUpdateItem:(NSString*)keyword itemBackColor:(int)backColor itemTextColor:(int)textColor itemIsCompleteWord:(BOOL)isCompleteWord itemIsCaseSensitive:(BOOL)isCaseSensitive itemIsUnderlined:(BOOL)isUnderlined;
 -(void)syntaxColoringDeleteItem:(NSString*)keyword;
 -(void)syntaxColoringEnableItem:(NSString*)keyword;

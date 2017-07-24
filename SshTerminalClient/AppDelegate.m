@@ -54,7 +54,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 1
+#define TEST_SERVER 0
         
 		/*NSFont* font = [NSFont userFixedPitchFontOfSize:0];
 		NSFontManager* manager = [NSFontManager sharedFontManager];
@@ -125,6 +125,11 @@ SshConnection* sshConnection = NULL;
 		// SyntaxColoring specific.
 		//[terminal syntaxColoringAddOrUpdateItem:@"test" itemBackColor:0 itemTextColor:6 itemIsCompleteWord:false itemIsCaseSensitive:false itemIsUnderlined:false];
 		//[terminal syntaxColoringAddOrUpdateItem:@"welcome" itemBackColor:0 itemTextColor:7 itemIsCompleteWord:true itemIsCaseSensitive:false itemIsUnderlined:true];
+		
+		[terminal setDefaultBackgroundRed:255 green:255 blue:255];
+		[terminal setDefaultForegroundRed:0 green:0 blue:0];
+		[terminal setCursorBackgroundRed:255 green:0 blue:0];
+		[terminal setCursorForegroundRed:0 green:255 blue:255];
 		
         terminal.columnCount = 80;
         [terminal connect];

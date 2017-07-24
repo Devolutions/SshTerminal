@@ -58,6 +58,16 @@ enum
     VT100TerminalView* terminalView;
     TelnetConnection* connection;
     
+	NSColor* defaultBackground;
+	NSColor* defaultForeground;
+	NSColor* cursorBackground;
+	NSColor* cursorForeground;
+	NSColor* colors[16];
+	
+	NSMutableArray* syntaxColoringItems;
+	BOOL syntaxColoringChangeMade;
+	BOOL syntaxColoringScreenInitiated;
+	
     NSString* password;
     NSString* hostName;
     NSString* userName;
@@ -95,10 +105,25 @@ enum
 
 @property(readonly)int state;
 
+-(void)setDefaultBackgroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b;
+-(void)setDefaultForegroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b;
+-(void)setCursorBackgroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b;
+-(void)setCursorForegroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b;
+-(void)setColor:(int)index red:(UInt8)r green:(UInt8)g blue:(UInt8)b;
+
 -(void)setFontWithName:(NSString *)fontName size:(CGFloat)fontSize;
 -(void)setEventDelegate:(id<TelnetTerminalEvent>) delegate;
 -(void)connect;
 -(void)disconnect;
 -(void)send:(NSString *)string;
+
+-(void)syntaxColoringAddOrUpdateItem:(NSString*)keyword itemBackColor:(int)backColor itemTextColor:(int)textColor itemIsCompleteWord:(BOOL)isCompleteWord itemIsCaseSensitive:(BOOL)isCaseSensitive itemIsUnderlined:(BOOL)isUnderlined;
+-(void)syntaxColoringDeleteItem:(NSString*)keyword;
+-(void)syntaxColoringEnableItem:(NSString*)keyword;
+-(void)syntaxColoringDisableItem:(NSString*)keyword;
+-(void)syntaxColoringDeleteAllItems;
+-(void)syntaxColoringEnableAllItems;
+-(void)syntaxColoringDisableAllItems;
+-(void)syntaxColoringApplyChanges;
 
 @end

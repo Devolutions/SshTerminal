@@ -159,6 +159,176 @@ BOOL isMatch(NSString* host, NSString* excluded)
 }
 
 
+-(void)setDefaultBackgroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b
+{
+	[defaultBackground release];
+	defaultBackground = [NSColor colorWithRed:(float)r / 255.0 green:(float)g / 255.0 blue:(float)b / 255.0 alpha:1.0];
+	[defaultBackground retain];
+}
+
+
+-(void)setDefaultForegroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b
+{
+	[defaultForeground release];
+	defaultForeground = [NSColor colorWithRed:(float)r / 255.0 green:(float)g / 255.0 blue:(float)b / 255.0 alpha:1.0];
+	[defaultForeground retain];
+}
+
+
+-(void)setCursorBackgroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b
+{
+	[cursorBackground release];
+	cursorBackground = [NSColor colorWithRed:(float)r / 255.0 green:(float)g / 255.0 blue:(float)b / 255.0 alpha:1.0];
+	[cursorBackground retain];
+}
+
+
+-(void)setCursorForegroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b
+{
+	[cursorForeground release];
+	cursorForeground = [NSColor colorWithRed:(float)r / 255.0 green:(float)g / 255.0 blue:(float)b / 255.0 alpha:1.0];
+	[cursorForeground retain];
+}
+
+
+-(void)setColor:(int)index red:(UInt8)r green:(UInt8)g blue:(UInt8)b
+{
+	[colors[index] release];
+	colors[index] = [NSColor colorWithRed:(float)r / 255.0 green:(float)g / 255.0 blue:(float)b / 255.0 alpha:1.0];
+	[colors[index] retain];
+}
+
+
+-(void)syntaxColoringAddOrUpdateItem:(NSString*)keyword itemBackColor:(int)backColor itemTextColor:(int)textColor itemIsCompleteWord:(BOOL)isCompleteWord itemIsCaseSensitive:(BOOL)isCaseSensitive itemIsUnderlined:(BOOL)isUnderlined
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	BOOL itemDoesntExist = true;
+	while ((item = [i nextObject]))
+	{
+		if ([item.keyword compare:keyword] == NSOrderedSame)
+		{
+			item.keyword = keyword;
+			item.keywordLen = (int)[keyword length];
+			item.backColor = backColor;
+			item.textColor = textColor;
+			item.isCompleteWord = isCompleteWord;
+			item.isCaseSensitive = isCaseSensitive;
+			item.isUnderlined = isUnderlined;
+			item.isEnabled = true;
+			itemDoesntExist = false;
+			break;
+		}
+	}
+	
+	if (itemDoesntExist)
+	{
+		SyntaxColoringItem* it = [[SyntaxColoringItem alloc] init];
+		it.keyword = keyword;
+		it.keywordLen = (int)[keyword length];
+		it.backColor = backColor;
+		it.textColor = textColor;
+		it.isCompleteWord = isCompleteWord;
+		it.isCaseSensitive = isCaseSensitive;
+		it.isUnderlined = isUnderlined;
+		it.isEnabled = true;
+		[syntaxColoringItems addObject:it];
+	}
+	
+	syntaxColoringChangeMade = true;
+}
+
+
+-(void)syntaxColoringDeleteItem:(NSString*)keyword
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	while ((item = [i nextObject]))
+	{
+		if ([item.keyword compare:keyword] == NSOrderedSame)
+		{
+			[syntaxColoringItems removeObject:item];
+			syntaxColoringChangeMade = true;
+			break;
+		}
+	}
+}
+
+
+-(void)syntaxColoringEnableItem:(NSString*)keyword
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	while ((item = [i nextObject]))
+	{
+		if ([item.keyword compare:keyword] == NSOrderedSame)
+		{
+			item.isEnabled = true;
+			syntaxColoringChangeMade = true;
+			break;
+		}
+	}
+}
+
+
+-(void)syntaxColoringDisableItem:(NSString*)keyword
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	while ((item = [i nextObject]))
+	{
+		if ([item.keyword compare:keyword] == NSOrderedSame)
+		{
+			item.isEnabled = false;
+			syntaxColoringChangeMade = true;
+			break;
+		}
+	}
+}
+
+
+-(void)syntaxColoringDeleteAllItems
+{
+	[syntaxColoringItems removeAllObjects];
+	syntaxColoringChangeMade = true;
+}
+
+
+-(void)syntaxColoringEnableAllItems
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	while ((item = [i nextObject]))
+	{
+		item.isEnabled = true;
+	}
+	
+	syntaxColoringChangeMade = true;
+}
+
+
+-(void)syntaxColoringDisableAllItems
+{
+	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	SyntaxColoringItem* item;
+	while ((item = [i nextObject]))
+	{
+		item.isEnabled = false;
+	}
+	
+	syntaxColoringChangeMade = true;
+}
+
+
+-(void)syntaxColoringApplyChanges
+{
+	if (syntaxColoringScreenInitiated)
+	{
+		[terminalView.screen applyChanges];
+	}
+}
+
+
 -(void)connect
 {
     if (state != telnetTerminalDisconnected)
@@ -232,9 +402,26 @@ BOOL isMatch(NSString* host, NSString* excluded)
         }
     }
     
-    // Setup the terminal.
+	// Setup terminal colors.
+	[terminalView.screen setDefaultBackgroundColor:defaultBackground foregroundColor:defaultForeground];
+	[terminalView.screen setCursorBackgroundColor:cursorBackground foregroundColor:cursorForeground];
+	for (int i = 0; i < 8; i++)
+	{
+		[terminalView.screen setColor:colors[i * 2] at:i];
+		[terminalView.screen setColor:colors[i * 2 + 1] at:i + 8];
+	}
+	
     [terminalView initScreen];
     
+	// Setup initial syntax coloring.
+	if (syntaxColoringScreenInitiated == false)
+	{
+		terminalView.screen.syntaxColoringItems = syntaxColoringItems;
+		terminalView.screen.syntaxColoringChangeMade = &syntaxColoringChangeMade;
+		syntaxColoringScreenInitiated = true;
+		[self syntaxColoringApplyChanges];
+	}
+	
     [connection startConnection];
 }
 

@@ -30,7 +30,7 @@ unichar gGraphicSet[] =
 	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,
 	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,
 	0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,		0,
-	0,		0,		0,		0,		0,		0,		0,		0,		0,		0, 0x2518,	0x2500,	0x250C,	0x2514, 0x253C,		0,
+	0,		0,		0,		0,		0,		0,		0,		0,		0,		0, 0x2518, 0x2500, 0x250C, 0x2514, 0x253C,		0,
 	0, 0x2500,		0,		0, 0x251C, 0x2524, 0x2534, 0x252C, 0x2502,		0,		0,		0,		0,		0,		0,		0,
 };
 
@@ -43,9 +43,32 @@ unichar gGraphicSet[] =
 @synthesize fontHeight;
 @synthesize fontWidth;
 
-// SyntaxColoring specific.
 @synthesize syntaxColoringItems;
 @synthesize syntaxColoringChangeMade;
+
+-(void)setDefaultBackgroundColor:(NSColor *)background foregroundColor:(NSColor *)foreground
+{
+	backColors[0] = background;
+	textView.backgroundColor = background;
+
+	textColors[0] = foreground;
+}
+
+
+-(void)setCursorBackgroundColor:(NSColor *)background foregroundColor:(NSColor *)foreground
+{
+	[cursorAttributes release];
+	cursorAttributes = [NSDictionary dictionaryWithObjectsAndKeys:background, NSBackgroundColorAttributeName, foreground, NSForegroundColorAttributeName, nil];
+	[cursorAttributes retain];
+}
+
+
+-(void)setColor:(NSColor *)color at :(int)index
+{
+	backColors[index + 1] = color;
+	textColors[index + 1] = color;
+}
+
 
 -(NSColor*)backgroundColor
 {
@@ -90,52 +113,56 @@ unichar gGraphicSet[] =
     return NO;
 }
 
+-(void)actualizeAttributesIn:(NSMutableAttributedString*)string inRange:(NSRange)range
+{
+	void (^change)(id, NSRange, BOOL*) = ^(id value, NSRange range, BOOL* stop)
+	{
+		NSNumber* number = value;
+		if (number == nil)
+		{
+			number = [NSNumber numberWithInt:0];
+		}
+		TerminalAttribute attribute;
+		attribute.all = [number intValue];
+		NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithDictionary:newLineAttributes];
+		[dictionary setObject:number forKey:TAName];
+		
+		// Setup the colors.
+		NSColor* backColor = backColors[attribute.backColor];
+		NSColor* textColor = textColors[attribute.textColor];
+		if (attribute.flags & TA_INVERSE)
+		{
+			[dictionary setObject:backColor forKey:NSForegroundColorAttributeName];
+			[dictionary setObject:textColor forKey:NSBackgroundColorAttributeName];
+		}
+		else
+		{
+			[dictionary setObject:backColor forKey:NSBackgroundColorAttributeName];
+			[dictionary setObject:textColor forKey:NSForegroundColorAttributeName];
+		}
+		
+		// Setup the font.
+		if (attribute.flags & TA_BOLD)
+		{
+			[dictionary setObject:boldFont forKey:NSFontAttributeName];
+		}
+		
+		// Setup the underline attribute.
+		if (attribute.flags & TA_UNDERLINE)
+		{
+			[dictionary setObject:[NSNumber numberWithInt:NSUnderlineStyleSingle] forKey:NSUnderlineStyleAttributeName];
+		}
+		
+		// Paste to text.
+		[string setAttributes:dictionary range:range];
+	};
+	
+	[string enumerateAttribute:TAName inRange:range options:0 usingBlock:change];
+}
 
 -(void)actualizeAttributesIn:(NSMutableAttributedString*)string
 {
-    void (^change)(id, NSRange, BOOL*) = ^(id value, NSRange range, BOOL* stop)
-    {
-        NSNumber* number = value;
-        if (number == nil)
-        {
-            number = [NSNumber numberWithInt:0];
-        }
-        TerminalAttribute attribute;
-        attribute.all = [number intValue];
-        NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithDictionary:newLineAttributes];
-        [dictionary setObject:number forKey:TAName];
-        
-        // Setup the colors.
-        NSColor* backColor = backColors[attribute.backColor];
-        NSColor* textColor = textColors[attribute.textColor];
-        if (attribute.flags & TA_INVERSE)
-        {
-            [dictionary setObject:backColor forKey:NSForegroundColorAttributeName];
-            [dictionary setObject:textColor forKey:NSBackgroundColorAttributeName];
-        }
-        else
-        {
-            [dictionary setObject:backColor forKey:NSBackgroundColorAttributeName];
-            [dictionary setObject:textColor forKey:NSForegroundColorAttributeName];
-        }
-        
-        // Setup the font.
-        if (attribute.flags & TA_BOLD)
-        {
-            [dictionary setObject:boldFont forKey:NSFontAttributeName];
-        }
-        
-        // Setup the underline attribute.
-        if (attribute.flags & TA_UNDERLINE)
-        {
-            [dictionary setObject:[NSNumber numberWithInt:NSUnderlineStyleSingle] forKey:NSUnderlineStyleAttributeName];
-        }
-        
-        // Paste to text.
-        [string setAttributes:dictionary range:range];
-    };
-    
-    [string enumerateAttribute:TAName inRange:NSMakeRange(0, string.length) options:0 usingBlock:change];
+	[self actualizeAttributesIn:string inRange:NSMakeRange(0, string.length)];
 }
 
 
@@ -331,16 +358,19 @@ unichar gGraphicSet[] =
         } while (tabs[curX] == 0);
         repeat++;
     }
+	[self invalidateLine:curY];
 }
 
 
 -(void)cursorDown:(int)repeat
 {
+	[self invalidateLine:curY];
     curY += repeat;
     if (curY > bottomMargin)
     {
         curY = bottomMargin;
     }
+	[self invalidateLine:curY];
 }
 
 
@@ -355,6 +385,7 @@ unichar gGraphicSet[] =
     {
         curX = 0;
     }
+	[self invalidateLine:curY];
 }
 
 
@@ -395,6 +426,7 @@ unichar gGraphicSet[] =
     {
         curX = columnCount - 1;
     }
+	[self invalidateLine:curY];
 }
 
 
@@ -414,21 +446,25 @@ unichar gGraphicSet[] =
         } while (tabs[curX] == 0);
         repeat--;
     }
+	[self invalidateLine:curY];
 }
 
 
 -(void)cursorUp:(int)repeat
 {
+	[self invalidateLine:curY];
     curY -= repeat;
     if (curY < topMargin)
     {
         curY = topMargin;
     }
+	[self invalidateLine:curY];
 }
 
 
 -(void)cursorToRow:(int)row column:(int)col
 {
+	[self invalidateLine:curY];
     curX = col;
     
     if (originWithinMargins == NO)
@@ -464,6 +500,7 @@ unichar gGraphicSet[] =
     {
         curX = columnCount - 1;
     }
+	[self invalidateLine:curY];
 }
 
 
@@ -879,8 +916,10 @@ unichar gGraphicSet[] =
                 case '8':
                 {
                     // Restore cursor.
+					[self invalidateLine:curY];
                     curX = savedCurX;
                     curY = savedCurY;
+					[self invalidateLine:curY];
                     currentAttribute = savedAttribute;
                     autoWrap = savedAutoWrap;
                     originWithinMargins = savedOriginWithinMargins;
@@ -1128,6 +1167,7 @@ unichar gGraphicSet[] =
             {
                 if (curX == 0)
                 {
+					[self invalidateLine:curY];
                     curX = columnCount - 1;
                     if (curY == topMargin)
                     {
@@ -1137,6 +1177,7 @@ unichar gGraphicSet[] =
                     {
                         curY--;
                     }
+					[self invalidateLine:curY];
                 }
                 else
                 {
@@ -1156,6 +1197,7 @@ unichar gGraphicSet[] =
         case '\r':
         {
             curX = 0;
+			[self invalidateLine:curY];
             break;
         }
             
@@ -1174,6 +1216,7 @@ unichar gGraphicSet[] =
             if (autoReturnLineFeed == YES)
             {
                 curX = 0;
+				[self invalidateLine:curY];
             }
             break;
         }
@@ -1229,9 +1272,6 @@ unichar gGraphicSet[] =
 			{
 				repeat = columnCount - curX;
 			}
-			// Commented out code because it cause some vertical alignment problems. Not deleted yet because I am not sure if it is OK in all situations.
-			//int insertOffset = curX + curY * columnCount;
-			//[screen addAttribute:TAName value:[NSNumber numberWithInt:currentAttribute.all] range:NSMakeRange(insertOffset, repeat)];
             [self cursorRight:repeat];
             break;
         }
@@ -1257,6 +1297,7 @@ unichar gGraphicSet[] =
             }
             [self cursorDown:repeat];
             curX = 0;
+			[self invalidateLine:curY];
             break;
         }
             
@@ -1272,6 +1313,7 @@ unichar gGraphicSet[] =
             }
             [self cursorUp:repeat];
             curX = 0;
+			[self invalidateLine:curY];
             
             break;
         }
@@ -1285,6 +1327,7 @@ unichar gGraphicSet[] =
             {
                 curX = columnCount - 1;
             }
+			[self invalidateLine:curY];
             
             break;
         }
@@ -1396,11 +1439,13 @@ unichar gGraphicSet[] =
             
         case 'd':
         {
+			[self invalidateLine:curY];
             curY = (args[0] > 0 ? args[0] - 1 : 0);
             if (curY >= rowCount)
             {
                 curY = rowCount - 1;
             }
+			[self invalidateLine:curY];
             break;
         }
             
@@ -1553,8 +1598,10 @@ unichar gGraphicSet[] =
 								altCurY = curY;
 								altSavedCurX = savedCurX;
 								altSavedCurY = savedCurY;
+								[self invalidateLine:curY];
 								curX = 0;
 								curY = 0;
+								[self invalidateLine:curY];
 							}
                         }
                     }
@@ -1672,8 +1719,10 @@ unichar gGraphicSet[] =
 							isAlternate = NO;
 							topMargin = savedTopMargin;
 							bottomMargin = savedBottomMargin;
+							[self invalidateLine:curY];
 							curX = 0;
 							curY = 0;
+							[self invalidateLine:curY];
 							[self deleteInScreen:2];
 						}
                     }
@@ -1706,12 +1755,12 @@ unichar gGraphicSet[] =
                 }
                 if (arg >= 90 && arg <= 97)
                 {
-                    currentAttribute.textColor = arg - 89;
+                    currentAttribute.textColor = arg - 89 + 8;
                     continue;
                 }
                 if (arg >= 100 && arg <= 107)
                 {
-                    currentAttribute.backColor = arg - 99;
+                    currentAttribute.backColor = arg - 99 + 8;
                     continue;
                 }
                 switch (arg)
@@ -1859,8 +1908,6 @@ unichar gGraphicSet[] =
     }
 	
 	[self actualizeAttributesIn:screen];
-	
-	// SyntaxColoring specfic.
 	[self applySyntaxColoringIn:screen];
     
     flushScreenBlock = ^{
@@ -1900,6 +1947,10 @@ unichar gGraphicSet[] =
         
         // Delete from the text view the part that needs updating.
         [storage beginEditing];
+		if (self->cursorIndex < storage.length)
+		{
+			[self actualizeAttributesIn:storage inRange:NSMakeRange(self->cursorIndex, 1)];
+		}
         if (updateLine < lineCount)
         {
             NSRange range = NSMakeRange(updateLineStart, storage.length - updateLineStart);
@@ -1931,7 +1982,15 @@ unichar gGraphicSet[] =
         {
             int lineStart = l * columnCount;
             NSAttributedString* screenLine = [screen attributedSubstringFromRange:NSMakeRange(lineStart, columnCount)];
+			if (l == curY)
+			{
+				self->cursorIndex = (SInt32)storage.length + curX;
+			}
             [storage appendAttributedString:screenLine];
+			if (l == curY && [textView cursorVisible] && self->cursorIndex < storage.length)
+			{
+				[storage addAttributes:cursorAttributes range:NSMakeRange(self->cursorIndex, 1)];
+			}
             
             if (l < lastInvalidLine)
             {
@@ -2066,7 +2125,6 @@ unichar gGraphicSet[] =
 -(void)newDataAvailableIn:(UInt8*)buffer length:(int)size
 {
     [lock lock];
-    NSRect previousRect = [self cursorRect];
     while (size > 0)
     {
         int copySize = (size > TERMINAL_BUFFER_SIZE - inIndex ? TERMINAL_BUFFER_SIZE - inIndex : size);
@@ -2078,14 +2136,6 @@ unichar gGraphicSet[] =
     }
     
     [self flushScreen];
-    NSRect newRect = [self cursorRect];
-    if (previousRect.origin.x != newRect.origin.x || previousRect.origin.y != newRect.origin.y)
-    {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [textView setNeedsDisplayInRect:previousRect];
-            [textView setNeedsDisplayInRect:newRect];
-        });
-    }
     [lock unlock];
 }
 
@@ -2123,16 +2173,19 @@ unichar gGraphicSet[] =
                     {
                         [self scrollFeed:1];
                         curX = 0;
+						[self invalidateLine:curY];
                     }
                     else
                     {
                         [self cursorDown:1];
                         curX = 0;
+						[self invalidateLine:curY];
                     }
                 }
                 else
                 {
                     curX = columnCount - 1;
+					[self invalidateLine:curY];
                 }
             }
             
@@ -2377,6 +2430,7 @@ unichar gGraphicSet[] =
             
             if (savedCursorChar >= range.location && savedCursorChar < range.location + range.length)
             {
+				[self invalidateLine:curY];
                 curY = i + savedCursorDeltaY;
                 if (curY < 0)
                 {
@@ -2396,6 +2450,7 @@ unichar gGraphicSet[] =
                 {
                     curX = columnCount - 1;
                 }
+				[self invalidateLine:curY];
             }
             
             if (range.length >= 2)
@@ -2531,27 +2586,46 @@ unichar gGraphicSet[] =
         
         rowCount = 24;
         
-        backColors[0] = [NSColor blackColor];
-        backColors[1] = [NSColor blackColor];
-        backColors[2] = [NSColor redColor];
-        backColors[3] = [NSColor greenColor];
-        backColors[4] = [NSColor yellowColor];
-        backColors[5] = [NSColor blueColor];
-        backColors[6] = [NSColor magentaColor];
-        backColors[7] = [NSColor cyanColor];
-        backColors[8] = [NSColor whiteColor];
+        backColors[0] = [NSColor blackColor];   // Default background.
+		backColors[1] = [NSColor blackColor];
+		backColors[2] = [NSColor redColor];
+		backColors[3] = [NSColor greenColor];
+		backColors[4] = [NSColor yellowColor];
+		backColors[5] = [NSColor blueColor];
+		backColors[6] = [NSColor magentaColor];
+		backColors[7] = [NSColor cyanColor];
+		backColors[8] = [NSColor whiteColor];
+		backColors[9] = [NSColor blackColor];
+		backColors[10] = [NSColor redColor];
+		backColors[11] = [NSColor greenColor];
+		backColors[12] = [NSColor yellowColor];
+		backColors[13] = [NSColor blueColor];
+		backColors[14] = [NSColor magentaColor];
+		backColors[15] = [NSColor cyanColor];
+		backColors[16] = [NSColor whiteColor];
         
-        textColors[0] = [NSColor whiteColor];
-        textColors[1] = [NSColor blackColor];
-        textColors[2] = [NSColor redColor];
-        textColors[3] = [NSColor greenColor];
-        textColors[4] = [NSColor yellowColor];
-        textColors[5] = [NSColor blueColor];
-        textColors[6] = [NSColor magentaColor];
-        textColors[7] = [NSColor cyanColor];
-        textColors[8] = [NSColor whiteColor];
+        textColors[0] = [NSColor whiteColor];   // Default foreground.
+		textColors[1] = [NSColor blackColor];
+		textColors[2] = [NSColor redColor];
+		textColors[3] = [NSColor greenColor];
+		textColors[4] = [NSColor yellowColor];
+		textColors[5] = [NSColor blueColor];
+		textColors[6] = [NSColor magentaColor];
+		textColors[7] = [NSColor cyanColor];
+		textColors[8] = [NSColor whiteColor];
+		textColors[9] = [NSColor blackColor];
+		textColors[10] = [NSColor redColor];
+		textColors[11] = [NSColor greenColor];
+		textColors[12] = [NSColor yellowColor];
+		textColors[13] = [NSColor blueColor];
+		textColors[14] = [NSColor magentaColor];
+		textColors[15] = [NSColor cyanColor];
+		textColors[16] = [NSColor whiteColor];
         
-        NSFontManager* fontManager = [NSFontManager sharedFontManager];
+		cursorAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[NSColor whiteColor], NSBackgroundColorAttributeName, [NSColor blackColor], NSForegroundColorAttributeName, nil];
+		[cursorAttributes retain];
+
+		NSFontManager* fontManager = [NSFontManager sharedFontManager];
         boldFont = [fontManager convertFont:normalFont toHaveTrait:NSBoldFontMask];
         [boldFont retain];
 

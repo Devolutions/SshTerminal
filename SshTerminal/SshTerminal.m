@@ -71,8 +71,6 @@
 @synthesize useAgent;
 @synthesize keepAliveTime;
 
-// SyntaxColoring specific.
-@synthesize syntaxColoringScreenInitiated;
 
 -(void)setPassword:(NSString *)string
 {
@@ -115,6 +113,46 @@
 -(void)clearAllTunnels
 {
     [tunnels removeAllObjects];
+}
+
+
+-(void)setDefaultBackgroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b
+{
+	[defaultBackground release];
+	defaultBackground = [NSColor colorWithRed:(float)r / 255.0 green:(float)g / 255.0 blue:(float)b / 255.0 alpha:1.0];
+	[defaultBackground retain];
+}
+
+
+-(void)setDefaultForegroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b
+{
+	[defaultForeground release];
+	defaultForeground = [NSColor colorWithRed:(float)r / 255.0 green:(float)g / 255.0 blue:(float)b / 255.0 alpha:1.0];
+	[defaultForeground retain];
+}
+
+
+-(void)setCursorBackgroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b
+{
+	[cursorBackground release];
+	cursorBackground = [NSColor colorWithRed:(float)r / 255.0 green:(float)g / 255.0 blue:(float)b / 255.0 alpha:1.0];
+	[cursorBackground retain];
+}
+
+
+-(void)setCursorForegroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b
+{
+	[cursorForeground release];
+	cursorForeground = [NSColor colorWithRed:(float)r / 255.0 green:(float)g / 255.0 blue:(float)b / 255.0 alpha:1.0];
+	[cursorForeground retain];
+}
+
+
+-(void)setColor:(int)index red:(UInt8)r green:(UInt8)g blue:(UInt8)b
+{
+	[colors[index] release];
+	colors[index] = [NSColor colorWithRed:(float)r / 255.0 green:(float)g / 255.0 blue:(float)b / 255.0 alpha:1.0];
+	[colors[index] retain];
 }
 
 
@@ -162,15 +200,24 @@
     [connection setAgentForwarding:agentForwarding];
     [connection setUseAgent:useAgent];
     [connection setKeepAliveTime:keepAliveTime];
+	
+	// Setup terminal colors.
+	[terminalView.screen setDefaultBackgroundColor:defaultBackground foregroundColor:defaultForeground];
+	[terminalView.screen setCursorBackgroundColor:cursorBackground foregroundColor:cursorForeground];
+	for (int i = 0; i < 8; i++)
+	{
+		[terminalView.screen setColor:colors[i * 2] at:i];
+		[terminalView.screen setColor:colors[i * 2 + 1] at:i + 8];
+	}
     
     [terminalView initScreen];
 	
-	// SyntaxColoring specific.
-	if (self.syntaxColoringScreenInitiated == false)
+	// Setup initial syntax coloring.
+	if (syntaxColoringScreenInitiated == false)
 	{
 		terminalView.screen.syntaxColoringItems = syntaxColoringItems;
 		terminalView.screen.syntaxColoringChangeMade = &syntaxColoringChangeMade;
-		self.syntaxColoringScreenInitiated = true;
+		syntaxColoringScreenInitiated = true;
 		[self syntaxColoringApplyChanges];
 	}
 	
@@ -327,79 +374,6 @@
 }
 
 
--(void)initSubclassMembers
-{
-    state = sshTerminalDisconnected;
-    port = 22;
-    tunnels = [NSMutableArray new];
-    
-    [self setAutoresizesSubviews:YES];
-    [self setHasVerticalScroller:YES];
-    [self setHasHorizontalScroller:NO];
-    [self setAutoresizesSubviews:YES];
-    
-    NSClipView* clip = [[NSClipView alloc] init];
-    [self setContentView:clip];
-    [clip release];
-
-    NSRect rect;
-    rect.origin = NSMakePoint(0, 0);
-    rect.size = self.contentSize;
-
-    terminalView = [[VT100TerminalView alloc] initWithFrame:rect];
-    [terminalView setEditable:YES];
-    [self adjustTerminalSize];
-    
-    [self setDocumentView:terminalView];
-	
-	syntaxColoringItems = [NSMutableArray new];
-}
-
-
--(SshTerminal*)initWithFrame:(NSRect)frameRect
-{
-    self = [super initWithFrame:frameRect];
-    if (self != nil)
-    {
-        [self initSubclassMembers];
-    }
-    
-    return self;
-}
-
-
--(instancetype)initWithCoder:(NSCoder *)coder
-{
-    self = [super initWithCoder:coder];
-    if (self != nil)
-    {
-        [self initSubclassMembers];
-    }
-    
-    return self;
-}
-
-
--(SshTerminal*)init
-{
-    return [self initWithFrame:NSMakeRect(0, 0, 0, 0)];
-}
-
-
-- (void)dealloc
-{
-	[syntaxColoringItems release];
-	[x11AuthorityFile release];
-	[x11Authentication release];
-	[keyFilePath release];
-	[hostName release];
-	[userName release];
-	[x11Display release];
-	[super dealloc];
-}
-
-
-// SyntaxColoring specific.
 -(void)syntaxColoringAddOrUpdateItem:(NSString*)keyword itemBackColor:(int)backColor itemTextColor:(int)textColor itemIsCompleteWord:(BOOL)isCompleteWord itemIsCaseSensitive:(BOOL)isCaseSensitive itemIsUnderlined:(BOOL)isUnderlined
 {
 	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
@@ -523,10 +497,130 @@
 
 -(void)syntaxColoringApplyChanges
 {
-	if (self.syntaxColoringScreenInitiated)
+	if (syntaxColoringScreenInitiated)
 	{
 		[terminalView.screen applyChanges];
 	}
 }
+
+
+-(void)initSubclassMembers
+{
+    state = sshTerminalDisconnected;
+    port = 22;
+    tunnels = [NSMutableArray new];
+	
+	defaultBackground = [NSColor blackColor];
+	[defaultBackground retain];
+	defaultForeground = [NSColor whiteColor];
+	[defaultForeground retain];
+	cursorBackground = [NSColor whiteColor];
+	[cursorBackground retain];
+	cursorForeground = [NSColor blackColor];
+	[cursorForeground retain];
+	colors[0] = [NSColor blackColor];
+	[colors[0] retain];
+	colors[1] = [NSColor darkGrayColor];
+	[colors[1] retain];
+	colors[2] = [NSColor redColor];
+	[colors[2] retain];
+	colors[3] = [NSColor colorWithRed:1.0F green:0.333F blue:0.333F alpha:1.0F];
+	[colors[3] retain];
+	colors[4] = [NSColor greenColor];
+	[colors[4] retain];
+	colors[5] = [NSColor colorWithRed:0.333F green:1.0F blue:0.333F alpha:1.0F];
+	[colors[5] retain];
+	colors[6] = [NSColor colorWithRed:0.733F green:0.733F blue:0.0F alpha:1.0F];
+	[colors[6] retain];
+	colors[7] = [NSColor colorWithRed:1.0F green:1.0F blue:0.733F alpha:1.0F];
+	[colors[7] retain];
+	colors[8] = [NSColor colorWithRed:0.0F green:0.0F blue:0.733F alpha:1.0F];
+	[colors[8] retain];
+	colors[9] = [NSColor colorWithRed:0.733F green:0.733F blue:1.0F alpha:1.0F];
+	[colors[9] retain];
+	colors[10] = [NSColor colorWithRed:0.733F green:0.0F blue:0.733F alpha:1.0F];
+	[colors[10] retain];
+	colors[11] = [NSColor colorWithRed:1.0F green:0.333F blue:1.0F alpha:1.0F];
+	[colors[11] retain];
+	colors[12] = [NSColor colorWithRed:0.0F green:0.733F blue:0.733F alpha:1.0F];
+	[colors[12] retain];
+	colors[13] = [NSColor colorWithRed:0.733F green:1.0F blue:1.0F alpha:1.0F];
+	[colors[13] retain];
+	colors[14] = [NSColor colorWithRed:0.733F green:0.733F blue:0.733F alpha:1.0F];
+	[colors[14] retain];
+	colors[15] = [NSColor whiteColor];
+	[colors[15] retain];
+	
+	[self setAutoresizesSubviews:YES];
+    [self setHasVerticalScroller:YES];
+    [self setHasHorizontalScroller:NO];
+    [self setAutoresizesSubviews:YES];
+    
+    NSClipView* clip = [[NSClipView alloc] init];
+    [self setContentView:clip];
+    [clip release];
+
+    NSRect rect;
+    rect.origin = NSMakePoint(0, 0);
+    rect.size = self.contentSize;
+
+    terminalView = [[VT100TerminalView alloc] initWithFrame:rect];
+    [terminalView setEditable:YES];
+    [self adjustTerminalSize];
+    
+    [self setDocumentView:terminalView];
+	
+	syntaxColoringItems = [NSMutableArray new];
+}
+
+
+-(SshTerminal*)initWithFrame:(NSRect)frameRect
+{
+    self = [super initWithFrame:frameRect];
+    if (self != nil)
+    {
+        [self initSubclassMembers];
+    }
+    
+    return self;
+}
+
+
+-(instancetype)initWithCoder:(NSCoder *)coder
+{
+    self = [super initWithCoder:coder];
+    if (self != nil)
+    {
+        [self initSubclassMembers];
+    }
+    
+    return self;
+}
+
+
+-(SshTerminal*)init
+{
+    return [self initWithFrame:NSMakeRect(0, 0, 0, 0)];
+}
+
+
+- (void)dealloc
+{
+	[defaultBackground release];
+	[defaultForeground release];
+	for (int i = 0; i < 16; i++)
+	{
+		[colors[i] release];
+	}
+	[syntaxColoringItems release];
+	[x11AuthorityFile release];
+	[x11Authentication release];
+	[keyFilePath release];
+	[hostName release];
+	[userName release];
+	[x11Display release];
+	[super dealloc];
+}
+
 
 @end

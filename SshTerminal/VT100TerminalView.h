@@ -30,6 +30,7 @@
 
 -(void)setConnection:(id<VT100Connection>)newConnection;
 -(void)setCursorVisible:(BOOL)visible;
+-(BOOL)cursorVisible;
 -(void)setTerminalSize:(NSSize)newSize;
 
 

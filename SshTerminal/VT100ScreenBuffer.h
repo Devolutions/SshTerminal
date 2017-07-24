@@ -41,11 +41,12 @@ typedef union
     
     NSFont* normalFont;
     NSFont* boldFont;
-    NSColor* backColors[9];
-    NSColor* textColors[9];
+    NSColor* backColors[17];
+    NSColor* textColors[17];
     
     NSMutableParagraphStyle* paragraphStyle;
     NSDictionary* newLineAttributes;
+	NSDictionary* cursorAttributes;
     NSAttributedString* blankLine;
     NSAttributedString* blankChar;
     NSAttributedString* lineFeed;
@@ -67,6 +68,7 @@ typedef union
     SInt32 columnCount;
     SInt32 curX;
     SInt32 curY;
+	SInt32 cursorIndex;
     SInt32 firstInvalidLine;
     SInt32 lastInvalidLine;
     SInt32 rowCount;
@@ -125,6 +127,9 @@ typedef union
 -(void)setConnection:(id<VT100Connection>)newConnection;
 -(void)setWidth:(int)newCount height:(int)height;
 -(void)setFontWithname:(NSString*)newFontName size:(CGFloat)newFontSize;
+-(void)setDefaultBackgroundColor:(NSColor*)background foregroundColor:(NSColor*)foreground;
+-(void)setCursorBackgroundColor:(NSColor*)background foregroundColor:(NSColor*)foreground;
+-(void)setColor:(NSColor*)color at:(int)index;
 
 -(BOOL)sendMouseEvent:(NSEvent*)theEvent inView:(NSView*)view isUpEvent:(BOOL)isUp;
 

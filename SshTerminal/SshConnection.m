@@ -1362,7 +1362,7 @@ void setLangEnv(ssh_channel channel, const char* var)
 -(void)remoteErrorMessage:(SshTunnel*)tunnel
 {
 	char stringBuffer[240];
-	snprintf(stringBuffer, sizeof(stringBuffer), "Server unable to connect to remote %s:%s\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
+	snprintf(stringBuffer, sizeof(stringBuffer), "Server unable to connect to remote %s:%d\r\n", [tunnel.remoteHost UTF8String], tunnel.remotePort);
 	[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
 }
 

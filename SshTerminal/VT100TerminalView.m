@@ -49,21 +49,16 @@
 }
 
 
--(void)drawRect:(NSRect)dirtyRect
+-(BOOL)cursorVisible
 {
-    [super drawRect:dirtyRect];
-    if (isCursorVisible == NO)
-    {
-        return;
-    }
-    
-    NSRect rect = [screen cursorRect];
-    if (NSIsEmptyRect(rect) == NO)
-    {
-        NSColor* cursorColor = [NSColor colorWithDeviceWhite:1.0F alpha:0.5F];
-        [cursorColor setFill];
-        [NSBezierPath fillRect:rect];
-    }
+	return isCursorVisible;
+}
+
+
+-(BOOL)shouldDrawInsertionPoint
+{
+	// This hides the NSTextView cursor, which we don't need.
+	return NO;
 }
 
 
@@ -150,7 +145,7 @@
 
 -(void)setMarkedText:(id)string selectedRange:(NSRange)selectedRange replacementRange:(NSRange)replacementRange
 {
-	markRange = [string length];
+	markRange = (int)[string length];
 	const char* chars = [string UTF8String];
 	int cLength = (int)strlen(chars);
 	[connection writeFrom:(const UInt8*)chars length:cLength];
