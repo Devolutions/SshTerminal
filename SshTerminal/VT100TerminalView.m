@@ -7,6 +7,7 @@
 //
 
 #import "VT100TerminalView.h"
+#import "TerminalPreferences.h"
 
 #define KEYPAD_ENTER 0x03
 
@@ -82,6 +83,27 @@
     return NO;
 }
 
+-(void)copy:(id)sender
+{
+    switch([[TerminalPreferences sharedPreferences] copyMode])
+    {
+        case PlainTextCopyMode:
+        {
+            NSString *string=[[self string] substringWithRange:[self selectedRange]];
+            
+            if([string length]>0){
+                [[NSPasteboard generalPasteboard] declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
+                [[NSPasteboard generalPasteboard] setString:[[self string] substringWithRange:[self selectedRange]] forType:NSStringPboardType];
+            }
+            
+            break;
+        }
+            
+        default:
+            [super copy:sender];
+            break;
+    }
+}
 
 -(void)paste:(id)sender
 {
