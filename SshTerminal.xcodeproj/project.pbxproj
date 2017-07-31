@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		657CCE2E1F2F65450000F8AF /* TerminalPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = 657CCE2C1F2F65450000F8AF /* TerminalPreferences.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		657CCE2F1F2F65450000F8AF /* TerminalPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = 657CCE2C1F2F65450000F8AF /* TerminalPreferences.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		657CCE301F2F65450000F8AF /* TerminalPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 657CCE2D1F2F65450000F8AF /* TerminalPreferences.m */; };
+		657CCE311F2F65450000F8AF /* TerminalPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 657CCE2D1F2F65450000F8AF /* TerminalPreferences.m */; };
 		6582BB491F1D161D00F71650 /* SyntaxColoringItem.m in Sources */ = {isa = PBXBuildFile; fileRef = E7D13EFF1EFDB1DD00E62159 /* SyntaxColoringItem.m */; };
 		6582BB4A1F1D161F00F71650 /* SyntaxColoringItem.h in Headers */ = {isa = PBXBuildFile; fileRef = E7D13F011EFDB21300E62159 /* SyntaxColoringItem.h */; };
 		E7D13F001EFDB1DD00E62159 /* SyntaxColoringItem.m in Sources */ = {isa = PBXBuildFile; fileRef = E7D13EFF1EFDB1DD00E62159 /* SyntaxColoringItem.m */; };
@@ -130,6 +134,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		657CCE2C1F2F65450000F8AF /* TerminalPreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TerminalPreferences.h; sourceTree = "<group>"; };
+		657CCE2D1F2F65450000F8AF /* TerminalPreferences.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TerminalPreferences.m; sourceTree = "<group>"; };
 		E7D13EFF1EFDB1DD00E62159 /* SyntaxColoringItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SyntaxColoringItem.m; sourceTree = "<group>"; };
 		E7D13F011EFDB21300E62159 /* SyntaxColoringItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SyntaxColoringItem.h; sourceTree = "<group>"; };
 		F477D6491C1622A100FCB65A /* VT100ScreenBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenBuffer.h; sourceTree = "<group>"; };
@@ -316,6 +322,8 @@
 				F4989F111B5FE59300693A47 /* TelnetConnection.m */,
 				F4989F0C1B5FDC7900693A47 /* TelnetTerminal.h */,
 				F4989F0D1B5FDC7900693A47 /* TelnetTerminal.m */,
+				657CCE2C1F2F65450000F8AF /* TerminalPreferences.h */,
+				657CCE2D1F2F65450000F8AF /* TerminalPreferences.m */,
 				F4AE90361B41733E007AC63E /* Supporting Files */,
 			);
 			path = SshTerminal;
@@ -374,6 +382,7 @@
 				F477D64B1C1622A100FCB65A /* VT100ScreenBuffer.h in Headers */,
 				F4989F161B5FEED800693A47 /* VT100Connection.h in Headers */,
 				F490013F1CF8B18700EC1186 /* SshAgent.h in Headers */,
+				657CCE2E1F2F65450000F8AF /* TerminalPreferences.h in Headers */,
 				E7D13F021EFDB21300E62159 /* SyntaxColoringItem.h in Headers */,
 				F4989F121B5FE59300693A47 /* TelnetConnection.h in Headers */,
 			);
@@ -403,6 +412,7 @@
 				F4FB45C71D0607B800BFDE72 /* VT100Connection.h in Headers */,
 				F4FB45C81D0607B800BFDE72 /* SshAgent.h in Headers */,
 				F4FB45C91D0607B800BFDE72 /* TelnetConnection.h in Headers */,
+				657CCE2F1F2F65450000F8AF /* TerminalPreferences.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -601,6 +611,7 @@
 			files = (
 				F4BA04871BBC59CF0025F526 /* ProxyHttp.m in Sources */,
 				F4BA047F1BBAFDE50025F526 /* ProxySocks4.m in Sources */,
+				657CCE301F2F65450000F8AF /* TerminalPreferences.m in Sources */,
 				F4989F191B6008A200693A47 /* NetworkHelpers.m in Sources */,
 				F4989F131B5FE59300693A47 /* TelnetConnection.m in Sources */,
 				F490013E1CF8B18700EC1186 /* SshAgent.c in Sources */,
@@ -634,6 +645,7 @@
 			files = (
 				F4FB45A51D0607B800BFDE72 /* ProxyHttp.m in Sources */,
 				F4FB45A61D0607B800BFDE72 /* ProxySocks4.m in Sources */,
+				657CCE311F2F65450000F8AF /* TerminalPreferences.m in Sources */,
 				F4FB45A71D0607B800BFDE72 /* NetworkHelpers.m in Sources */,
 				F4FB45A81D0607B800BFDE72 /* TelnetConnection.m in Sources */,
 				F4FB45A91D0607B800BFDE72 /* SshAgent.c in Sources */,
