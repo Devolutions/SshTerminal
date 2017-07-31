@@ -57,9 +57,13 @@
 @synthesize hostName;
 @synthesize userName;
 @synthesize keyFilePath;
+@synthesize jumpHostName;
+@synthesize jumpUserName;
+@synthesize jumpKeyFilePath;
 @synthesize columnCount;
 @synthesize state;
 @synthesize port;
+@synthesize jumpPort;
 @synthesize x11Forwarding;
 @synthesize x11Display;
 @synthesize x11Authentication;
@@ -74,13 +78,25 @@
 
 -(void)setPassword:(NSString *)string
 {
-    password = [string copy];
+	password = [string copy];
 }
 
 
 -(void)setKeyFilePassword:(NSString *)string
 {
-    keyFilePassword = [string copy];
+	keyFilePassword = [string copy];
+}
+
+
+-(void)setJumpPassword:(NSString *)string
+{
+	jumpPassword = [string copy];
+}
+
+
+-(void)setJumpKeyFilePassword:(NSString *)string
+{
+	jumpKeyFilePassword = [string copy];
 }
 
 
@@ -164,20 +180,39 @@
     }
     state = sshTerminalConnected;
     
-    [connection release];
-    connection = [[SshConnection alloc] init];
-    [connection setEventDelegate:self];
-    [terminalView setConnection:connection];
+	int family = PF_UNSPEC;
+	if (internetProtocol == sshTerminalIpv4)
+	{
+		family = PF_INET;
+	}
+	else if (internetProtocol == sshTerminalIpv6)
+	{
+		family = PF_INET6;
+	}
 
-    int family = PF_UNSPEC;
-    if (internetProtocol == sshTerminalIpv4)
-    {
-        family = PF_INET;
-    }
-    else if (internetProtocol == sshTerminalIpv6)
-    {
-        family = PF_INET6;
-    }
+	[connection release];
+	connection = [[SshConnection alloc] init];
+	[connection setEventDelegate:self];
+	[terminalView setConnection:connection];
+	
+	[jump release];
+	if (jumpHostName == nil || jumpHostName.length == 0)
+	{
+		jump = nil;
+	}
+	else
+	{
+		jump = [[SshConnection alloc] initWithConnection:connection];
+		[jump setEventDelegate:self];
+		[jump setHost:jumpHostName port:jumpPort protocol:family];
+		[jump setUser:jumpUserName];
+		[jump setKeyFilePath:[jumpKeyFilePath stringByExpandingTildeInPath] withPassword:jumpKeyFilePassword];
+		[jump setPassword:jumpPassword];
+		[jump setVerbose:verbose withLevel:verbosityLevel];
+
+		[jump addForwardTunnelPort:0 host:@"127.0.0.1" remotePort:port remoteHost:hostName];
+	}
+	
     [connection setHost:hostName port:port protocol:family];
     [connection setUser:userName];
     [connection setKeyFilePath:[keyFilePath stringByExpandingTildeInPath] withPassword:keyFilePassword];
@@ -221,49 +256,79 @@
 		[self syntaxColoringApplyChanges];
 	}
 	
-	[connection startConnection];
+	if (jump != nil)
+	{
+		[jump startConnection];
+	}
+	else
+	{
+		[connection startConnection];
+	}
 }
 
 
 -(void)resume
 {
-    if (connection != nil)
+	if (state != sshTerminalPaused)
+	{
+		return;
+	}
+	
+	if (paused == jump)
+	{
+		[jump resume:YES andSaveHost:NO];
+	}
+    else if (paused == connection)
     {
-        if (state != sshTerminalPaused)
-        {
-            return;
-        }
         state = sshTerminalConnected;
         [connection resume:YES andSaveHost:NO];
     }
+	paused = nil;
 }
 
 
 -(void)resumeAndRememberServer
 {
-    if (connection != nil)
-    {
-        if (state != sshTerminalPaused)
-        {
-            return;
-        }
-        state = sshTerminalConnected;
-        [connection resume:YES andSaveHost:YES];
-    }
+	if (state != sshTerminalPaused)
+	{
+		return;
+	}
+
+	if (paused == jump)
+	{
+		[jump resume:YES andSaveHost:YES];
+	}
+	else if (paused == connection)
+	{
+		state = sshTerminalConnected;
+		[connection resume:YES andSaveHost:YES];
+	}
+	paused = nil;
 }
 
 
 -(void)disconnect
 {
+	if (state == sshTerminalDisconnected)
+	{
+		return;
+	}
+	
+	if (state == sshTerminalPaused)
+	{
+		if (paused == jump)
+		{
+			[jump endConnection];
+		}
+		paused = nil;
+	}
+	
     if (connection != nil)
     {
-        if (state == sshTerminalDisconnected)
-        {
-            return;
-        }
-        state = sshTerminalDisconnected;
         [connection endConnection];
     }
+	
+	state = sshTerminalDisconnected;
 }
 
 
@@ -296,32 +361,95 @@
 }
 
 
--(void)signalError:(int)code
+-(void)signalDisconnected
 {
+	[connection release];
+	connection = nil;
+	[jump release];
+	jump = nil;
+	
+	if ([eventDelegate respondsToSelector:@selector(disconnected)])
+	{
+		[eventDelegate disconnected];
+	}
+	
+	// Get ready for next session.
+	isConnectionClosed = NO;
+	isJumpClosed = NO;
+}
+
+
+-(void)callbackFromConnection:(id)caller withCode:(int)code
+{
+	// This method is called through a dispatch_async on the main queue.
     switch (code)
     {
         case CONNECTED:
         {
-            if (tunnels.count == 0)
-            {
-                [terminalView setCursorVisible:YES];
-            }
-            if ([eventDelegate respondsToSelector:@selector(connected)])
-            {
-                [eventDelegate connected];
-            }
+			if (caller == connection)
+			{
+				if (tunnels.count == 0)
+				{
+					[terminalView setCursorVisible:YES];
+				}
+				if ([eventDelegate respondsToSelector:@selector(connected)])
+				{
+					[eventDelegate connected];
+				}
+			}
+			else
+			{
+				UInt16 tunnelPort = [jump jumpPort];
+				if (tunnelPort == 0)
+				{
+					[jump endConnection];
+				}
+				else
+				{
+					[connection setSocketHost:@"127.0.0.1" port:tunnelPort];
+					[connection startConnection];
+				}
+			}
             break;
         }
             
         case DISCONNECTED:
         {
-            state = sshTerminalDisconnected;
-            [terminalView setCursorVisible:NO];
-            if ([eventDelegate respondsToSelector:@selector(disconnected)])
-            {
-                [eventDelegate disconnected];
-            }
-            connection = nil;
+			[terminalView setCursorVisible:NO];
+			if (caller == connection)
+			{
+				if (jump == nil)
+				{
+					state = sshTerminalDisconnected;
+					[self signalDisconnected];
+				}
+				else
+				{
+					if (isJumpClosed)
+					{
+						state = sshTerminalDisconnected;
+						[self signalDisconnected];
+					}
+					else
+					{
+						isConnectionClosed = YES;
+						[jump endConnection];
+					}
+				}
+			}
+			else
+			{
+				if (isConnectionClosed)
+				{
+					state = sshTerminalDisconnected;
+					[self signalDisconnected];
+				}
+				else
+				{
+					isJumpClosed = YES;
+					[connection endConnection];
+				}
+			}
             break;
         }
             
@@ -330,9 +458,10 @@
         case SERVER_NOT_KNOWN:
         {
             state = sshTerminalPaused;
+			paused = caller;
             if ([eventDelegate respondsToSelector:@selector(serverMismatch:)])
             {
-                NSString* fingerPrint = [connection fingerPrint];
+                NSString* fingerPrint = [paused fingerPrint];
                 [eventDelegate serverMismatch:fingerPrint];
             }
             break;
@@ -376,7 +505,7 @@
 
 -(void)syntaxColoringAddOrUpdateItem:(NSString*)keyword itemBackColor:(int)backColor itemTextColor:(int)textColor itemIsCompleteWord:(BOOL)isCompleteWord itemIsCaseSensitive:(BOOL)isCaseSensitive itemIsUnderlined:(BOOL)isUnderlined
 {
-	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	NSEnumerator* i = [syntaxColoringItems objectEnumerator];
 	SyntaxColoringItem* item;
 	BOOL itemDoesntExist = true;
 	while ((item = [i nextObject]))
@@ -408,6 +537,7 @@
 		it.isUnderlined = isUnderlined;
 		it.isEnabled = true;
 		[syntaxColoringItems addObject:it];
+		[it release];
 	}
 	
 	syntaxColoringChangeMade = true;
@@ -574,7 +704,7 @@
 }
 
 
--(SshTerminal*)initWithFrame:(NSRect)frameRect
+-(instancetype)initWithFrame:(NSRect)frameRect
 {
     self = [super initWithFrame:frameRect];
     if (self != nil)
@@ -598,7 +728,7 @@
 }
 
 
--(SshTerminal*)init
+-(instancetype)init
 {
     return [self initWithFrame:NSMakeRect(0, 0, 0, 0)];
 }

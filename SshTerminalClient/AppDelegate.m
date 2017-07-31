@@ -67,10 +67,14 @@ SshConnection* sshConnection = NULL;
 		//terminal.verbosityLevel = 1;
 		
 #if (TEST_SERVER == 0)
-        terminal.hostName = @"macmini2";
-        terminal.port = 22;
+        terminal.hostName = @"192.168.7.60";
+        terminal.port = 2220;
         terminal.userName = @"david";
         [terminal setPassword:@"123456"];
+		terminal.jumpHostName = @"macmini2";
+		terminal.jumpPort = 22;
+		terminal.jumpUserName = @"david";
+		[terminal setJumpPassword:@"123456"];
         //terminal.hostName = @"192.168.7.60";
         //terminal.agentForwarding = YES;
         //terminal.keyFilePath = @"~/Encrypted.ppk";
@@ -99,10 +103,9 @@ SshConnection* sshConnection = NULL;
         //terminal.internetProtocol = sshTerminalIpv6;
         //[terminal addReverseTunnelWithPort:15601 onHost:@"localhost" andRemotePort:15600 onRemoteHost:@"localhost"];
 #elif (TEST_SERVER == 4)
-        terminal.userName = @"david";
         terminal.hostName = @"macmini2";
         terminal.port = 22;
-        //terminal.internetProtocol = sshTerminalIpv6;
+        terminal.userName = @"david";
         [terminal setPassword:@"123456"];
         //[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
         //[terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];

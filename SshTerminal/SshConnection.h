@@ -41,7 +41,7 @@ enum ConnectionEvent
 
 @protocol SshConnectionEventDelegate <NSObject>
 
--(void)signalError:(int)code;
+-(void)callbackFromConnection:(id)caller withCode:(int)code;
 
 @end
 
@@ -55,7 +55,8 @@ enum ConnectionEvent
     struct ssh_callbacks_struct callbacks;
     BOOL useKeyAuthentication;
     BOOL x11Forwarding;
-    NSString* host;
+	NSString* socketHost;   // This is used only when going through a jump host.
+	NSString* host;
     NSString* password;
     NSString* keyFilePassword;
     NSString* keyFilePath;
@@ -66,9 +67,14 @@ enum ConnectionEvent
     int width;
     int height;
     int internetProtocol;
+	int socketFd;
+	UInt16 socketPort;   // This is used only when going through a jump host.
+	UInt16 port;
     BOOL verbose;
     BOOL agentForwarding;
     BOOL useAgent;
+	BOOL isClosing;
+	BOOL isTunnelMessagesHidden;
 	int verbosityLevel;
     int keepAliveTime;
     
@@ -92,6 +98,7 @@ enum ConnectionEvent
 
 // Methods called from the UI thread.
 -(void)setHost:(NSString*)newHost port:(UInt16)newPort protocol:(int)newProtocol;
+-(void)setSocketHost:(NSString*)newHost port:(UInt16)newPort;
 -(void)setUser:(NSString*)newUser;
 -(void)setKeyFilePath:(NSString*)newKeyFilePath withPassword:(NSString*)newPassword;
 -(void)setPassword:(NSString*)newPassword;
@@ -102,6 +109,7 @@ enum ConnectionEvent
 
 -(void)addForwardTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 -(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
+-(UInt16)jumpPort;
 
 -(void)setX11Forwarding:(BOOL)enable withDisplay:(NSString*)display;
 
@@ -111,6 +119,8 @@ enum ConnectionEvent
 -(void)startConnection;
 -(void)endConnection;
 -(NSString*)fingerPrint;
+
+-(instancetype)initWithConnection:(SshConnection*)otherConnection;
 
 // Methods called from the private queue thread.
 -(void)connect;
@@ -127,3 +137,5 @@ enum ConnectionEvent
 -(ssh_channel)agentChannel;
 
 @end
+
+

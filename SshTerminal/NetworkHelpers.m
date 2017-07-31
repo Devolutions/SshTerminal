@@ -10,6 +10,24 @@
 #import "NetworkHelpers.h"
 
 
+void NetworkAddressSetDefault(NetworkAddress* address, __uint8_t family)
+{
+	assert(address != NULL && (family == PF_INET || family == PF_INET6));
+	
+	memset(address, 0, sizeof(NetworkAddress));
+	address->family = family;
+	if (family == PF_INET)
+	{
+		address->len = sizeof(address->ipv4);
+	}
+	else
+	{
+		address->len = sizeof(address->ipv6);
+		memcpy(&address->ipv6.sin6_addr, &in6addr_any, sizeof(address->ipv6.sin6_addr));
+	}
+}
+
+
 struct addrinfo* findSockaddr(int family, struct addrinfo* info)
 {
     while (1)

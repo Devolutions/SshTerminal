@@ -47,20 +47,30 @@ enum
 {
     VT100TerminalView* terminalView;
     SshConnection* connection;
+	SshConnection* jump;
+	SshConnection* paused;   // Weak pointer.
     
     NSString* password;
     NSString* hostName;
     NSString* userName;
     NSString* keyFilePath;
     NSString* keyFilePassword;
+	NSString* jumpPassword;
+	NSString* jumpHostName;
+	NSString* jumpUserName;
+	NSString* jumpKeyFilePath;
+	NSString* jumpKeyFilePassword;
     NSString* x11Display;
     NSString* x11Authentication;
     NSString* x11AuthorityFile;
-    UInt16 port;
+	UInt16 port;
+	UInt16 jumpPort;
     BOOL x11Forwarding;
     BOOL verbose;
     BOOL agentForwarding;
     BOOL useAgent;
+	BOOL isConnectionClosed;
+	BOOL isJumpClosed;
     int internetProtocol;
     int columnCount;
     int state;
@@ -101,6 +111,13 @@ enum
 @property(assign)int verbosityLevel;
 @property(readonly)int state;
 @property(assign)int keepAliveTime;   // Zero equals: keepalive off. Otherwise: time between keepalives in seconds.
+
+@property(copy,nonatomic)NSString* jumpHostName;   // Host name or IP address.
+@property(assign)UInt16 jumpPort;
+-(void)setJumpPassword:(NSString *)string;
+@property(copy,nonatomic)NSString* jumpUserName;
+@property(copy,nonatomic)NSString* jumpKeyFilePath;
+-(void)setJumpKeyFilePassword:(NSString *)string;
 
 -(void)setDefaultBackgroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b;
 -(void)setDefaultForegroundRed:(UInt8)r green:(UInt8)g blue:(UInt8)b;

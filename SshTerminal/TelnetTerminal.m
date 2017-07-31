@@ -201,7 +201,7 @@ BOOL isMatch(NSString* host, NSString* excluded)
 
 -(void)syntaxColoringAddOrUpdateItem:(NSString*)keyword itemBackColor:(int)backColor itemTextColor:(int)textColor itemIsCompleteWord:(BOOL)isCompleteWord itemIsCaseSensitive:(BOOL)isCaseSensitive itemIsUnderlined:(BOOL)isUnderlined
 {
-	NSEnumerator *i = [syntaxColoringItems objectEnumerator];
+	NSEnumerator* i = [syntaxColoringItems objectEnumerator];
 	SyntaxColoringItem* item;
 	BOOL itemDoesntExist = true;
 	while ((item = [i nextObject]))
@@ -233,6 +233,7 @@ BOOL isMatch(NSString* host, NSString* excluded)
 		it.isUnderlined = isUnderlined;
 		it.isEnabled = true;
 		[syntaxColoringItems addObject:it];
+		[it release];
 	}
 	
 	syntaxColoringChangeMade = true;

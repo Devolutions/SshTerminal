@@ -82,6 +82,13 @@
         close(listenFd);
         return NO;
     }
+	if (port == 0)
+	{
+		struct sockaddr_in name;
+		socklen_t nameLength = sizeof(name);
+		getsockname(listenFd, (struct sockaddr*)&name, &nameLength);
+		port = ntohs(name.sin_port);
+	}
     
     int flags = fcntl(listenFd, F_GETFL, 0);
     fcntl(listenFd, F_SETFL, flags | O_NONBLOCK);

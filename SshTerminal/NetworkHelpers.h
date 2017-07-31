@@ -35,6 +35,7 @@ typedef struct
 } NetworkAddress;
 
 
+void NetworkAddressSetDefault(NetworkAddress* address, __uint8_t family);
 struct addrinfo* findSockaddr(int family, struct addrinfo* info);
 int resolveHost(NetworkAddress* addresses, const char* host);
 

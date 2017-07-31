@@ -56,11 +56,18 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 
 -(void)setHost:(NSString *)newHost port:(UInt16)newPort protocol:(int)newProtocol
 {
-    [host release];
-    host = [newHost copy];
-	int portParameter = newPort; //ssh_options_set utilize a int for the port number. We need the send the config with an int otherwise it sometimes doesn't work Benoit S. 2015-12-14
-    ssh_options_set(session, SSH_OPTIONS_PORT, &portParameter);
-    internetProtocol = newProtocol;
+	[host release];
+	host = [newHost copy];
+	port = newPort;
+	internetProtocol = newProtocol;
+}
+
+
+-(void)setSocketHost:(NSString *)newHost port:(UInt16)newPort
+{
+	[socketHost release];
+	socketHost = [newHost copy];
+	socketPort = newPort;
 }
 
 
@@ -171,6 +178,17 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     
     [reverseTunnels addObject:tunnel];
     [tunnel release];
+}
+
+
+-(UInt16)jumpPort
+{
+	if (forwardTunnels.count == 0)
+	{
+		return 0;
+	}
+	SshTunnel* tunnel = [forwardTunnels objectAtIndex:0];
+	return tunnel.port;
 }
 
 
@@ -336,7 +354,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
 
 -(void)eventNotify:(int)code
 {
-    dispatch_async(mainQueue, ^{ [eventDelegate signalError:code]; });
+    dispatch_async(mainQueue, ^{ [eventDelegate callbackFromConnection:self withCode:code]; });
 }
 
 
@@ -411,6 +429,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     return fd;
 }
 
+
 -(void)connect
 {
 	[self setLoggingCallback];
@@ -418,10 +437,19 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     if (verbose == YES)
     {
         [self verboseNotify:@"Initiating connection\r\n"];
-		
     }
+	
+	ssh_options_set(session, SSH_OPTIONS_HOST, [host UTF8String]);
+	int portParameter = port; //ssh_options_set utilize a int for the port number. We need to send the port as an int, otherwise it sometimes doesn't work Benoit S. 2015-12-14
+	ssh_options_set(session, SSH_OPTIONS_PORT, &portParameter);
+
+	const char* connectionHost = (socketHost != nil ? [socketHost UTF8String] : [host UTF8String]);
+	int connectionPort = (socketHost != nil ? socketPort : port);
+	int connectionProtocol = (socketHost != nil ? PF_INET : internetProtocol);
+	
+	// Resolve the host address.
     NetworkAddress addresses[2];
-    int addressCount = resolveHost(addresses, [host UTF8String]);
+    int addressCount = resolveHost(addresses, connectionHost);
     if (addressCount == 0)
     {
         if (verbose == YES)
@@ -433,9 +461,9 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
         return;
     }
     int selectedAddress = 0;
-    if (addressCount > 1 && internetProtocol != PF_UNSPEC)
+    if (addressCount > 1 && connectionProtocol != PF_UNSPEC)
     {
-        if (addresses[0].family != internetProtocol)
+        if (addresses[0].family != connectionProtocol)
         {
             selectedAddress = 1;
         }
@@ -444,13 +472,70 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     getnameinfo(&addresses[selectedAddress].ip, addresses[selectedAddress].len, addressString, sizeof(addressString), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
     if (verbose == YES)
     {
-		uint port;
-		ssh_options_get_port(session, &port);
-        NSString* message = [NSString stringWithFormat:@"Connecting to %s : %u\r\n", addressString, port];
+        NSString* message = [NSString stringWithFormat:@"Connecting to %s : %u\r\n", addressString, connectionPort];
         [self verboseNotify:message];
     }
-    ssh_options_set(session, SSH_OPTIONS_HOST, addressString);
-    int result;
+	addresses[selectedAddress].port = htons(connectionPort);
+	
+	// Create the socket and connect to the host.
+	socketFd = socket(addresses[selectedAddress].family, SOCK_STREAM, 0);
+	if (socketFd < 0)
+	{
+		if (verbose == YES)
+		{
+			[self verboseNotify:@"Unable to create socket\r\n"];
+		}
+		[self eventNotify:OUT_OF_MEMORY_ERROR];
+		dispatch_async(queue, ^{ [self disconnect]; });
+		return;
+	}
+	NetworkAddress sourceAddress;
+	NetworkAddressSetDefault(&sourceAddress, addresses[selectedAddress].family);
+	int result = bind(socketFd, &sourceAddress.ip, sourceAddress.len);
+	if (result != 0)
+	{
+		close(socketFd);
+		socketFd = -1;
+		if (verbose == YES)
+		{
+			[self verboseNotify:@"Unable to bind socket\r\n"];
+		}
+		[self eventNotify:FATAL_ERROR];
+		dispatch_async(queue, ^{ [self disconnect]; });
+		return;
+	}
+	result = connect(socketFd, &addresses[selectedAddress].ip, addresses[selectedAddress].len);
+	if (result < 0)
+	{
+		if (verbose == YES)
+		{
+			int error = errno;
+			if (error == ETIMEDOUT)
+			{
+				[self verboseNotify:@"Connection timed out\r\n"];
+			}
+			else if (error == ECONNREFUSED)
+			{
+				[self verboseNotify:@"Connection refused\r\n"];
+			}
+			else if (error == ENETUNREACH)
+			{
+				[self verboseNotify:@"Network unreachable\r\n"];
+			}
+			else
+			{
+				[self verboseNotify:@"Connection failed\r\n"];
+			}
+		}
+		close(socketFd);
+		socketFd = -1;
+		[self eventNotify:CONNECTION_ERROR];
+		dispatch_async(queue, ^{ [self disconnect]; });
+		return;
+	}
+
+	// Perform the SSH handshake.
+	ssh_options_set(session, SSH_OPTIONS_FD, &socketFd);
     while (1)
     {
         result = ssh_connect(session);
@@ -940,6 +1025,7 @@ void setLangEnv(ssh_channel channel, const char* var)
         return;
     }
     
+	// Commented out code kept until we are sure it is OK to remove (2017-07-27).
 	//setLangEnv(channel, "LANG");
 	//setLangEnv(channel, "LC_COLLATE");
 	setLangEnv(channel, "LC_CTYPE");
@@ -1189,11 +1275,14 @@ void setLangEnv(ssh_channel channel, const char* var)
     dispatch_source_set_event_handler(readSource, ^{ [self newSshDataAvailable]; });
     dispatch_resume(readSource);
     
-	dispatch_async(screenQueue, ^{
-		char stringBuffer[81];
-		snprintf(stringBuffer, 80, "Logged in to: %s\r\n", [host UTF8String]);
-		[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
-	});
+	if (isTunnelMessagesHidden == NO)
+	{
+		dispatch_async(screenQueue, ^{
+			char stringBuffer[81];
+			snprintf(stringBuffer, 80, "Logged in to: %s\r\n", [host UTF8String]);
+			[dataDelegate newDataAvailableIn:(UInt8*)stringBuffer length:(int)strlen(stringBuffer)];
+		});
+	}
 
 	for (int i = 0; i < [forwardTunnels count]; i++)
     {
@@ -1307,7 +1396,10 @@ void setLangEnv(ssh_channel channel, const char* var)
             [tunnelConnections removeObjectAtIndex:i];
             i--;
             
-            dispatch_async(screenQueue, ^{ [self disconnectionMessage:tunnelConnection]; });
+			if (isTunnelMessagesHidden == NO)
+			{
+				dispatch_async(screenQueue, ^{ [self disconnectionMessage:tunnelConnection]; });
+			}
         }
     }
     
@@ -1330,11 +1422,17 @@ void setLangEnv(ssh_channel channel, const char* var)
                     tunnelConnection.tunnel = tunnel;
                     [tunnelConnections addObject:tunnelConnection];
                     
-                    dispatch_async(screenQueue, ^{ [self remoteConnectionMessage:tunnelConnection]; });
+					if (isTunnelMessagesHidden == NO)
+					{
+						dispatch_async(screenQueue, ^{ [self remoteConnectionMessage:tunnelConnection]; });
+					}
                 }
                 else
                 {
-					dispatch_async(screenQueue, ^{ [self localReverseErrorMessage:tunnel]; });
+					if (isTunnelMessagesHidden == NO)
+					{
+						dispatch_async(screenQueue, ^{ [self localReverseErrorMessage:tunnel]; });
+					}
                     [self eventNotify:TUNNEL_ERROR];
                 }
                 
@@ -1384,7 +1482,10 @@ void setLangEnv(ssh_channel channel, const char* var)
     int tunnelFd = [tunnel acceptConnection];
     if (tunnelFd < 0)
     {
-		dispatch_async(screenQueue, ^{ [self localAcceptErrorMessage:tunnel]; });
+		if (isTunnelMessagesHidden == NO)
+		{
+			dispatch_async(screenQueue, ^{ [self localAcceptErrorMessage:tunnel]; });
+		}
         [self eventNotify:TUNNEL_ERROR];
         return;
     }
@@ -1398,7 +1499,10 @@ void setLangEnv(ssh_channel channel, const char* var)
     int result = ssh_channel_open_forward(tunnelChannel, [tunnel.remoteHost UTF8String], tunnel.remotePort, [tunnel.host UTF8String], tunnel.port);
     if (result != SSH_OK)
     {
-		dispatch_async(screenQueue, ^{ [self remoteErrorMessage:tunnel]; });
+		if (isTunnelMessagesHidden == NO)
+		{
+			dispatch_async(screenQueue, ^{ [self remoteErrorMessage:tunnel]; });
+		}
         close(tunnelFd);
         [self eventNotify:TUNNEL_ERROR];
         return;
@@ -1414,7 +1518,10 @@ void setLangEnv(ssh_channel channel, const char* var)
     tunnelConnection.tunnel = tunnel;
     [tunnelConnections addObject:tunnelConnection];
 
-    dispatch_async(screenQueue, ^{ [self localConnectionMessage:tunnelConnection]; });
+	if (isTunnelMessagesHidden == NO)
+	{
+		dispatch_async(screenQueue, ^{ [self localConnectionMessage:tunnelConnection]; });
+	}
 }
 
 
@@ -1436,6 +1543,12 @@ void setLangEnv(ssh_channel channel, const char* var)
 
 -(void)closeAllChannels
 {
+	if (isClosing)
+	{
+		return;
+	}
+	isClosing = YES;
+	
 	[self setLoggingCallback];
     if (readSource != NULL)
     {
@@ -1471,7 +1584,10 @@ void setLangEnv(ssh_channel channel, const char* var)
             SshTunnelConnection* tunnelConnection = [tunnelConnections objectAtIndex:i];
             [tunnelConnection disconnect];
             
-            dispatch_async(screenQueue, ^{ [self brutalDisconnectMessage:tunnelConnection]; });
+			if (isTunnelMessagesHidden == NO)
+			{
+				dispatch_async(screenQueue, ^{ [self brutalDisconnectMessage:tunnelConnection]; });
+			}
         }
         [tunnelConnections removeAllObjects];
     });
@@ -1487,15 +1603,21 @@ void setLangEnv(ssh_channel channel, const char* var)
     {
         ssh_disconnect(session);
     }
+	if (socketFd >= 0)
+	{
+		close(socketFd);
+		socketFd = -1;
+	}
     
-    dispatch_async(screenQueue, ^{
-        [dataDelegate newDataAvailableIn:(UInt8*)"\r\nLogged out\r\n" length:14];
-    });
+	if (isTunnelMessagesHidden == NO)
+	{
+		dispatch_async(screenQueue, ^{ [dataDelegate newDataAvailableIn:(UInt8*)"\r\nLogged out\r\n" length:14]; });
+	}
     [self eventNotify:DISCONNECTED];
 }
 
 
--(SshConnection*)init
+-(instancetype)init
 {
     self = [super init];
     if (self != nil)
@@ -1511,11 +1633,15 @@ void setLangEnv(ssh_channel channel, const char* var)
         ssh_set_callbacks(session, &callbacks);
 
         queue = dispatch_queue_create("com.Devolutions.SshConnectionQueue", DISPATCH_QUEUE_SERIAL);
-        screenQueue = dispatch_queue_create("com.Devolutions.VT100ParsingQueue", DISPATCH_QUEUE_SERIAL);
+		if (screenQueue == NULL)
+		{
+			screenQueue = dispatch_queue_create("com.Devolutions.VT100ParsingQueue", DISPATCH_QUEUE_SERIAL);
+		}
         mainQueue = dispatch_get_main_queue();
         forwardTunnels = [NSMutableArray new];
         reverseTunnels = [NSMutableArray new];
         tunnelConnections = [NSMutableArray new];
+		socketFd = -1;
         
         if (session == NULL || forwardTunnels == nil || reverseTunnels == nil || tunnelConnections == nil)
         {
@@ -1524,6 +1650,16 @@ void setLangEnv(ssh_channel channel, const char* var)
     }
     
     return self;
+}
+
+
+-(instancetype)initWithConnection:(SshConnection *)otherConnection
+{
+	dataDelegate = otherConnection->dataDelegate;
+	screenQueue = otherConnection->screenQueue;
+	dispatch_retain(screenQueue);
+	isTunnelMessagesHidden = YES;
+	return [self init];
 }
 
 
@@ -1540,6 +1676,10 @@ void setLangEnv(ssh_channel channel, const char* var)
             ssh_finalize();
         }
     }
+	if (socketFd >= 0)
+	{
+		close(socketFd);
+	}
     [forwardTunnels release];
     [reverseTunnels release];
     [tunnelConnections release];
