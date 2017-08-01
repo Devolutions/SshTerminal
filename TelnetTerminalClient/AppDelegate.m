@@ -47,9 +47,10 @@
 #define TEST_SERVER 0
         
 #if (TEST_SERVER == 0)
-        terminal.userName = @"devolutions\\devotest";
-        terminal.hostName = @"192.168.1.181";
-        [terminal setPassword:@"Price2011"];
+        terminal.hostName = @"192.168.7.47";
+		terminal.port = 23;
+        terminal.userName = @"downhill\\downtest";
+        [terminal setPassword:@"123456"];
 #elif (TEST_SERVER == 1)
         terminal.proxyExclusion = @"VDEV*.dev*.loc";
         terminal.proxyPort = 463;
