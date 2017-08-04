@@ -219,6 +219,12 @@
 				break;
 			}
 				
+			case 0x1B:
+			{
+				sprintf(specialSequence, "\x1B");
+				break;
+			}
+				
             case KEYPAD_ENTER:
             {
                 if (screen.keypadNormal == NO)

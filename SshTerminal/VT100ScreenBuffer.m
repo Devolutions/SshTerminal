@@ -113,6 +113,7 @@ unichar gGraphicSet[] =
     return NO;
 }
 
+
 -(void)actualizeAttributesIn:(NSMutableAttributedString*)string inRange:(NSRange)range
 {
 	void (^change)(id, NSRange, BOOL*) = ^(id value, NSRange range, BOOL* stop)
@@ -159,6 +160,7 @@ unichar gGraphicSet[] =
 	
 	[string enumerateAttribute:TAName inRange:range options:0 usingBlock:change];
 }
+
 
 -(void)actualizeAttributesIn:(NSMutableAttributedString*)string
 {
