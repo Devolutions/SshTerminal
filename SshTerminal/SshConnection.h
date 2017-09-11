@@ -12,6 +12,8 @@
 #import "SshTunnel.h"
 #import "SshTunnelConnection.h"
 #import "SshAgent.h"
+#import "TerminalPreferences.h"
+#import <mach/mach_time.h>
 
 
 #define INPUT_BUFFER_SIZE 1024
@@ -82,11 +84,14 @@ enum ConnectionEvent
     UInt8 outBuffer[OUTPUT_BUFFER_SIZE];
     int inIndex;
     int outIndex;
+	uint64_t lastWriteTick;
+	mach_timebase_info_data_t timebase;
     
     dispatch_queue_t queue;
     dispatch_queue_t screenQueue;
     dispatch_queue_t mainQueue;
     dispatch_source_t readSource;
+	dispatch_source_t timerSource;
     NSMutableArray* forwardTunnels;
     NSMutableArray* reverseTunnels;
     NSMutableArray* tunnelConnections;

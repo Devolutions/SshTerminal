@@ -842,8 +842,8 @@
 				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_VERSION = A;
 				HEADER_SEARCH_PATHS = (
-					"./libssh-git/build",
-					"./libssh-git/include",
+					"/Proto/libssh-0.7.5/build",
+					"/Proto/libssh-0.7.5/include",
 					"./openssl-1_0_2k-osx64/include",
 				);
 				INFOPLIST_FILE = SshTerminal/Info.plist;
@@ -879,8 +879,8 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
 				HEADER_SEARCH_PATHS = (
-					"./libssh-git/build",
-					"./libssh-git/include",
+					"/Proto/libssh-0.7.5/build",
+					"/Proto/libssh-0.7.5/include",
 					"./openssl-1_0_2k-osx64/include",
 				);
 				INFOPLIST_FILE = SshTerminal/Info.plist;

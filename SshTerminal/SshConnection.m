@@ -10,6 +10,8 @@
 #import "VT100TerminalView.h"
 #import "SshAgent.h"
 #import "PuttyKey.h"
+#import <sys/time.h>
+#include <mach/mach_time.h>
 
 
 int gInstanceCount = 0;
@@ -261,6 +263,7 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     memcpy(writeBuffer, buffer, count);
     dispatch_async(queue, ^{
 		[self setLoggingCallback];
+		lastWriteTick = mach_absolute_time();
         ssh_channel_write(channel, writeBuffer, count);
         free(writeBuffer);
     });
@@ -979,6 +982,19 @@ void setLangEnv(ssh_channel channel, const char* var)
 }
 
 
+-(void)keepAlive
+{
+	uint64_t tick = mach_absolute_time();
+	uint64_t interval = (tick - lastWriteTick) * timebase.numer / timebase.denom / 1000000000;
+	if (interval >= keepAliveTime)
+	{
+		uint8_t nullByte = 0;
+		ssh_channel_write(channel, &nullByte, 1);
+		lastWriteTick = tick;
+	}
+}
+
+
 -(void)openTerminalChannel
 {
 	[self setLoggingCallback];
@@ -989,14 +1005,17 @@ void setLangEnv(ssh_channel channel, const char* var)
     int fd = ssh_get_fd(session);
     [self setKeepAliveForSocket:fd];
     readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, queue);
-    if (readSource == nil)
+	timerSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+    if (readSource == nil || timerSource == nil)
     {
         [self eventNotify:OUT_OF_MEMORY_ERROR];
         dispatch_async(queue, ^{ [self disconnect]; });
         return;
     }
     dispatch_source_set_event_handler(readSource, ^{ [self newTerminalDataAvailable]; });
-    
+	dispatch_source_set_timer(timerSource, DISPATCH_TIME_NOW, 1000000000, 10000);
+	dispatch_source_set_event_handler(timerSource, ^{ [self keepAlive]; });
+	
     channel = ssh_channel_new(session);
     if (channel == NULL)
     {
@@ -1119,6 +1138,8 @@ void setLangEnv(ssh_channel channel, const char* var)
 	
     [self eventNotify:CONNECTED];
     dispatch_resume(readSource);
+	lastWriteTick = mach_absolute_time();
+	dispatch_resume(timerSource);
 }
 
 
@@ -1555,6 +1576,11 @@ void setLangEnv(ssh_channel channel, const char* var)
         dispatch_source_cancel(readSource);
         readSource = NULL;
     }
+	if (timerSource != NULL)
+	{
+		dispatch_source_cancel(timerSource);
+		timerSource = NULL;
+	}
     if (channel != NULL)
     {
         ssh_channel_free(channel);
@@ -1647,6 +1673,7 @@ void setLangEnv(ssh_channel channel, const char* var)
         {
             self = nil;
         }
+		mach_timebase_info(&timebase);
     }
     
     return self;
