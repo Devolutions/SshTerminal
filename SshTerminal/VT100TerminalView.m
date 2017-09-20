@@ -215,7 +215,8 @@
         {
 			case NSDeleteCharacter:
 			{
-				sprintf(specialSequence, "\b");
+				specialSequence[0] = 127;
+				specialSequence[1] = 0;
 				break;
 			}
 				
