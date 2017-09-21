@@ -79,6 +79,7 @@ enum ConnectionEvent
 	BOOL isTunnelMessagesHidden;
 	int verbosityLevel;
     int keepAliveTime;
+    BOOL locallyManagedKeepAlive;
     
     UInt8 inBuffer[INPUT_BUFFER_SIZE];
     UInt8 outBuffer[OUTPUT_BUFFER_SIZE];
@@ -111,6 +112,7 @@ enum ConnectionEvent
 -(void)setAgentForwarding:(BOOL)newAgentForwarding;
 -(void)setUseAgent:(BOOL)newUseAgent;
 -(void)setKeepAliveTime:(int)newTime;
+-(void)setLocallyManagedKeepAlive:(BOOL)locallyManaged;
 
 -(void)addForwardTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;
 -(void)addReverseTunnelPort:(SInt16)newPort host:(NSString*)newHost remotePort:(SInt16)newRemotePort remoteHost:(NSString*)newRemoteHost;

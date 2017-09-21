@@ -134,6 +134,11 @@ ssh_channel authAgentCallback(ssh_session session, void* userdata)
     keepAliveTime = newTime;
 }
 
+-(void)setLocallyManagedKeepAlive:(BOOL)locallyManaged
+{
+    locallyManagedKeepAlive = locallyManaged;
+}
+
 
 -(void)setWidth:(int)newWidth height:(int)newHeight
 {
@@ -984,14 +989,17 @@ void setLangEnv(ssh_channel channel, const char* var)
 
 -(void)keepAlive
 {
-	uint64_t tick = mach_absolute_time();
-	uint64_t interval = (tick - lastWriteTick) * timebase.numer / timebase.denom / 1000000000;
-	if (interval >= keepAliveTime)
-	{
-		uint8_t nullByte = 0;
-		ssh_channel_write(channel, &nullByte, 1);
-		lastWriteTick = tick;
-	}
+    if (keepAliveTime > 0 && locallyManagedKeepAlive)
+    {
+        uint64_t tick = mach_absolute_time();
+        uint64_t interval = (tick - lastWriteTick) * timebase.numer / timebase.denom / 1000000000;
+        if (interval >= keepAliveTime)
+        {
+            uint8_t nullByte = 0;
+            ssh_channel_write(channel, &nullByte, 1);
+            lastWriteTick = tick;
+        }
+    }
 }
 
 

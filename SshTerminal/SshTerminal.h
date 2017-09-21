@@ -71,6 +71,7 @@ enum
     BOOL useAgent;
 	BOOL isConnectionClosed;
 	BOOL isJumpClosed;
+    BOOL locallyManagedKeepAlive;
     int internetProtocol;
     int columnCount;
     int state;
@@ -111,6 +112,7 @@ enum
 @property(assign)int verbosityLevel;
 @property(readonly)int state;
 @property(assign)int keepAliveTime;   // Zero equals: keepalive off. Otherwise: time between keepalives in seconds.
+@property(assign)BOOL locallyManagedKeepAlive;
 
 @property(copy,nonatomic)NSString* jumpHostName;   // Host name or IP address.
 @property(assign)UInt16 jumpPort;

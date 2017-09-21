@@ -74,6 +74,7 @@
 @synthesize agentForwarding;
 @synthesize useAgent;
 @synthesize keepAliveTime;
+@synthesize locallyManagedKeepAlive;
 
 
 -(void)setPassword:(NSString *)string
@@ -235,6 +236,7 @@
     [connection setAgentForwarding:agentForwarding];
     [connection setUseAgent:useAgent];
     [connection setKeepAliveTime:keepAliveTime];
+    [connection setLocallyManagedKeepAlive:locallyManagedKeepAlive];
 	
 	// Setup terminal colors.
 	[terminalView.screen setDefaultBackgroundColor:defaultBackground foregroundColor:defaultForeground];
