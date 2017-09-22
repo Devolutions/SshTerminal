@@ -1,13 +1,15 @@
 
 
 #include <stdlib.h>
-#include <libssh/string.h>
-#include <libssh/pki.h>
+//#include <libssh/string.h>
+//#include <libssh/pki.h>
 #include "SshAgent.h"
 #include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/sha.h>
+#include <openssl/ssl.h>
 
 int ssh_pki_export_pubkey_blob(const ssh_key key, ssh_string* pblob);
-ssh_signature pki_do_sign(const ssh_key privkey, const unsigned char *hash, size_t hlen);
 
 
 void pack32(uint8_t* d, uint32_t value)
@@ -52,7 +54,7 @@ uint8_t* SshAgentMakeIdentityListReply(SshAgentContext* context)
         {
             goto FREE_KEY_BLOBS;
         }
-        totalBlobSize += ntohl(keyBlobs[i]->size);
+        totalBlobSize += ssh_string_len(keyBlobs[i]);
     }
 
     int messageSize = 5 + totalBlobSize + 8 * keyCount;
@@ -118,20 +120,20 @@ uint8_t* SshAgentMakeErrorReply()
 
 ssh_string SshAgentSignDss(uint8_t* data, int dataSize, ssh_key key, uint32_t flags)
 {
-    unsigned char hash[SHA_DIGEST_LEN] = {0};
-    SHACTX ctx;
+    unsigned char hash[SHA_DIGEST_LENGTH] = {0};
+    SHA_CTX ctx;
     
-    ctx = sha1_init();
-    if (ctx == NULL)
+    int result = SHA1_Init(&ctx);
+    if (result == 0)
     {
         return NULL;
     }
     
-    sha1_update(ctx, data, dataSize);
-    sha1_final(hash, ctx);   // This release ctx.
+    SHA1_Update(&ctx, data, dataSize);
+    SHA1_Final(hash, &ctx);   // This release ctx.
     
     DSA_SIG* sig = NULL;
-    sig = DSA_do_sign(hash, sizeof(hash), key->dsa);
+    sig = DSA_do_sign(hash, sizeof(hash), getKeyDsa(key));
     if (sig == NULL)
     {
         return NULL;
@@ -179,22 +181,22 @@ ssh_string SshAgentSignDss(uint8_t* data, int dataSize, ssh_key key, uint32_t fl
 ssh_string SshAgentSignRsaSha1(uint8_t* data, int dataSize, ssh_key key, uint32_t flags)
 {
     // Compute the hash.
-    unsigned char hash[SHA_DIGEST_LEN] = {0};
-    SHACTX ctx;
+    unsigned char hash[SHA_DIGEST_LENGTH] = {0};
+    SHA_CTX ctx;
     
-    ctx = sha1_init();
-    if (ctx == NULL)
+	int result = SHA1_Init(&ctx);
+	if (result == 0)
     {
         return NULL;
     }
     
-    sha1_update(ctx, data, dataSize);
-    sha1_final(hash, ctx);   // This release ctx.
+    SHA1_Update(&ctx, data, dataSize);
+    SHA1_Final(hash, &ctx);   // This release ctx.
     
     // Prepare the buffer to hold the signature in a blob of the form:
     // signatureBlobLength[ signatureTypeLength[ signatureType ] signatureLength[ signature ] ]
     int signatureTypeLength = 7;
-    int signatureLength = RSA_size(key->rsa);
+    int signatureLength = RSA_size(getKeyRsa(key));
     int signatureBlobLength = 8 + signatureTypeLength + signatureLength;
     
     uint8_t* signatureBlob = malloc(4 + signatureBlobLength);
@@ -214,7 +216,7 @@ ssh_string SshAgentSignRsaSha1(uint8_t* data, int dataSize, ssh_key key, uint32_
     
     // Sign the hash in place in the signature blob buffer.
     unsigned int len;
-    int result = RSA_sign(NID_sha1, hash, sizeof(hash), signatureBlob + index, &len, key->rsa);
+    result = RSA_sign(NID_sha1, hash, sizeof(hash), signatureBlob + index, &len, getKeyRsa(key));
     if (result != 1)
     {
         free(signatureBlob);
@@ -228,22 +230,22 @@ ssh_string SshAgentSignRsaSha1(uint8_t* data, int dataSize, ssh_key key, uint32_
 ssh_string SshAgentSignRsaSha256(uint8_t* data, int dataSize, ssh_key key, uint32_t flags)
 {
     // Compute the hash.
-    unsigned char hash[SHA256_DIGEST_LEN] = {0};
-    SHA256CTX ctx;
+    unsigned char hash[SHA256_DIGEST_LENGTH] = {0};
+    SHA256_CTX ctx;
     
-    ctx = sha256_init();
-    if (ctx == NULL)
+	int result = SHA256_Init(&ctx);
+	if (result == 0)
     {
         return NULL;
     }
     
-    sha256_update(ctx, data, dataSize);
-    sha256_final(hash, ctx);   // This release ctx.
+    SHA256_Update(&ctx, data, dataSize);
+    SHA256_Final(hash, &ctx);   // This release ctx.
     
     // Prepare the buffer to hold the signature in a blob of the form:
     // signatureBlobLength[ signatureTypeLength[ signatureType ] signatureLength[ signature ] ]
     int signatureTypeLength = 12;
-    int signatureLength = RSA_size(key->rsa);
+    int signatureLength = RSA_size(getKeyRsa(key));
     int signatureBlobLength = 8 + signatureTypeLength + signatureLength;
     
     uint8_t* signatureBlob = malloc(4 + signatureBlobLength);
@@ -263,7 +265,7 @@ ssh_string SshAgentSignRsaSha256(uint8_t* data, int dataSize, ssh_key key, uint3
     
     // Sign the hash in place in the signature blob buffer.
     unsigned int len;
-    int result = RSA_sign(NID_sha256, hash, sizeof(hash), signatureBlob + index, &len, key->rsa);
+    result = RSA_sign(NID_sha256, hash, sizeof(hash), signatureBlob + index, &len, getKeyRsa(key));
     if (result != 1)
     {
         free(signatureBlob);
@@ -277,22 +279,22 @@ ssh_string SshAgentSignRsaSha256(uint8_t* data, int dataSize, ssh_key key, uint3
 ssh_string SshAgentSignRsaSha512(uint8_t* data, int dataSize, ssh_key key, uint32_t flags)
 {
     // Compute the hash.
-    unsigned char hash[SHA512_DIGEST_LEN] = {0};
-    SHA512CTX ctx;
+    unsigned char hash[SHA512_DIGEST_LENGTH] = {0};
+    SHA512_CTX ctx;
     
-    ctx = sha512_init();
-    if (ctx == NULL)
+    int result = SHA512_Init(&ctx);
+    if (result == 0)
     {
         return NULL;
     }
     
-    sha512_update(ctx, data, dataSize);
-    sha512_final(hash, ctx);   // This release ctx.
+    SHA512_Update(&ctx, data, dataSize);
+    SHA512_Final(hash, &ctx);   // This release ctx.
     
     // Prepare the buffer to hold the signature in a blob of the form:
     // signatureBlobLength[ signatureTypeLength[ signatureType ] signatureLength[ signature ] ]
     int signatureTypeLength = 12;
-    int signatureLength = RSA_size(key->rsa);
+    int signatureLength = RSA_size(getKeyRsa(key));
     int signatureBlobLength = 8 + signatureTypeLength + signatureLength;
     
     uint8_t* signatureBlob = malloc(4 + signatureBlobLength);
@@ -312,7 +314,7 @@ ssh_string SshAgentSignRsaSha512(uint8_t* data, int dataSize, ssh_key key, uint3
     
     // Sign the hash in place in the signature blob buffer.
     unsigned int len;
-    int result = RSA_sign(NID_sha512, hash, sizeof(hash), signatureBlob + index, &len, key->rsa);
+    result = RSA_sign(NID_sha512, hash, sizeof(hash), signatureBlob + index, &len, getKeyRsa(key));
     if (result != 1)
     {
         free(signatureBlob);
@@ -341,21 +343,21 @@ ssh_string SshAgentSignRsa(uint8_t* data, int dataSize, ssh_key key, uint32_t fl
 ssh_string SshAgentSignEcdsaSha256(uint8_t* data, int dataSize, ssh_key key, uint32_t flags)
 {
     // Compute the hash.
-    unsigned char hash[SHA256_DIGEST_LEN] = {0};
-    SHA256CTX ctx;
+    unsigned char hash[SHA256_DIGEST_LENGTH] = {0};
+    SHA256_CTX ctx;
     
-    ctx = sha256_init();
-    if (ctx == NULL)
+    int result = SHA256_Init(&ctx);
+    if (result == 0)
     {
         return NULL;
     }
     
-    sha256_update(ctx, data, dataSize);
-    sha256_final(hash, ctx);   // This release ctx.
+    SHA256_Update(&ctx, data, dataSize);
+    SHA256_Final(hash, &ctx);   // This release ctx.
     
     // Sign the hash.
     ECDSA_SIG* sig = NULL;
-    sig = ECDSA_do_sign(hash, sizeof(hash), key->ecdsa);
+    sig = ECDSA_do_sign(hash, sizeof(hash), getKeyEcdsa(key));
     if (sig == NULL)
     {
         return NULL;
@@ -394,21 +396,21 @@ ssh_string SshAgentSignEcdsaSha256(uint8_t* data, int dataSize, ssh_key key, uin
 ssh_string SshAgentSignEcdsaSha384(uint8_t* data, int dataSize, ssh_key key, uint32_t flags)
 {
     // Compute the hash.
-    unsigned char hash[SHA384_DIGEST_LEN] = {0};
-    SHA384CTX ctx;
+    unsigned char hash[SHA384_DIGEST_LENGTH] = {0};
+    SHA512_CTX ctx;
     
-    ctx = sha384_init();
-    if (ctx == NULL)
+    int result = SHA384_Init(&ctx);
+    if (result == 0)
     {
         return NULL;
     }
     
-    sha384_update(ctx, data, dataSize);
-    sha384_final(hash, ctx);   // This release ctx.
+    SHA384_Update(&ctx, data, dataSize);
+    SHA384_Final(hash, &ctx);   // This release ctx.
     
     // Sign the hash.
     ECDSA_SIG* sig = NULL;
-    sig = ECDSA_do_sign(hash, sizeof(hash), key->ecdsa);
+    sig = ECDSA_do_sign(hash, sizeof(hash), getKeyEcdsa(key));
     if (sig == NULL)
     {
         return NULL;
@@ -447,21 +449,21 @@ ssh_string SshAgentSignEcdsaSha384(uint8_t* data, int dataSize, ssh_key key, uin
 ssh_string SshAgentSignEcdsaSha512(uint8_t* data, int dataSize, ssh_key key, uint32_t flags)
 {
     // Compute the hash.
-    unsigned char hash[SHA384_DIGEST_LEN] = {0};
-    SHA512CTX ctx;
+    unsigned char hash[SHA512_DIGEST_LENGTH] = {0};
+    SHA512_CTX ctx;
     
-    ctx = sha512_init();
-    if (ctx == NULL)
+    int result = SHA512_Init(&ctx);
+    if (result == 0)
     {
         return NULL;
     }
     
-    sha512_update(ctx, data, dataSize);
-    sha512_final(hash, ctx);   // This release ctx.
+    SHA512_Update(&ctx, data, dataSize);
+    SHA512_Final(hash, &ctx);   // This release ctx.
     
     // Sign the hash.
     ECDSA_SIG* sig = NULL;
-    sig = ECDSA_do_sign(hash, sizeof(hash), key->ecdsa);
+    sig = ECDSA_do_sign(hash, sizeof(hash), getKeyEcdsa(key));
     if (sig == NULL)
     {
         return NULL;
@@ -499,7 +501,7 @@ ssh_string SshAgentSignEcdsaSha512(uint8_t* data, int dataSize, ssh_key key, uin
 
 ssh_string SshAgentSignEcdsa(uint8_t* data, int dataSize, ssh_key key, uint32_t flags)
 {
-    switch (key->ecdsa_nid)
+    switch (getKeyEcdsaNid(key))
     {
         case NID_X9_62_prime256v1:
             return SshAgentSignEcdsaSha256(data, dataSize, key, flags);
@@ -530,7 +532,7 @@ ssh_string SshAgentSignEd25519(uint8_t* data, int dataSize, ssh_key key, uint32_
     
     // Sign the data in place in the blob buffer.
     int signatureIndex = 12 + typeNameLength;
-    int result = crypto_sign_ed25519(signature + signatureIndex, &signatureLength, data, dataSize, (uint8_t*)key->ed25519_privkey);
+    int result = crypto_sign_ed25519(signature + signatureIndex, &signatureLength, data, dataSize, (uint8_t*)getKeyEd25519Private(key));
     if (result != 0)
     {
         free(signature);
@@ -553,7 +555,7 @@ ssh_string SshAgentSignEd25519(uint8_t* data, int dataSize, ssh_key key, uint32_
 
 ssh_string SshAgentSign(uint8_t* data, int dataSize, ssh_key key, uint32_t flags)
 {
-    switch (key->type)
+    switch (ssh_key_type(key))
     {
         case SSH_KEYTYPE_DSS:
             return SshAgentSignDss(data, dataSize, key, flags);

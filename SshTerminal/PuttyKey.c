@@ -13,7 +13,8 @@
 #include "openssl/dsa.h"
 #include "openssl/rsa.h"
 #include "openssl/evp.h"
-#include "libssh/pki.h"
+#include "openssl/sha.h"
+//#include "libssh/pki.h"
 #include "PuttyKey.h"
 
 #define SKIP_LINE_END(p, i, s) while (i < s) {if (p[i] != '\r' && p[i] != '\n'){ break; } i++;}
@@ -360,28 +361,28 @@ int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
         memset(decryptKey, 0, sizeof(decryptKey));
         
         // Build the decryption key from the password.
-        SHACTX hashContext;
-        hashContext = sha1_init();
-        if (hashContext == NULL)
+        SHA_CTX hashContext;
+		result = SHA1_Init(&hashContext);
+        if (result == 0)
         {
             returnCode = FAIL_OUT_OF_MEMORY;
             goto EXIT;
         }
         uint8_t bytes[] = {0, 0, 0, 0};
-        sha1_update(hashContext, bytes, sizeof(bytes));
+		SHA1_Update(&hashContext, bytes, sizeof(bytes));
         int passwordLength = (int)strlen(password);
-        sha1_update(hashContext, password, passwordLength);
-        sha1_final(decryptKey, hashContext);   // This release ctx.
+        SHA1_Update(&hashContext, password, passwordLength);
+        SHA1_Final(decryptKey, &hashContext);   // This release ctx.
         bytes[3] = 1;
-        hashContext = sha1_init();
-        if (hashContext == NULL)
+		result = SHA1_Init(&hashContext);
+		if (result == 0)
         {
             returnCode = FAIL_OUT_OF_MEMORY;
             goto EXIT;
         }
-        sha1_update(hashContext, bytes, sizeof(bytes));
-        sha1_update(hashContext, password, passwordLength);
-        sha1_final(decryptKey + 20, hashContext);   // This release ctx.
+        SHA1_Update(&hashContext, bytes, sizeof(bytes));
+        SHA1_Update(&hashContext, password, passwordLength);
+        SHA1_Final(decryptKey + 20, &hashContext);   // This release ctx.
         
         // Decrypt the private blob.
         EVP_CIPHER_CTX* cypherContext = EVP_CIPHER_CTX_new();
@@ -491,19 +492,19 @@ int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
     {
         // Compute a key.
         uint8_t macKey[20];
-        SHACTX hashContext;
-        hashContext = sha1_init();
-        if (hashContext == NULL)
+        SHA_CTX hashContext;
+		result = SHA1_Init(&hashContext);
+		if (result == 0)
         {
             returnCode = FAIL_OUT_OF_MEMORY;
             goto EXIT;
         }
-        sha1_update(hashContext, "putty-private-key-file-mac-key", 30);
+        SHA1_Update(&hashContext, "putty-private-key-file-mac-key", 30);
         if (isEncrypted && password != NULL)
         {
-            sha1_update(hashContext, password, (int)strlen(password));
+            SHA1_Update(&hashContext, password, (int)strlen(password));
         }
-        sha1_final(macKey, hashContext);   // This release ctx.
+        SHA1_Final(macKey, &hashContext);   // This release ctx.
         
         // Hash the key with the MAC data to get an intermediate result.
         uint8_t intermediate[20];
@@ -513,15 +514,15 @@ int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
         {
             iv[i] ^= macKey[i];
         }
-        hashContext = sha1_init();
-        if (hashContext == NULL)
+		result = SHA1_Init(&hashContext);
+		if (result == 0)
         {
             returnCode = FAIL_OUT_OF_MEMORY;
             goto EXIT;
         }
-        sha1_update(hashContext, iv, 64);
-        sha1_update(hashContext, macData, macDataLength);
-        sha1_final(intermediate, hashContext);   // This release ctx.
+        SHA1_Update(&hashContext, iv, 64);
+        SHA1_Update(&hashContext, macData, macDataLength);
+        SHA1_Final(intermediate, &hashContext);   // This release ctx.
         
         // Hash the key with the intermediate result to get the final MAC in binary form.
         memset(iv, 0x5C, 64);
@@ -529,28 +530,28 @@ int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
         {
             iv[i] ^= macKey[i];
         }
-        hashContext = sha1_init();
-        if (hashContext == NULL)
+		result = SHA1_Init(&hashContext);
+		if (result == 0)
         {
             returnCode = FAIL_OUT_OF_MEMORY;
             goto EXIT;
         }
-        sha1_update(hashContext, iv, 64);
-        sha1_update(hashContext, intermediate, 20);
-        sha1_final(macBinary, hashContext);   // This release ctx.
+        SHA1_Update(&hashContext, iv, 64);
+        SHA1_Update(&hashContext, intermediate, 20);
+        SHA1_Final(macBinary, &hashContext);   // This release ctx.
     }
     else
     {
         // Hash the MAC data to get the final MAC in binary form.
-        SHACTX hashContext;
-        hashContext = sha1_init();
-        if (hashContext == NULL)
+        SHA_CTX hashContext;
+		result = SHA1_Init(&hashContext);
+		if (result == 0)
         {
             returnCode = FAIL_OUT_OF_MEMORY;
             goto EXIT;
         }
-        sha1_update(hashContext, macData, macDataLength);
-        sha1_final(macBinary, hashContext);   // This release ctx.
+        SHA1_Update(&hashContext, macData, macDataLength);
+        SHA1_Final(macBinary, &hashContext);   // This release ctx.
     }
 
     PuttyKeyBinaryToString(macBinary, 20, mac);
@@ -567,7 +568,6 @@ int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
         returnCode = FAIL_OUT_OF_MEMORY;
         goto EXIT;
     }
-    key->flags = SSH_KEY_FLAG_PRIVATE | SSH_KEY_FLAG_PUBLIC;
     
     if (isDsa)
     {
@@ -578,9 +578,7 @@ int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
             goto EXIT;
         }
         
-        key->type = SSH_KEYTYPE_DSS;
-        key->type_c = ssh_key_type_to_char(SSH_KEYTYPE_DSS);
-        key->dsa = dsa;
+		makeDsaKey(key, dsa);
         
         // Load the private part.
         int index = 0;
@@ -609,9 +607,7 @@ int PuttyKeyParseData(char* data, int size, const char* password, ssh_key* pkey)
             goto EXIT;
         }
         
-        key->type = SSH_KEYTYPE_RSA;
-        key->type_c = ssh_key_type_to_char(SSH_KEYTYPE_RSA);
-        key->rsa = rsa;
+		makeRsaKey(key, rsa);
         
         // Load the private part.
         int index = 0;

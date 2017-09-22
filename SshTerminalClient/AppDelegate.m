@@ -54,7 +54,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 4
+#define TEST_SERVER 0
         
 		/*NSFont* font = [NSFont userFixedPitchFontOfSize:0];
 		NSFontManager* manager = [NSFontManager sharedFontManager];
@@ -63,24 +63,24 @@ SshConnection* sshConnection = NULL;
 		[manager orderFrontFontPanel:self];*/
 		
         [terminal clearAllTunnels];
-		//terminal.verbose = YES;
-		//terminal.verbosityLevel = 1;
+		terminal.verbose = YES;
+		terminal.verbosityLevel = 1;
 		terminal.keepAliveTime = 5;
 		
 #if (TEST_SERVER == 0)
         terminal.hostName = @"192.168.7.60";
         terminal.port = 2220;
         terminal.userName = @"david";
-        [terminal setPassword:@"123456"];
-		terminal.jumpHostName = @"macmini2";
-		terminal.jumpPort = 22;
-		terminal.jumpUserName = @"david";
-		[terminal setJumpPassword:@"123456"];
+        //[terminal setPassword:@"123456"];
+		//terminal.jumpHostName = @"macmini2";
+		//terminal.jumpPort = 22;
+		//terminal.jumpUserName = @"david";
+		//[terminal setJumpPassword:@"123456"];
         //terminal.hostName = @"192.168.7.60";
         //terminal.agentForwarding = YES;
-        //terminal.keyFilePath = @"~/Encrypted.ppk";
-        //terminal.keyFilePath = @"~/.ssh/dvincent-dsa";
-        //[terminal setKeyFilePassword:@"qwerty"];
+        terminal.keyFilePath = @"~/Encrypted.ppk";
+        //terminal.keyFilePath = @"~/.ssh/dvincent-rsa";
+        [terminal setKeyFilePassword:@"qwerty"];
 		//terminal.agentForwarding = YES;
         //terminal.x11Forwarding = YES;
         //terminal.internetProtocol = sshTerminalIpv6;
@@ -88,9 +88,9 @@ SshConnection* sshConnection = NULL;
         terminal.hostName = @"192.168.7.62";
 		terminal.port = 2222;
         terminal.userName = @"test";
-        [terminal setPassword:@"123456"];
-		//terminal.keyFilePath = @"~/.ssh/dvincent-rsa";
-		//[terminal setKeyFilePassword:@"qwerty"];
+        //[terminal setPassword:@"123456"];
+		terminal.keyFilePath = @"~/.ssh/dvincent-rsa";
+		[terminal setKeyFilePassword:@"qwerty"];
 		terminal.agentForwarding = YES;
 #elif (TEST_SERVER == 2)
         terminal.userName = @"dvincent";

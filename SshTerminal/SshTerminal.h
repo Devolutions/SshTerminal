@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "TerminalPreferences.h"
 
 //! Project version number for SshTerminal.
 FOUNDATION_EXPORT double SshTerminalVersionNumber;
