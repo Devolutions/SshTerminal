@@ -226,6 +226,12 @@
 				break;
 			}
 				
+			case '\t':
+			{
+				sprintf(specialSequence, "\t");
+				break;
+			}
+				
             case KEYPAD_ENTER:
             {
                 if (screen.keypadNormal == NO)
