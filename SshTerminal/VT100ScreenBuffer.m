@@ -358,7 +358,7 @@ unichar gGraphicSet[] =
             }
             curX--;
         } while (tabs[curX] == 0);
-        repeat++;
+        repeat--;
     }
 	[self invalidateLine:curY];
 }

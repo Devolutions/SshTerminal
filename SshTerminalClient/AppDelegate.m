@@ -54,7 +54,7 @@ SshConnection* sshConnection = NULL;
 {
     if (resume == NO)
     {
-#define TEST_SERVER 4
+#define TEST_SERVER 6
         
 		/*NSFont* font = [NSFont userFixedPitchFontOfSize:0];
 		NSFontManager* manager = [NSFontManager sharedFontManager];
@@ -63,9 +63,9 @@ SshConnection* sshConnection = NULL;
 		[manager orderFrontFontPanel:self];*/
 		
         [terminal clearAllTunnels];
-		terminal.verbose = YES;
-		terminal.verbosityLevel = 1;
-		terminal.keepAliveTime = 5;
+		//terminal.verbose = YES;
+		//terminal.verbosityLevel = 1;
+		//terminal.keepAliveTime = 5;
 		
 #if (TEST_SERVER == 0)
         terminal.hostName = @"192.168.7.60";
@@ -124,12 +124,12 @@ SshConnection* sshConnection = NULL;
 		//[terminal addForwardTunnelWithPort:1080 onHost:@"localhost" andRemotePort:23 onRemoteHost:@"VDEVOSRV-TST"];
 		//[terminal addForwardTunnelWithPort:3389 onHost:@"0.0.0.0" andRemotePort:3389 onRemoteHost:@"192.168.7.203"];
 #elif (TEST_SERVER == 6)
-		terminal.hostName = @"do02.flj.net";
+		terminal.hostName = @"192.168.3.211";
 		terminal.port = 22;
-		terminal.userName = @"test";
-		[terminal setPassword:@"123456"];
-		terminal.verbose = YES;
-		terminal.verbosityLevel = 1;
+		terminal.userName = @"parallels";
+		[terminal setPassword:@"Price2011"];
+		//terminal.verbose = YES;
+		//terminal.verbosityLevel = 1;
 #endif
         //terminal.verbose = YES;
 		
